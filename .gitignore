@@ -1,0 +1,15 @@
+# Ignore everything by default
+*
+
+# Track PowerShell scripts
+!*.ps1
+
+# Track batch files
+!*.bat
+
+# Don't track log files
+*.log
+*.txt
+
+# Track gitignore itself
+!.gitignore
