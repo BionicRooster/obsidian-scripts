@@ -9,6 +9,7 @@
 #   4. Fixes broken links pointing to moved resources
 #   5. Fixes legacy Evernote paths pointing to new image locations
 #   6. Generates "Empty Notes.md" listing notes with only a title (no content)
+#   7. Generates "Truncated Filenames.md" listing notes with cut-off names
 #
 # Safe to run repeatedly - only makes changes when needed
 #
@@ -34,6 +35,12 @@ $script:imagesRenamed = 0
 $script:linksFixed = 0
 $script:filesModified = 0
 $script:emptyNotesFound = 0
+$script:truncatedFilesFound = 0
+
+# Dictionary configuration for truncated filename detection
+$script:wordListPath = "C:\Users\awt\english_words.txt"
+$script:wordListUrl = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt"
+$script:dictionary = $null
 
 # Track renamed images for link updates
 $script:renamedImages = [System.Collections.ArrayList]@()
@@ -665,6 +672,200 @@ function Generate-EmptyNotesList {
 }
 
 # =============================================================================
+# PHASE 7: Generate Truncated Filenames list
+# =============================================================================
+# Finds all markdown files with truncated names (last word not in dictionary
+# and appears cut off mid-word). Uses pattern matching and dictionary lookup.
+# Creates/updates "Truncated Filenames.md" with links to these files.
+# =============================================================================
+function Generate-TruncatedFilenamesList {
+    Write-Log "=== Phase 7: Generating Truncated Filenames list ===" "Cyan"
+
+    # Download word list if needed
+    if (-not (Test-Path $script:wordListPath)) {
+        Write-Log "  Downloading English word list..." "Yellow"
+        try {
+            Invoke-WebRequest -Uri $script:wordListUrl -OutFile $script:wordListPath -UseBasicParsing
+            Write-Log "  Word list downloaded." "Green"
+        } catch {
+            Write-Log "  ERROR: Failed to download word list - $_" "Red"
+            return
+        }
+    }
+
+    # Load dictionary if not already loaded
+    if ($null -eq $script:dictionary) {
+        Write-Log "  Loading dictionary..." "Gray"
+        $script:dictionary = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        Get-Content $script:wordListPath | ForEach-Object {
+            [void]$script:dictionary.Add($_.Trim().ToLower())
+        }
+
+        # Add common terms not in standard dictionary
+        $additionalWords = @(
+            # Tech terms
+            'kanban', 'onenote', 'evernote', 'obsidian', 'kindle', 'arduino', 'github', 'gitlab',
+            'postgresql', 'mongodb', 'nodejs', 'javascript', 'typescript', 'kubernetes', 'dockerfile',
+            'wifi', 'bluetooth', 'hdmi', 'usb', 'html', 'css', 'json', 'xml', 'sql', 'api', 'url',
+            'iphone', 'ipad', 'macos', 'ios', 'linux', 'ubuntu', 'debian', 'nvidia', 'amd', 'intel',
+            # Common proper nouns
+            'bahai', 'quran', 'torah', 'buddhist', 'hindu', 'sikh', 'zoroastrian',
+            # Food terms
+            'kimchi', 'tofu', 'tempeh', 'hummus', 'falafel', 'tahini', 'miso', 'ramen', 'udon',
+            'chutney', 'naan', 'chapati', 'samosa', 'biryani', 'teriyaki', 'wasabi', 'edamame',
+            'quinoa', 'acai', 'kombucha', 'matcha', 'chai', 'boba', 'pho', 'banh',
+            # Names/surnames
+            'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
+            # Other common terms
+            'podcast', 'ebook', 'audiobook', 'vegan', 'keto', 'paleo', 'gluten', 'probiotic',
+            'cryptocurrency', 'blockchain', 'bitcoin', 'ethereum', 'nft', 'defi',
+            'covid', 'coronavirus', 'pandemic', 'vaccine', 'mrna',
+            'lgbt', 'lgbtq', 'bipoc', 'dei', 'juneteenth', 'kwanzaa', 'hanukkah', 'diwali', 'ramadan', 'eid',
+            # Short words
+            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok'
+        )
+        foreach ($word in $additionalWords) {
+            [void]$script:dictionary.Add($word.ToLower())
+        }
+        Write-Log "  Loaded $($script:dictionary.Count) words" "Gray"
+    }
+
+    # Truncation pattern indicators - words ending in these are likely truncated
+    $truncationPatterns = @(
+        'nv', 'lv', 'rv', 'nf', 'lf', 'rf', 'nc', 'lc', 'rc', 'ng',
+        'mb', 'mp', 'nt', 'nd', 'nk', 'ns', 'ct', 'pt', 'ft',
+        'qu', 'sq', 'tw', 'sw', 'dw', 'gw',
+        'bl', 'cl', 'fl', 'gl', 'pl', 'sl', 'br', 'cr', 'dr', 'fr', 'gr', 'pr', 'tr',
+        'sc', 'sk', 'sm', 'sn', 'sp', 'st', 'sw',
+        'th', 'ch', 'sh', 'wh', 'ph',
+        'xp', 'xc', 'xh', 'xt',
+        'ib', 'ob', 'ab', 'eb', 'ub',
+        'ig', 'og', 'ag', 'eg', 'ug',
+        'iv', 'ov', 'av', 'ev', 'uv',
+        'iz', 'oz', 'az', 'ez', 'uz'
+    )
+
+    # Valid word endings
+    $validEndings = @(
+        'ing', 'tion', 'sion', 'ness', 'ment', 'able', 'ible', 'ful', 'less', 'ous', 'ive',
+        'ary', 'ery', 'ory', 'ty', 'ly', 'al', 'er', 'or', 'ist', 'ism', 'ity', 'ure',
+        'age', 'ance', 'ence', 'dom', 'hood', 'ship', 'ward', 'wise', 'like',
+        'ed', 'es', 's', 'y', 'e', 'a', 'o', 'i'
+    )
+
+    # Function to check if a word looks truncated
+    $testTruncated = {
+        param([string]$word)
+
+        $cleanWord = $word -replace '[^a-zA-Z]', ''
+        if ($cleanWord.Length -lt 3) { return $false }
+        if ($script:dictionary.Contains($cleanWord.ToLower())) { return $false }
+
+        # Check valid endings
+        foreach ($ending in $validEndings) {
+            if ($cleanWord.Length -gt $ending.Length -and $cleanWord.ToLower().EndsWith($ending)) {
+                if ($cleanWord.Length -ge 6) { return $false }
+            }
+        }
+
+        # Check truncation patterns
+        $lowerWord = $cleanWord.ToLower()
+        $lastTwo = if ($lowerWord.Length -ge 2) { $lowerWord.Substring($lowerWord.Length - 2) } else { "" }
+
+        foreach ($pattern in $truncationPatterns) {
+            if ($lastTwo -eq $pattern) { return $true }
+        }
+
+        # Short unknown words are likely truncated
+        if ($cleanWord.Length -le 5) { return $true }
+
+        # Check if it's a prefix of a longer word
+        if ($cleanWord.Length -ge 4) {
+            $prefix = $cleanWord.ToLower()
+            foreach ($dictWord in $script:dictionary) {
+                if ($dictWord.StartsWith($prefix) -and $dictWord.Length -gt $prefix.Length + 2) {
+                    return $true
+                }
+            }
+        }
+
+        return $false
+    }
+
+    # Find truncated filenames
+    $truncatedFiles = @()
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        $baseName = $file.BaseName
+
+        # Skip date-named files, .md in name, resource folders
+        if ($baseName -match '^\d{4}-\d{2}-\d{2}') { continue }
+        if ($baseName -match '\.md$') { continue }
+        if ($baseName -match '\.resources$') { continue }
+
+        # Split into words and get last alphabetic word
+        $words = $baseName -split '[\s\-_]+'
+        $lastWord = $null
+        for ($i = $words.Count - 1; $i -ge 0; $i--) {
+            if ($words[$i] -match '[a-zA-Z]') {
+                $lastWord = $words[$i]
+                break
+            }
+        }
+
+        if (-not $lastWord) { continue }
+
+        $cleanLastWord = $lastWord -replace '[^a-zA-Z]', ''
+        if ($cleanLastWord.Length -lt 2) { continue }
+
+        # Skip acronyms and camelCase
+        if ($cleanLastWord -cmatch '^[A-Z]+$') { continue }
+        if ($cleanLastWord -cmatch '[a-z][A-Z]') { continue }
+
+        # Handle number suffixes
+        if ($lastWord -match '^[a-zA-Z]+\d+$') {
+            $cleanLastWord = $lastWord -replace '\d+$', ''
+        }
+
+        if (& $testTruncated $cleanLastWord) {
+            $truncatedFiles += @{
+                Name = $file.BaseName
+                LastWord = $cleanLastWord
+            }
+        }
+    }
+
+    $truncatedFiles = $truncatedFiles | Sort-Object { $_.Name }
+    $script:truncatedFilesFound = $truncatedFiles.Count
+
+    # Create markdown content
+    $mdContent = "# Truncated Filenames`n`n"
+    $mdContent += "Notes with potentially truncated names (last word appears cut off).`n`n"
+    $mdContent += "**Total: $($truncatedFiles.Count) files**`n`n"
+    $mdContent += "*Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*`n`n"
+    $mdContent += "| Note | Truncated Word |`n"
+    $mdContent += "|------|----------------|`n"
+
+    foreach ($file in $truncatedFiles) {
+        $mdContent += "| [[$($file.Name)]] | ``$($file.LastWord)`` |`n"
+    }
+
+    $outputPath = Join-Path $vaultPath "Truncated Filenames.md"
+
+    if ($dryRun) {
+        Write-Log "  [DRY RUN] Would create Truncated Filenames.md with $($truncatedFiles.Count) entries" "Magenta"
+    } else {
+        try {
+            Set-Content -Path $outputPath -Value $mdContent -Encoding UTF8 -NoNewline
+            Write-Log "  Created Truncated Filenames.md with $($truncatedFiles.Count) entries" "Green"
+        } catch {
+            Write-Log "  ERROR: Failed to create Truncated Filenames.md - $_" "Red"
+        }
+    }
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -687,6 +888,7 @@ Build-FileIndex
 Fix-BrokenLinks
 Fix-LegacyEvernotePaths
 Generate-EmptyNotesList
+Generate-TruncatedFilenamesList
 
 # Summary
 Write-Log "" "White"
@@ -698,5 +900,6 @@ Write-Log "  Images renamed (unknown_filename): $script:imagesRenamed" "White"
 Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
 Write-Log "  Empty notes found: $script:emptyNotesFound" "White"
+Write-Log "  Truncated filenames found: $script:truncatedFilesFound" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
