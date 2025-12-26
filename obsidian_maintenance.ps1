@@ -2,7 +2,8 @@
 # Obsidian Vault Maintenance Script
 # =============================================================================
 # Purpose: Comprehensive maintenance for an Obsidian vault:
-#   1. Normalizes smart/curly apostrophes to standard apostrophes in file names
+#   1a. Normalizes smart/curly apostrophes to standard apostrophes in file names
+#   1b. Resolves duplicate files (smart vs standard apostrophe versions)
 #   2. Renames unknown_filename images to meaningful names based on parent folder
 #   3. Updates all markdown links to match renamed files
 #   4. Fixes broken links pointing to moved resources
@@ -15,7 +16,7 @@
 
 # Configuration
 $vaultPath = "D:\Obsidian\Main"                              # Path to Obsidian vault
-$logPath = "C:\Users\awt\obsidian_maintenance_log.txt"       # Log file location
+$logPath = "C:\Users\awt\PowerShell\logs\obsidian_maintenance_log.txt"  # Log file location
 $dryRun = $false                                             # Set to $true to preview changes without applying
 $maxPathLength = 240                                         # Windows max path safety limit
 
@@ -27,6 +28,7 @@ $standardApostrophe = "'"          # ' (standard apostrophe)
 
 # Initialize counters
 $script:filesRenamed = 0
+$script:duplicatesResolved = 0
 $script:imagesRenamed = 0
 $script:linksFixed = 0
 $script:filesModified = 0
@@ -54,10 +56,10 @@ function Normalize-Text {
 }
 
 # =============================================================================
-# PHASE 1: Rename files/folders with non-standard apostrophes
+# PHASE 1a: Rename files/folders with non-standard apostrophes
 # =============================================================================
 function Rename-NonStandardApostrophes {
-    Write-Log "=== Phase 1: Checking for files with non-standard apostrophes ===" "Cyan"
+    Write-Log "=== Phase 1a: Checking for files with non-standard apostrophes ===" "Cyan"
 
     $itemsToRename = Get-ChildItem -Path $vaultPath -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -match "[$curlyApostrophe$leftApostrophe$backtick]" } |
@@ -97,6 +99,122 @@ function Rename-NonStandardApostrophes {
                 }
             }
         }
+    }
+}
+
+# =============================================================================
+# PHASE 1b: Resolve duplicate files (smart vs standard apostrophe versions)
+# =============================================================================
+# When Phase 1a skips a file because the destination exists, we may have duplicates
+# where one file has a smart apostrophe and one has a standard apostrophe.
+# This phase detects such duplicates, compares file sizes, keeps the larger one
+# (which contains the real content), and deletes the smaller stub file.
+# =============================================================================
+function Resolve-ApostropheDuplicates {
+    Write-Log "=== Phase 1b: Resolving apostrophe duplicate files ===" "Cyan"
+
+    # Track duplicates found for reporting
+    $duplicatesFound = 0
+
+    # Get all items with non-standard apostrophes in their names
+    $itemsWithSmartApos = Get-ChildItem -Path $vaultPath -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match "[$curlyApostrophe$leftApostrophe$backtick]" }
+
+    if ($itemsWithSmartApos.Count -eq 0) {
+        Write-Log "  No potential duplicates found" "Green"
+        return
+    }
+
+    Write-Log "  Checking $($itemsWithSmartApos.Count) items for duplicates..." "Yellow"
+
+    foreach ($item in $itemsWithSmartApos) {
+        # Skip if item no longer exists (may have been processed already)
+        if (-not (Test-Path $item.FullName)) { continue }
+
+        # Get the normalized name (with standard apostrophe)
+        $normalizedName = Normalize-Text $item.Name
+
+        # Skip if names are the same (no smart apostrophe in name)
+        if ($normalizedName -eq $item.Name) { continue }
+
+        # Build path to potential duplicate with standard apostrophe
+        $parentPath = if ($item.PSIsContainer) { $item.Parent.FullName } else { $item.DirectoryName }
+        $normalizedPath = Join-Path $parentPath $normalizedName
+
+        # Check if both versions exist (duplicate situation)
+        if (Test-Path $normalizedPath) {
+            $duplicatesFound++
+
+            # Get file info for both versions
+            $smartAposItem = $item
+            $standardAposItem = Get-Item -Path $normalizedPath -ErrorAction SilentlyContinue
+
+            if (-not $standardAposItem) { continue }
+
+            # Determine which is the "real" file based on size
+            # The larger file typically contains the actual content
+            $smartSize = if ($smartAposItem.PSIsContainer) {
+                (Get-ChildItem -Path $smartAposItem.FullName -Recurse -File -ErrorAction SilentlyContinue |
+                    Measure-Object -Property Length -Sum).Sum
+            } else {
+                $smartAposItem.Length
+            }
+
+            $standardSize = if ($standardAposItem.PSIsContainer) {
+                (Get-ChildItem -Path $standardAposItem.FullName -Recurse -File -ErrorAction SilentlyContinue |
+                    Measure-Object -Property Length -Sum).Sum
+            } else {
+                $standardAposItem.Length
+            }
+
+            # Handle null sizes (empty files/folders)
+            if ($null -eq $smartSize) { $smartSize = 0 }
+            if ($null -eq $standardSize) { $standardSize = 0 }
+
+            Write-Log "  Found duplicate pair:" "Yellow"
+            Write-Log "    Smart apostrophe:    $($smartAposItem.Name) ($smartSize bytes)" "Gray"
+            Write-Log "    Standard apostrophe: $($standardAposItem.Name) ($standardSize bytes)" "Gray"
+
+            if ($dryRun) {
+                if ($smartSize -gt $standardSize) {
+                    Write-Log "    [DRY RUN] Would delete standard version (stub), rename smart version" "Magenta"
+                } elseif ($standardSize -gt $smartSize) {
+                    Write-Log "    [DRY RUN] Would delete smart version (stub), keep standard version" "Magenta"
+                } else {
+                    Write-Log "    [DRY RUN] Same size - would delete smart version, keep standard" "Magenta"
+                }
+            } else {
+                try {
+                    if ($smartSize -gt $standardSize) {
+                        # Smart apostrophe version is larger (real file)
+                        # Delete the standard apostrophe stub, then rename the smart one
+                        Remove-Item -Path $standardAposItem.FullName -Force -Recurse -ErrorAction Stop
+                        Rename-Item -Path $smartAposItem.FullName -NewName $normalizedName -ErrorAction Stop
+                        Write-Log "    Resolved: Deleted stub, renamed real file to standard apostrophe" "Green"
+                        $script:duplicatesResolved++
+                    } elseif ($standardSize -gt $smartSize) {
+                        # Standard apostrophe version is larger (real file)
+                        # Delete the smart apostrophe stub
+                        Remove-Item -Path $smartAposItem.FullName -Force -Recurse -ErrorAction Stop
+                        Write-Log "    Resolved: Deleted smart apostrophe stub, kept standard version" "Green"
+                        $script:duplicatesResolved++
+                    } else {
+                        # Same size - prefer standard apostrophe version, delete smart one
+                        Remove-Item -Path $smartAposItem.FullName -Force -Recurse -ErrorAction Stop
+                        Write-Log "    Resolved: Same size, deleted smart apostrophe version" "Green"
+                        $script:duplicatesResolved++
+                    }
+                } catch {
+                    Write-Log "    ERROR: Failed to resolve duplicate - $_" "Red"
+                }
+            }
+        }
+    }
+
+    if ($duplicatesFound -eq 0) {
+        Write-Log "  No duplicates found" "Green"
+    } else {
+        Write-Log "  Found $duplicatesFound duplicate pairs, resolved $($script:duplicatesResolved)" "Green"
     }
 }
 
@@ -475,6 +593,7 @@ Write-Log ""
 
 # Run maintenance phases
 Rename-NonStandardApostrophes
+Resolve-ApostropheDuplicates
 Rename-UnknownFilenameImages
 Build-FileIndex
 Fix-BrokenLinks
@@ -485,6 +604,7 @@ Write-Log "" "White"
 Write-Log "============================================" "Green"
 Write-Log "MAINTENANCE COMPLETE" "Green"
 Write-Log "  Files/folders renamed (apostrophes): $script:filesRenamed" "White"
+Write-Log "  Apostrophe duplicates resolved: $script:duplicatesResolved" "White"
 Write-Log "  Images renamed (unknown_filename): $script:imagesRenamed" "White"
 Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
