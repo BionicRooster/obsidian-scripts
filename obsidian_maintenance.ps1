@@ -10,6 +10,8 @@
 #   5. Fixes legacy Evernote paths pointing to new image locations
 #   6. Generates "Empty Notes.md" listing notes with only a title (no content)
 #   7. Generates "Truncated Filenames.md" listing notes with cut-off names
+#   8. Deletes small image files (<3KB) in .resources folders (icons, trackers)
+#   9. Deletes empty folders left behind after cleanup
 #
 # Safe to run repeatedly - only makes changes when needed
 #
@@ -36,6 +38,8 @@ $script:linksFixed = 0
 $script:filesModified = 0
 $script:emptyNotesFound = 0
 $script:truncatedFilesFound = 0
+$script:smallImagesDeleted = 0
+$script:emptyFoldersDeleted = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -866,6 +870,91 @@ function Generate-TruncatedFilenamesList {
 }
 
 # =============================================================================
+# PHASE 8: Delete small image files in .resources folders
+# =============================================================================
+# Removes tiny images (<3KB) that are typically tracker pixels, spacer GIFs,
+# small icons, and other web clipping artifacts that serve no purpose.
+# =============================================================================
+function Delete-SmallResourceImages {
+    Write-Log "=== Phase 8: Deleting small images in .resources folders ===" "Cyan"
+
+    # Find all .resources folders
+    $resourcesFolders = Get-ChildItem -Path $vaultPath -Directory -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like "*.resources" }
+
+    if ($resourcesFolders.Count -eq 0) {
+        Write-Log "  No .resources folders found" "Green"
+        return
+    }
+
+    foreach ($folder in $resourcesFolders) {
+        $images = Get-ChildItem -Path $folder.FullName -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -match '\.(png|jpg|jpeg|gif|ico|svg|webp)$' -and $_.Length -lt 3000 }
+
+        foreach ($img in $images) {
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would delete: $($folder.Name)/$($img.Name)" "Magenta"
+                $script:smallImagesDeleted++
+            } else {
+                try {
+                    Remove-Item -Path $img.FullName -Force -ErrorAction Stop
+                    $script:smallImagesDeleted++
+                } catch {
+                    Write-Log "  ERROR: $($img.Name) - $_" "Red"
+                }
+            }
+        }
+    }
+
+    Write-Log "  Deleted $($script:smallImagesDeleted) small images" "Green"
+}
+
+# =============================================================================
+# PHASE 9: Delete empty folders
+# =============================================================================
+# Removes empty folders left behind after image cleanup and other operations.
+# Runs multiple passes since deleting subfolders may leave parent folders empty.
+# =============================================================================
+function Delete-EmptyFolders {
+    Write-Log "=== Phase 9: Deleting empty folders ===" "Cyan"
+
+    # Keep running until no more empty folders found
+    do {
+        $deletedThisPass = 0
+
+        # Get all directories, sorted by depth (deepest first)
+        $folders = Get-ChildItem -Path $vaultPath -Directory -Recurse -ErrorAction SilentlyContinue |
+            Sort-Object { $_.FullName.Split('\').Count } -Descending
+
+        foreach ($folder in $folders) {
+            # Skip if folder no longer exists
+            if (-not (Test-Path $folder.FullName)) { continue }
+
+            # Check if folder is empty (no files and no subfolders)
+            $items = Get-ChildItem -Path $folder.FullName -Force -ErrorAction SilentlyContinue
+
+            if ($items.Count -eq 0) {
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would delete: $($folder.FullName.Replace($vaultPath + '\', ''))" "Magenta"
+                    $deletedThisPass++
+                    $script:emptyFoldersDeleted++
+                } else {
+                    try {
+                        Remove-Item -Path $folder.FullName -Force -ErrorAction Stop
+                        $deletedThisPass++
+                        $script:emptyFoldersDeleted++
+                    } catch {
+                        Write-Log "  ERROR: $($folder.Name) - $_" "Red"
+                    }
+                }
+            }
+        }
+    } while ($deletedThisPass -gt 0 -and -not $dryRun)
+
+    Write-Log "  Deleted $($script:emptyFoldersDeleted) empty folders" "Green"
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -889,6 +978,8 @@ Fix-BrokenLinks
 Fix-LegacyEvernotePaths
 Generate-EmptyNotesList
 Generate-TruncatedFilenamesList
+Delete-SmallResourceImages
+Delete-EmptyFolders
 
 # Summary
 Write-Log "" "White"
@@ -901,5 +992,7 @@ Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
 Write-Log "  Empty notes found: $script:emptyNotesFound" "White"
 Write-Log "  Truncated filenames found: $script:truncatedFilesFound" "White"
+Write-Log "  Small images deleted: $script:smallImagesDeleted" "White"
+Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
