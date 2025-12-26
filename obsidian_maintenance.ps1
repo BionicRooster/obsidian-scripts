@@ -8,6 +8,7 @@
 #   3. Updates all markdown links to match renamed files
 #   4. Fixes broken links pointing to moved resources
 #   5. Fixes legacy Evernote paths pointing to new image locations
+#   6. Generates "Empty Notes.md" listing notes with only a title (no content)
 #
 # Safe to run repeatedly - only makes changes when needed
 #
@@ -32,6 +33,7 @@ $script:duplicatesResolved = 0
 $script:imagesRenamed = 0
 $script:linksFixed = 0
 $script:filesModified = 0
+$script:emptyNotesFound = 0
 
 # Track renamed images for link updates
 $script:renamedImages = [System.Collections.ArrayList]@()
@@ -577,6 +579,92 @@ function Fix-LegacyEvernotePaths {
 }
 
 # =============================================================================
+# PHASE 6: Generate Empty Notes list
+# =============================================================================
+# Finds all markdown files that contain only a title heading and optional
+# metadata (frontmatter, nav line, tags) but no actual body content.
+# Creates/updates "Empty Notes.md" with links to these files.
+# =============================================================================
+function Generate-EmptyNotesList {
+    Write-Log "=== Phase 6: Generating Empty Notes list ===" "Cyan"
+
+    $emptyNotes = @()
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Skip the Empty Notes file itself
+        if ($file.Name -eq "Empty Notes.md") { continue }
+
+        try {
+            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+
+            # Remove frontmatter (YAML between --- markers)
+            $contentNoFrontmatter = $content -replace '(?s)^---.*?---\s*', ''
+
+            # Get non-empty lines
+            $lines = ($contentNoFrontmatter -split "`n") |
+                Where-Object { $_.Trim() -ne '' } |
+                ForEach-Object { $_.Trim() }
+
+            # Count lines that are actual content (not title, nav, or tags)
+            $contentLines = $lines | Where-Object {
+                # Skip headings
+                $_ -notmatch '^#+\s+' -and
+                # Skip nav lines
+                $_ -notmatch '^nav:' -and
+                # Skip standalone tags
+                $_ -notmatch '^\s*#\w+\s*$' -and
+                # Skip tag lists
+                $_ -notmatch '^tags:' -and
+                # Skip empty list items or simple breadcrumbs
+                $_ -notmatch '^\s*-\s*\[\[.+\]\]\s*$'
+            }
+
+            # If no content lines, consider it empty
+            if ($contentLines.Count -eq 0) {
+                $emptyNotes += @{
+                    Name = $file.BaseName
+                    RelPath = $file.FullName.Replace($vaultPath + '\', '').Replace('\', '/')
+                }
+            }
+        } catch {}
+    }
+
+    # Sort by relative path
+    $emptyNotes = $emptyNotes | Sort-Object { $_.RelPath }
+
+    $script:emptyNotesFound = $emptyNotes.Count
+
+    # Create markdown content
+    $mdContent = "# Empty Notes (Title Only)`n`n"
+    $mdContent += "These notes contain no content other than a title heading and optional metadata.`n`n"
+    $mdContent += "**Total: $($emptyNotes.Count) files**`n`n"
+    $mdContent += "*Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*`n`n"
+
+    foreach ($note in $emptyNotes) {
+        # Create Obsidian wiki link using the base name
+        $mdContent += "- [[$($note.Name)]]`n"
+    }
+
+    # Write to file
+    $outputPath = Join-Path $vaultPath "Empty Notes.md"
+
+    if ($dryRun) {
+        Write-Log "  [DRY RUN] Would create Empty Notes.md with $($emptyNotes.Count) entries" "Magenta"
+    } else {
+        try {
+            Set-Content -Path $outputPath -Value $mdContent -Encoding UTF8 -NoNewline
+            Write-Log "  Created Empty Notes.md with $($emptyNotes.Count) entries" "Green"
+        } catch {
+            Write-Log "  ERROR: Failed to create Empty Notes.md - $_" "Red"
+        }
+    }
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -598,6 +686,7 @@ Rename-UnknownFilenameImages
 Build-FileIndex
 Fix-BrokenLinks
 Fix-LegacyEvernotePaths
+Generate-EmptyNotesList
 
 # Summary
 Write-Log "" "White"
@@ -608,5 +697,6 @@ Write-Log "  Apostrophe duplicates resolved: $script:duplicatesResolved" "White"
 Write-Log "  Images renamed (unknown_filename): $script:imagesRenamed" "White"
 Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
+Write-Log "  Empty notes found: $script:emptyNotesFound" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
