@@ -873,141 +873,225 @@ function Generate-TruncatedFilenamesList {
 # =============================================================================
 # PHASE 8: Fix UTF-8 encoding corruption (mojibake)
 # =============================================================================
-# Repairs common UTF-8 encoding issues where special characters got corrupted:
-#   - Latin accents: á, í, é -> Ã¡, Ã­, Ã© (UTF-8 bytes read as Latin-1)
-#   - Smart quotes: ', ", " -> â€™, â€œ, â€ (curly quotes corrupted)
-#   - Dashes: —, – -> â€", â€" (em/en dashes corrupted)
-#   - Non-breaking spaces: Â followed by space (NBSP corruption)
-#   - Checkbox/bullet chars: â–¢, â–¡ (corrupted ballot boxes)
+# Repairs common UTF-8 encoding issues using byte-level operations:
+#   - Smart quotes/apostrophes: curly quotes -> straight quotes
+#   - Dashes: em/en dashes -> standard dashes
+#   - Non-breaking spaces: NBSP -> regular space
 #   - BOM: Removes UTF-8 BOM marker from start of files
+#   - Double-encoded mojibake patterns
+# Uses byte-level operations to avoid encoding issues during read/write.
 # =============================================================================
 $script:encodingIssuesFixed = 0
+
+# Define encoding patterns as hex strings and their UTF-8 replacements
+# Pattern = mojibake bytes in hex, Replacement = correct UTF-8 bytes in hex
+$script:encodingPatterns = @(
+    # Right single quote (most common: displays as special chars)
+    @{ Find = "C3A2E282ACE284A2"; Replace = "27" },      # Double-encoded -> '
+    @{ Find = "E28099"; Replace = "27" },                 # Curly apostrophe -> '
+
+    # Left single quote
+    @{ Find = "C3A2E282ACCB9C"; Replace = "27" },        # Double-encoded -> '
+    @{ Find = "E28098"; Replace = "27" },                 # Curly left quote -> '
+
+    # Left double quote
+    @{ Find = "C3A2E282ACC593"; Replace = "22" },        # Double-encoded -> "
+    @{ Find = "E2809C"; Replace = "22" },                 # Curly left double -> "
+
+    # Right double quote
+    @{ Find = "C3A2E282ACC29D"; Replace = "22" },        # Double-encoded -> "
+    @{ Find = "E2809D"; Replace = "22" },                 # Curly right double -> "
+
+    # Em dash
+    @{ Find = "C3A2E282ACE2809C"; Replace = "2D2D" },    # Double-encoded -> --
+    @{ Find = "E28094"; Replace = "2D2D" },              # Em dash -> --
+
+    # En dash
+    @{ Find = "C3A2E282ACE28093"; Replace = "2D" },      # Double-encoded -> -
+    @{ Find = "E28093"; Replace = "2D" },                 # En dash -> -
+
+    # Non-breaking space corruption
+    @{ Find = "C382C2A0"; Replace = "20" },              # Double-encoded NBSP -> space
+    @{ Find = "C2A0"; Replace = "20" },                   # NBSP -> space
+
+    # Corrupted checkbox/bullet
+    @{ Find = "C3A2E296A2"; Replace = "2D" },            # Corrupted ballot box -> -
+
+    # BOM
+    @{ Find = "EFBBBF"; Replace = "" },                   # Remove BOM
+
+    # Ellipsis
+    @{ Find = "C3A2E282ACE2809A"; Replace = "2E2E2E" },  # Double-encoded -> ...
+    @{ Find = "E280A6"; Replace = "2E2E2E" },             # Ellipsis -> ...
+
+    # Bullet
+    @{ Find = "C3A2E282ACE280A2"; Replace = "E280A2" }   # Double-encoded -> proper bullet
+)
+
+# Converts a hex string to a byte array with explicit typing
+function Convert-EncodingHexToBytes {
+    param([string]$hex)
+
+    # Return empty byte array for null/empty input
+    if ([string]::IsNullOrEmpty($hex)) {
+        return [byte[]]@()
+    }
+
+    # Create byte array of correct size
+    [byte[]]$bytes = New-Object byte[] ($hex.Length / 2)
+
+    # Convert each hex pair to a byte
+    for ($i = 0; $i -lt $hex.Length; $i += 2) {
+        $bytes[$i / 2] = [Convert]::ToByte($hex.Substring($i, 2), 16)
+    }
+
+    # Return with explicit type to prevent PowerShell array unrolling
+    return ,[byte[]]$bytes
+}
+
+# Find byte pattern in source array starting at given index
+function Find-EncodingBytePattern {
+    param(
+        [byte[]]$source,
+        [byte[]]$pattern,
+        [int]$startIndex
+    )
+
+    if ($pattern.Length -eq 0 -or $source.Length -eq 0) { return -1 }
+
+    for ($i = $startIndex; $i -le $source.Length - $pattern.Length; $i++) {
+        $found = $true
+        for ($j = 0; $j -lt $pattern.Length; $j++) {
+            if ($source[$i + $j] -ne $pattern[$j]) {
+                $found = $false
+                break
+            }
+        }
+        if ($found) { return $i }
+    }
+    return -1
+}
+
+# Replace all occurrences of find pattern with replace pattern in byte array
+function Replace-EncodingBytePattern {
+    param(
+        [byte[]]$source,
+        [byte[]]$find,
+        [byte[]]$replace
+    )
+
+    # Create a List to build the result
+    $result = New-Object System.Collections.Generic.List[byte]
+    $i = 0
+    $matchCount = 0  # Track actual matches for verification
+
+    while ($i -lt $source.Length) {
+        $pos = Find-EncodingBytePattern -source $source -pattern $find -startIndex $i
+        if ($pos -eq -1) {
+            # No more matches, copy remaining bytes
+            for ($j = $i; $j -lt $source.Length; $j++) {
+                $result.Add($source[$j])
+            }
+            break
+        }
+        else {
+            $matchCount++
+            # Copy bytes before the match
+            for ($j = $i; $j -lt $pos; $j++) {
+                $result.Add($source[$j])
+            }
+            # Add replacement bytes (if any - empty replacement removes the pattern)
+            if ($replace -ne $null -and $replace.Length -gt 0) {
+                foreach ($b in $replace) {
+                    $result.Add($b)
+                }
+            }
+            # Advance past the matched pattern
+            $i = $pos + $find.Length
+        }
+    }
+
+    # Return results - use explicit byte array cast
+    [byte[]]$outputBytes = $result.ToArray()
+    $wasModified = ($matchCount -gt 0)
+
+    return [PSCustomObject]@{
+        Bytes = $outputBytes
+        Modified = $wasModified
+        MatchCount = $matchCount
+    }
+}
 
 function Fix-EncodingCorruption {
     Write-Log "=== Phase 8: Fixing UTF-8 encoding corruption ===" "Cyan"
 
     $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
     $filesFixed = 0
+    $filesSkipped = 0
 
     foreach ($file in $mdFiles) {
         try {
-            $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
-            if (-not $content) { continue }
+            # Read original bytes with explicit type
+            [byte[]]$originalBytes = [System.IO.File]::ReadAllBytes($file.FullName)
+            [byte[]]$currentBytes = $originalBytes.Clone()  # Clone to avoid reference issues
+            $fileModified = $false
 
-            # Check for corruption markers
-            # Ã (195) indicates Latin accent corruption, â (226) indicates smart quote corruption
-            $corruptMarker1 = [char]195  # For Ã¡, Ã­, etc.
-            $corruptMarker2 = [char]226  # For â€™, â€œ, etc.
-            if (-not ($content.Contains($corruptMarker1) -or $content.Contains($corruptMarker2))) { continue }
+            foreach ($p in $script:encodingPatterns) {
+                # Convert hex patterns to byte arrays with explicit typing
+                [byte[]]$findBytes = Convert-EncodingHexToBytes $p.Find
+                [byte[]]$replaceBytes = Convert-EncodingHexToBytes $p.Replace
 
-            $originalContent = $content
-
-            # === Latin accent corruption patterns ===
-            # Corrupted: Ã (195) + second byte = UTF-8 C3 xx read as Latin-1
-            $corrA = [string][char]195 + [string][char]161  # Ã¡ -> á
-            $corrI = [string][char]195 + [string][char]173  # Ã­ -> í
-            $corrE = [string][char]195 + [string][char]169  # Ã© -> é
-            $corrO = [string][char]195 + [string][char]179  # Ã³ -> ó
-            $corrU = [string][char]195 + [string][char]186  # Ãº -> ú
-            $corrN = [string][char]195 + [string][char]177  # Ã± -> ñ
-            $corrUU = [string][char]195 + [string][char]188 # Ã¼ -> ü
-
-            $content = $content.Replace($corrA, [string][char]225)  # á
-            $content = $content.Replace($corrI, [string][char]237)  # í
-            $content = $content.Replace($corrE, [string][char]233)  # é
-            $content = $content.Replace($corrO, [string][char]243)  # ó
-            $content = $content.Replace($corrU, [string][char]250)  # ú
-            $content = $content.Replace($corrN, [string][char]241)  # ñ
-            $content = $content.Replace($corrUU, [string][char]252) # ü
-
-            # === Smart quote/punctuation corruption patterns ===
-            # Corrupted: â (226) + € (128) + third byte = UTF-8 E2 80 xx read as Latin-1
-            # These are 3-byte UTF-8 sequences that got corrupted
-
-            # Right single quote/apostrophe: E2 80 99 -> â€™ -> ' (U+2019)
-            $corrRSQ = [string][char]226 + [string][char]128 + [string][char]153
-            $content = $content.Replace($corrRSQ, [string][char]8217)
-
-            # Left single quote: E2 80 98 -> â€˜ -> ' (U+2018)
-            $corrLSQ = [string][char]226 + [string][char]128 + [string][char]152
-            $content = $content.Replace($corrLSQ, [string][char]8216)
-
-            # Right double quote: E2 80 9D -> â€ -> " (U+201D)
-            $corrRDQ = [string][char]226 + [string][char]128 + [string][char]157
-            $content = $content.Replace($corrRDQ, [string][char]8221)
-
-            # Left double quote: E2 80 9C -> â€œ -> " (U+201C)
-            $corrLDQ = [string][char]226 + [string][char]128 + [string][char]156
-            $content = $content.Replace($corrLDQ, [string][char]8220)
-
-            # Em dash: E2 80 94 -> â€" -> — (U+2014)
-            $corrEmDash = [string][char]226 + [string][char]128 + [string][char]148
-            $content = $content.Replace($corrEmDash, [string][char]8212)
-
-            # En dash: E2 80 93 -> â€" -> – (U+2013)
-            $corrEnDash = [string][char]226 + [string][char]128 + [string][char]147
-            $content = $content.Replace($corrEnDash, [string][char]8211)
-
-            # Ellipsis: E2 80 A6 -> â€¦ -> … (U+2026)
-            $corrEllipsis = [string][char]226 + [string][char]128 + [string][char]166
-            $content = $content.Replace($corrEllipsis, [string][char]8230)
-
-            # Bullet: E2 80 A2 -> â€¢ -> • (U+2022)
-            $corrBullet = [string][char]226 + [string][char]128 + [string][char]162
-            $content = $content.Replace($corrBullet, [string][char]8226)
-
-            # Trademark: E2 84 A2 -> â„¢ -> ™ (U+2122)
-            $corrTM = [string][char]226 + [string][char]132 + [string][char]162
-            $content = $content.Replace($corrTM, [string][char]8482)
-
-            # === Non-breaking space corruption patterns ===
-            # Â followed by space: C2 A0 (NBSP) read as Latin-1 becomes Â + space
-            $corrNBSP1 = [string][char]194 + [string][char]160  # Â + NBSP -> space
-            $content = $content.Replace($corrNBSP1, " ")
-
-            # Actual NBSP character -> regular space
-            $content = $content.Replace([string][char]160, " ")
-
-            # Â followed by regular space (common web copy artifact)
-            $content = $content.Replace([string][char]194 + " ", " ")
-
-            # === Corrupted checkbox/bullet characters ===
-            # â–¢ (ballot box): E2 96 A2 -> corrupted display
-            $corrCheckbox = [string][char]226 + [string][char]150 + [string][char]162
-            $content = $content.Replace($corrCheckbox, "-")
-
-            # â–¡ (white square): E2 96 A1
-            $corrWhiteSquare = [string][char]226 + [string][char]150 + [string][char]161
-            $content = $content.Replace($corrWhiteSquare, "-")
-
-            # === BOM removal ===
-            # Remove UTF-8 BOM if present at start
-            if ($content.Length -gt 0 -and $content[0] -eq [char]0xFEFF) {
-                $content = $content.Substring(1)
+                if ($findBytes.Length -gt 0) {
+                    $result = Replace-EncodingBytePattern -source $currentBytes -find $findBytes -replace $replaceBytes
+                    if ($result.Modified) {
+                        # Explicitly cast to byte array to prevent type coercion
+                        [byte[]]$currentBytes = $result.Bytes
+                        $fileModified = $true
+                    }
+                }
             }
 
-            if ($content -ne $originalContent) {
-                if ($dryRun) {
-                    Write-Log "  [DRY RUN] Would fix encoding: $($file.Name)" "Magenta"
-                    $filesFixed++
-                } else {
-                    try {
-                        # Write with proper UTF-8 encoding (no BOM)
-                        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-                        [System.IO.File]::WriteAllText($file.FullName, $content, $utf8NoBom)
+            if ($fileModified) {
+                # Verify the bytes actually changed before writing
+                $bytesAreDifferent = ($currentBytes.Length -ne $originalBytes.Length)
+                if (-not $bytesAreDifferent) {
+                    for ($i = 0; $i -lt $currentBytes.Length; $i++) {
+                        if ($currentBytes[$i] -ne $originalBytes[$i]) {
+                            $bytesAreDifferent = $true
+                            break
+                        }
+                    }
+                }
+
+                if ($bytesAreDifferent) {
+                    if ($dryRun) {
+                        Write-Log "  [DRY RUN] Would fix encoding: $($file.Name)" "Magenta"
                         $filesFixed++
-                    } catch {
-                        # File may be locked, skip silently
+                    } else {
+                        try {
+                            # Write the modified bytes
+                            [System.IO.File]::WriteAllBytes($file.FullName, [byte[]]$currentBytes)
+                            $filesFixed++
+                        } catch {
+                            # File may be locked, log and continue
+                            $filesSkipped++
+                            Write-Log "  LOCKED: $($file.Name)" "DarkYellow"
+                        }
                     }
                 }
             }
         } catch {
             # Skip files that can't be read
+            $filesSkipped++
         }
     }
 
     $script:encodingIssuesFixed = $filesFixed
-    Write-Log "  Fixed encoding in $filesFixed files" "Green"
+    if ($filesSkipped -gt 0) {
+        Write-Log "  Fixed encoding in $filesFixed files ($filesSkipped skipped - locked)" "Green"
+    } else {
+        Write-Log "  Fixed encoding in $filesFixed files" "Green"
+    }
 }
 
 # =============================================================================
