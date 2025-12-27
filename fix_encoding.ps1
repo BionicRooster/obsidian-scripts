@@ -50,13 +50,25 @@ $patterns = @(
     @{ Find = "C3A2E282ACE280A2"; Replace = "E280A2" }   # -> proper bullet
 )
 
-function Convert-HexToBytes($hex) {
-    if ([string]::IsNullOrEmpty($hex)) { return @() }
-    $bytes = New-Object byte[] ($hex.Length / 2)
+function Convert-HexToBytes {
+    # Converts a hex string to a byte array with explicit typing
+    param([string]$hex)
+
+    # Return empty byte array for null/empty input
+    if ([string]::IsNullOrEmpty($hex)) {
+        return [byte[]]@()
+    }
+
+    # Create byte array of correct size
+    [byte[]]$bytes = New-Object byte[] ($hex.Length / 2)
+
+    # Convert each hex pair to a byte
     for ($i = 0; $i -lt $hex.Length; $i += 2) {
         $bytes[$i / 2] = [Convert]::ToByte($hex.Substring($i, 2), 16)
     }
-    return $bytes
+
+    # Return with explicit type to prevent PowerShell array unrolling
+    return ,[byte[]]$bytes
 }
 
 function Find-BytePattern($source, $pattern, $startIndex) {
@@ -74,34 +86,55 @@ function Find-BytePattern($source, $pattern, $startIndex) {
     return -1
 }
 
-function Replace-BytePattern($source, $find, $replace) {
+function Replace-BytePattern {
+    # Explicit parameter typing to prevent PowerShell type coercion issues
+    param(
+        [byte[]]$source,
+        [byte[]]$find,
+        [byte[]]$replace
+    )
+
+    # Create a List to build the result
     $result = New-Object System.Collections.Generic.List[byte]
     $i = 0
-    $modified = $false
+    $matchCount = 0  # Track actual matches for verification
 
     while ($i -lt $source.Length) {
         $pos = Find-BytePattern $source $find $i
         if ($pos -eq -1) {
-            # No more matches, copy rest
+            # No more matches, copy remaining bytes
             for ($j = $i; $j -lt $source.Length; $j++) {
                 $result.Add($source[$j])
             }
             break
         }
         else {
-            $modified = $true
-            # Copy bytes before match
+            $matchCount++
+            # Copy bytes before the match
             for ($j = $i; $j -lt $pos; $j++) {
                 $result.Add($source[$j])
             }
-            # Add replacement
-            foreach ($b in $replace) {
-                $result.Add($b)
+            # Add replacement bytes (if any - empty replacement removes the pattern)
+            if ($replace -ne $null -and $replace.Length -gt 0) {
+                foreach ($b in $replace) {
+                    $result.Add($b)
+                }
             }
+            # Advance past the matched pattern
             $i = $pos + $find.Length
         }
     }
-    return @{ Bytes = $result.ToArray(); Modified = $modified }
+
+    # Return results - use explicit byte array cast and separate properties
+    # to avoid PowerShell hashtable unboxing issues
+    $outputBytes = [byte[]]$result.ToArray()
+    $wasModified = ($matchCount -gt 0)
+
+    return [PSCustomObject]@{
+        Bytes = $outputBytes
+        Modified = $wasModified
+        MatchCount = $matchCount
+    }
 }
 
 Write-Host "Starting encoding fix scan in: $vaultPath" -ForegroundColor Cyan
@@ -111,27 +144,44 @@ $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse
 
 foreach ($file in $mdFiles) {
     try {
-        $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
-        $currentBytes = $bytes
+        # Read original bytes with explicit type
+        [byte[]]$originalBytes = [System.IO.File]::ReadAllBytes($file.FullName)
+        [byte[]]$currentBytes = $originalBytes.Clone()  # Clone to avoid reference issues
         $fileModified = $false
 
         foreach ($p in $patterns) {
-            $findBytes = Convert-HexToBytes $p.Find
-            $replaceBytes = Convert-HexToBytes $p.Replace
+            # Convert hex patterns to byte arrays with explicit typing
+            [byte[]]$findBytes = Convert-HexToBytes $p.Find
+            [byte[]]$replaceBytes = Convert-HexToBytes $p.Replace
 
             if ($findBytes.Length -gt 0) {
-                $result = Replace-BytePattern $currentBytes $findBytes $replaceBytes
+                $result = Replace-BytePattern -source $currentBytes -find $findBytes -replace $replaceBytes
                 if ($result.Modified) {
-                    $currentBytes = $result.Bytes
+                    # Explicitly cast to byte array to prevent type coercion
+                    [byte[]]$currentBytes = $result.Bytes
                     $fileModified = $true
                 }
             }
         }
 
         if ($fileModified) {
-            [System.IO.File]::WriteAllBytes($file.FullName, $currentBytes)
-            $filesFixed++
-            Write-Host "Fixed: $($file.Name)" -ForegroundColor Green
+            # Verify the bytes actually changed before writing
+            $bytesAreDifferent = ($currentBytes.Length -ne $originalBytes.Length)
+            if (-not $bytesAreDifferent) {
+                for ($i = 0; $i -lt $currentBytes.Length; $i++) {
+                    if ($currentBytes[$i] -ne $originalBytes[$i]) {
+                        $bytesAreDifferent = $true
+                        break
+                    }
+                }
+            }
+
+            if ($bytesAreDifferent) {
+                # Write the modified bytes
+                [System.IO.File]::WriteAllBytes($file.FullName, [byte[]]$currentBytes)
+                $filesFixed++
+                Write-Host "Fixed: $($file.Name)" -ForegroundColor Green
+            }
         }
     }
     catch {
