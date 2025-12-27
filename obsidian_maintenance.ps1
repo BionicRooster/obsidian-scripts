@@ -870,13 +870,82 @@ function Generate-TruncatedFilenamesList {
 }
 
 # =============================================================================
-# PHASE 8: Delete small image files in .resources folders
+# PHASE 8: Fix UTF-8 encoding corruption
+# =============================================================================
+# Repairs common UTF-8 encoding issues where special characters like
+# á, í, é were corrupted to Ã¡, Ã­, Ã© (UTF-8 bytes read as Latin-1)
+# =============================================================================
+$script:encodingIssuesFixed = 0
+
+function Fix-EncodingCorruption {
+    Write-Log "=== Phase 8: Fixing UTF-8 encoding corruption ===" "Cyan"
+
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $filesFixed = 0
+
+    foreach ($file in $mdFiles) {
+        try {
+            $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+
+            # Check for corruption markers (Ã followed by special chars indicates UTF-8 read as Latin-1)
+            # Using char codes: Ã = 195, ¡ = 161, ­ = 173, © = 169, ³ = 179, º = 186, ñ = 241, ü = 252
+            $corruptMarker = [char]195
+            if (-not $content.Contains($corruptMarker)) { continue }
+
+            $originalContent = $content
+
+            # Build replacement patterns using character codes to avoid encoding issues
+            # Corrupted: Ã (195) + ¡ (161) = UTF-8 C3 A1 read as Latin-1 = should be á
+            $corrA = [string][char]195 + [string][char]161  # Ã¡ -> á
+            $corrI = [string][char]195 + [string][char]173  # Ã­ -> í
+            $corrE = [string][char]195 + [string][char]169  # Ã© -> é
+            $corrO = [string][char]195 + [string][char]179  # Ã³ -> ó
+            $corrU = [string][char]195 + [string][char]186  # Ãº -> ú
+            $corrN = [string][char]195 + [string][char]177  # Ã± -> ñ
+            $corrUU = [string][char]195 + [string][char]188 # Ã¼ -> ü
+
+            # Fix corrupted UTF-8 patterns
+            $content = $content.Replace($corrA, [string][char]225)  # á
+            $content = $content.Replace($corrI, [string][char]237)  # í
+            $content = $content.Replace($corrE, [string][char]233)  # é
+            $content = $content.Replace($corrO, [string][char]243)  # ó
+            $content = $content.Replace($corrU, [string][char]250)  # ú
+            $content = $content.Replace($corrN, [string][char]241)  # ñ
+            $content = $content.Replace($corrUU, [string][char]252) # ü
+
+            if ($content -ne $originalContent) {
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would fix encoding: $($file.Name)" "Magenta"
+                    $filesFixed++
+                } else {
+                    try {
+                        # Write with proper UTF-8 encoding (no BOM)
+                        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+                        [System.IO.File]::WriteAllText($file.FullName, $content, $utf8NoBom)
+                        $filesFixed++
+                    } catch {
+                        # File may be locked, skip silently
+                    }
+                }
+            }
+        } catch {
+            # Skip files that can't be read
+        }
+    }
+
+    $script:encodingIssuesFixed = $filesFixed
+    Write-Log "  Fixed encoding in $filesFixed files" "Green"
+}
+
+# =============================================================================
+# PHASE 9: Delete small image files in .resources folders (was PHASE 8)
 # =============================================================================
 # Removes tiny images (<3KB) that are typically tracker pixels, spacer GIFs,
 # small icons, and other web clipping artifacts that serve no purpose.
 # =============================================================================
 function Delete-SmallResourceImages {
-    Write-Log "=== Phase 8: Deleting small images in .resources folders ===" "Cyan"
+    Write-Log "=== Phase 9: Deleting small images in .resources folders ===" "Cyan"
 
     # Find all .resources folders
     $resourcesFolders = Get-ChildItem -Path $vaultPath -Directory -Recurse -ErrorAction SilentlyContinue |
@@ -916,7 +985,7 @@ function Delete-SmallResourceImages {
 # Runs multiple passes since deleting subfolders may leave parent folders empty.
 # =============================================================================
 function Delete-EmptyFolders {
-    Write-Log "=== Phase 9: Deleting empty folders ===" "Cyan"
+    Write-Log "=== Phase 10: Deleting empty folders ===" "Cyan"
 
     # Keep running until no more empty folders found
     do {
@@ -978,6 +1047,7 @@ Fix-BrokenLinks
 Fix-LegacyEvernotePaths
 Generate-EmptyNotesList
 Generate-TruncatedFilenamesList
+Fix-EncodingCorruption
 Delete-SmallResourceImages
 Delete-EmptyFolders
 
@@ -992,6 +1062,7 @@ Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
 Write-Log "  Empty notes found: $script:emptyNotesFound" "White"
 Write-Log "  Truncated filenames found: $script:truncatedFilesFound" "White"
+Write-Log "  Encoding issues fixed: $script:encodingIssuesFixed" "White"
 Write-Log "  Small images deleted: $script:smallImagesDeleted" "White"
 Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
 Write-Log "  Log saved to: $logPath" "White"
