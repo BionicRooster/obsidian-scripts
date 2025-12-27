@@ -10,8 +10,9 @@
 #   5. Fixes legacy Evernote paths pointing to new image locations
 #   6. Generates "Empty Notes.md" listing notes with only a title (no content)
 #   7. Generates "Truncated Filenames.md" listing notes with cut-off names
-#   8. Deletes small image files (<3KB) in .resources folders (icons, trackers)
-#   9. Deletes empty folders left behind after cleanup
+#   8. Fixes UTF-8 encoding corruption (mojibake): smart quotes, accents, NBSP, BOM
+#   9. Deletes small image files (<3KB) in .resources folders (icons, trackers)
+#  10. Deletes empty folders left behind after cleanup
 #
 # Safe to run repeatedly - only makes changes when needed
 #
@@ -870,10 +871,15 @@ function Generate-TruncatedFilenamesList {
 }
 
 # =============================================================================
-# PHASE 8: Fix UTF-8 encoding corruption
+# PHASE 8: Fix UTF-8 encoding corruption (mojibake)
 # =============================================================================
-# Repairs common UTF-8 encoding issues where special characters like
-# á, í, é were corrupted to Ã¡, Ã­, Ã© (UTF-8 bytes read as Latin-1)
+# Repairs common UTF-8 encoding issues where special characters got corrupted:
+#   - Latin accents: á, í, é -> Ã¡, Ã­, Ã© (UTF-8 bytes read as Latin-1)
+#   - Smart quotes: ', ", " -> â€™, â€œ, â€ (curly quotes corrupted)
+#   - Dashes: —, – -> â€", â€" (em/en dashes corrupted)
+#   - Non-breaking spaces: Â followed by space (NBSP corruption)
+#   - Checkbox/bullet chars: â–¢, â–¡ (corrupted ballot boxes)
+#   - BOM: Removes UTF-8 BOM marker from start of files
 # =============================================================================
 $script:encodingIssuesFixed = 0
 
@@ -888,15 +894,16 @@ function Fix-EncodingCorruption {
             $content = Get-Content -Path $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
 
-            # Check for corruption markers (Ã followed by special chars indicates UTF-8 read as Latin-1)
-            # Using char codes: Ã = 195, ¡ = 161, ­ = 173, © = 169, ³ = 179, º = 186, ñ = 241, ü = 252
-            $corruptMarker = [char]195
-            if (-not $content.Contains($corruptMarker)) { continue }
+            # Check for corruption markers
+            # Ã (195) indicates Latin accent corruption, â (226) indicates smart quote corruption
+            $corruptMarker1 = [char]195  # For Ã¡, Ã­, etc.
+            $corruptMarker2 = [char]226  # For â€™, â€œ, etc.
+            if (-not ($content.Contains($corruptMarker1) -or $content.Contains($corruptMarker2))) { continue }
 
             $originalContent = $content
 
-            # Build replacement patterns using character codes to avoid encoding issues
-            # Corrupted: Ã (195) + ¡ (161) = UTF-8 C3 A1 read as Latin-1 = should be á
+            # === Latin accent corruption patterns ===
+            # Corrupted: Ã (195) + second byte = UTF-8 C3 xx read as Latin-1
             $corrA = [string][char]195 + [string][char]161  # Ã¡ -> á
             $corrI = [string][char]195 + [string][char]173  # Ã­ -> í
             $corrE = [string][char]195 + [string][char]169  # Ã© -> é
@@ -905,7 +912,6 @@ function Fix-EncodingCorruption {
             $corrN = [string][char]195 + [string][char]177  # Ã± -> ñ
             $corrUU = [string][char]195 + [string][char]188 # Ã¼ -> ü
 
-            # Fix corrupted UTF-8 patterns
             $content = $content.Replace($corrA, [string][char]225)  # á
             $content = $content.Replace($corrI, [string][char]237)  # í
             $content = $content.Replace($corrE, [string][char]233)  # é
@@ -913,6 +919,72 @@ function Fix-EncodingCorruption {
             $content = $content.Replace($corrU, [string][char]250)  # ú
             $content = $content.Replace($corrN, [string][char]241)  # ñ
             $content = $content.Replace($corrUU, [string][char]252) # ü
+
+            # === Smart quote/punctuation corruption patterns ===
+            # Corrupted: â (226) + € (128) + third byte = UTF-8 E2 80 xx read as Latin-1
+            # These are 3-byte UTF-8 sequences that got corrupted
+
+            # Right single quote/apostrophe: E2 80 99 -> â€™ -> ' (U+2019)
+            $corrRSQ = [string][char]226 + [string][char]128 + [string][char]153
+            $content = $content.Replace($corrRSQ, [string][char]8217)
+
+            # Left single quote: E2 80 98 -> â€˜ -> ' (U+2018)
+            $corrLSQ = [string][char]226 + [string][char]128 + [string][char]152
+            $content = $content.Replace($corrLSQ, [string][char]8216)
+
+            # Right double quote: E2 80 9D -> â€ -> " (U+201D)
+            $corrRDQ = [string][char]226 + [string][char]128 + [string][char]157
+            $content = $content.Replace($corrRDQ, [string][char]8221)
+
+            # Left double quote: E2 80 9C -> â€œ -> " (U+201C)
+            $corrLDQ = [string][char]226 + [string][char]128 + [string][char]156
+            $content = $content.Replace($corrLDQ, [string][char]8220)
+
+            # Em dash: E2 80 94 -> â€" -> — (U+2014)
+            $corrEmDash = [string][char]226 + [string][char]128 + [string][char]148
+            $content = $content.Replace($corrEmDash, [string][char]8212)
+
+            # En dash: E2 80 93 -> â€" -> – (U+2013)
+            $corrEnDash = [string][char]226 + [string][char]128 + [string][char]147
+            $content = $content.Replace($corrEnDash, [string][char]8211)
+
+            # Ellipsis: E2 80 A6 -> â€¦ -> … (U+2026)
+            $corrEllipsis = [string][char]226 + [string][char]128 + [string][char]166
+            $content = $content.Replace($corrEllipsis, [string][char]8230)
+
+            # Bullet: E2 80 A2 -> â€¢ -> • (U+2022)
+            $corrBullet = [string][char]226 + [string][char]128 + [string][char]162
+            $content = $content.Replace($corrBullet, [string][char]8226)
+
+            # Trademark: E2 84 A2 -> â„¢ -> ™ (U+2122)
+            $corrTM = [string][char]226 + [string][char]132 + [string][char]162
+            $content = $content.Replace($corrTM, [string][char]8482)
+
+            # === Non-breaking space corruption patterns ===
+            # Â followed by space: C2 A0 (NBSP) read as Latin-1 becomes Â + space
+            $corrNBSP1 = [string][char]194 + [string][char]160  # Â + NBSP -> space
+            $content = $content.Replace($corrNBSP1, " ")
+
+            # Actual NBSP character -> regular space
+            $content = $content.Replace([string][char]160, " ")
+
+            # Â followed by regular space (common web copy artifact)
+            $content = $content.Replace([string][char]194 + " ", " ")
+
+            # === Corrupted checkbox/bullet characters ===
+            # â–¢ (ballot box): E2 96 A2 -> corrupted display
+            $corrCheckbox = [string][char]226 + [string][char]150 + [string][char]162
+            $content = $content.Replace($corrCheckbox, "-")
+
+            # â–¡ (white square): E2 96 A1
+            $corrWhiteSquare = [string][char]226 + [string][char]150 + [string][char]161
+            $content = $content.Replace($corrWhiteSquare, "-")
+
+            # === BOM removal ===
+            # Remove UTF-8 BOM if present at start
+            if ($content.Length -gt 0 -and $content[0] -eq [char]0xFEFF) {
+                $content = $content.Substring(1)
+            }
 
             if ($content -ne $originalContent) {
                 if ($dryRun) {
