@@ -14,6 +14,7 @@
 #   9. Deletes small image files (<3KB) in .resources folders (icons, trackers)
 #  10. Deletes empty folders left behind after cleanup
 #  11. Adds #task tag to uncompleted checkboxes missing the tag
+#  12. Fixes corrupted horizontal line characters (mojibake box-drawing chars)
 #
 # Safe to run repeatedly - only makes changes when needed
 #
@@ -43,6 +44,7 @@ $script:truncatedFilesFound = 0
 $script:smallImagesDeleted = 0
 $script:emptyFoldersDeleted = 0
 $script:taskTagsAdded = 0
+$script:corruptedLinesFixed = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -1241,6 +1243,96 @@ function Add-TaskTagsToCheckboxes {
 }
 
 # =============================================================================
+# PHASE 12: Fix corrupted horizontal line characters
+# =============================================================================
+# Repairs corrupted box-drawing horizontal line characters (mojibake).
+# The pattern C3 A2 22 E2 82 AC (6 bytes) repeated is the corrupted form
+# of the Unicode box-drawing character. Replaces with markdown horizontal rule.
+# =============================================================================
+function Fix-CorruptedHorizontalLines {
+    Write-Log "=== Phase 12: Fixing corrupted horizontal lines ===" "Cyan"
+
+    # The corrupted 6-byte sequence (box-drawing horizontal line mojibake)
+    [byte[]]$corruptedPattern = @(0xC3, 0xA2, 0x22, 0xE2, 0x82, 0xAC)
+
+    $filesFixed = 0
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        try {
+            # Read file as bytes
+            $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+            if ($bytes.Length -lt 6) { continue }
+
+            # Quick check: does file contain the corrupted pattern?
+            $containsPattern = $false
+            for ($i = 0; $i -le $bytes.Length - 6; $i++) {
+                $match = $true
+                for ($j = 0; $j -lt 6; $j++) {
+                    if ($bytes[$i + $j] -ne $corruptedPattern[$j]) {
+                        $match = $false
+                        break
+                    }
+                }
+                if ($match) {
+                    $containsPattern = $true
+                    break
+                }
+            }
+
+            if (-not $containsPattern) { continue }
+
+            # Convert to string for line-by-line processing
+            $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+            $lines = $content -split "`n"
+            $modified = $false
+
+            # Build the corrupted string pattern for comparison
+            $corruptedString = [System.Text.Encoding]::UTF8.GetString($corruptedPattern)
+
+            for ($i = 0; $i -lt $lines.Length; $i++) {
+                $line = $lines[$i].TrimEnd("`r")
+
+                # Check if line consists entirely of the corrupted pattern repeated
+                if ($line.Length -ge 6 -and $line.Contains($corruptedString)) {
+                    $checkLine = $line
+
+                    # Remove all occurrences of the corrupted pattern
+                    while ($checkLine.Contains($corruptedString)) {
+                        $checkLine = $checkLine.Replace($corruptedString, "")
+                    }
+
+                    # If nothing remains, it was a corrupted horizontal line
+                    if ($checkLine.Trim().Length -eq 0) {
+                        $lines[$i] = "---"
+                        $modified = $true
+                        $script:corruptedLinesFixed++
+                    }
+                }
+            }
+
+            if ($modified) {
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would fix corrupted lines in: $($file.Name)" "Magenta"
+                } else {
+                    $newContent = $lines -join "`n"
+                    $newBytes = [System.Text.Encoding]::UTF8.GetBytes($newContent)
+                    [System.IO.File]::WriteAllBytes($file.FullName, $newBytes)
+                    $filesFixed++
+                }
+            }
+        } catch {
+            # Skip files that can't be read or written
+            continue
+        }
+    }
+
+    Write-Log "  Fixed $($script:corruptedLinesFixed) corrupted lines in $filesFixed files" "Green"
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -1268,6 +1360,7 @@ Fix-EncodingCorruption
 Delete-SmallResourceImages
 Delete-EmptyFolders
 Add-TaskTagsToCheckboxes
+Fix-CorruptedHorizontalLines
 
 # Summary
 Write-Log "" "White"
@@ -1284,5 +1377,6 @@ Write-Log "  Encoding issues fixed: $script:encodingIssuesFixed" "White"
 Write-Log "  Small images deleted: $script:smallImagesDeleted" "White"
 Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
 Write-Log "  Task tags added: $script:taskTagsAdded" "White"
+Write-Log "  Corrupted lines fixed: $script:corruptedLinesFixed" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
