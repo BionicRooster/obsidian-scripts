@@ -131,7 +131,7 @@ function Reopen-ObsidianIfClosed {
                 Write-Log "  Obsidian restarted successfully." "Green"
             } catch {
                 # Try alternative path if Obsidian isn't in PATH
-                $obsidianPath = "$env:LOCALAPPDATA\Obsidian\Obsidian.exe"
+                $obsidianPath = "$env:LOCALAPPDATA\Programs\Obsidian\Obsidian.exe"
                 if (Test-Path $obsidianPath) {
                     try {
                         Start-Process $obsidianPath -ErrorAction Stop
