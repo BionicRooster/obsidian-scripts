@@ -33,6 +33,9 @@ $leftApostrophe = [char]0x2018     # ' (left single quote)
 $backtick = [char]0x0060           # ` (backtick/grave accent)
 $standardApostrophe = "'"          # ' (standard apostrophe)
 
+# Track if we closed Obsidian (so we can reopen it at the end)
+$script:obsidianWasClosed = $false
+
 # Initialize counters
 $script:filesRenamed = 0
 $script:duplicatesResolved = 0
@@ -63,6 +66,87 @@ function Write-Log {
     $logMessage = "[$timestamp] $Message"
     Write-Host $Message -ForegroundColor $Color
     Add-Content -Path $logPath -Value $logMessage
+}
+
+# =============================================================================
+# Obsidian Process Management
+# =============================================================================
+# Checks if Obsidian is running, closes it if needed, and reopens at the end.
+# This prevents file locking issues during maintenance operations.
+# =============================================================================
+
+# Function to close Obsidian if running
+function Close-ObsidianIfRunning {
+    Write-Log "=== Checking for running Obsidian process ===" "Cyan"
+
+    # Check if Obsidian is running
+    $obsidianProcess = Get-Process -Name "Obsidian" -ErrorAction SilentlyContinue
+
+    if ($obsidianProcess) {
+        Write-Log "  Obsidian is running - closing it for maintenance..." "Yellow"
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would close Obsidian and wait 10 seconds" "Magenta"
+            $script:obsidianWasClosed = $true
+        } else {
+            try {
+                # Gracefully close Obsidian (sends close message to main window)
+                $obsidianProcess | ForEach-Object { $_.CloseMainWindow() | Out-Null }
+
+                # Wait a moment for graceful shutdown
+                Start-Sleep -Seconds 2
+
+                # Check if still running and force kill if necessary
+                $obsidianProcess = Get-Process -Name "Obsidian" -ErrorAction SilentlyContinue
+                if ($obsidianProcess) {
+                    Write-Log "  Obsidian didn't close gracefully, forcing termination..." "DarkYellow"
+                    $obsidianProcess | Stop-Process -Force -ErrorAction SilentlyContinue
+                }
+
+                $script:obsidianWasClosed = $true
+                Write-Log "  Obsidian closed. Waiting 10 seconds for file handles to release..." "Green"
+                Start-Sleep -Seconds 10
+                Write-Log "  Ready to proceed with maintenance." "Green"
+            } catch {
+                Write-Log "  ERROR: Failed to close Obsidian - $_" "Red"
+            }
+        }
+    } else {
+        Write-Log "  Obsidian is not running - proceeding with maintenance." "Green"
+    }
+}
+
+# Function to reopen Obsidian if we closed it
+function Reopen-ObsidianIfClosed {
+    if ($script:obsidianWasClosed) {
+        Write-Log "" "White"
+        Write-Log "=== Reopening Obsidian ===" "Cyan"
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would reopen Obsidian" "Magenta"
+        } else {
+            try {
+                # Start Obsidian - it will open to the last used vault
+                Start-Process "Obsidian" -ErrorAction Stop
+                Write-Log "  Obsidian restarted successfully." "Green"
+            } catch {
+                # Try alternative path if Obsidian isn't in PATH
+                $obsidianPath = "$env:LOCALAPPDATA\Obsidian\Obsidian.exe"
+                if (Test-Path $obsidianPath) {
+                    try {
+                        Start-Process $obsidianPath -ErrorAction Stop
+                        Write-Log "  Obsidian restarted successfully." "Green"
+                    } catch {
+                        Write-Log "  ERROR: Failed to restart Obsidian - $_" "Red"
+                        Write-Log "  Please restart Obsidian manually." "Yellow"
+                    }
+                } else {
+                    Write-Log "  ERROR: Could not find Obsidian executable" "Red"
+                    Write-Log "  Please restart Obsidian manually." "Yellow"
+                }
+            }
+        }
+    }
 }
 
 # Function to normalize text (convert smart apostrophes to standard)
@@ -1032,6 +1116,10 @@ if ($dryRun) { Write-Log "MODE: DRY RUN (no changes will be made)" "Magenta" }
 Write-Log "============================================" "Cyan"
 Write-Log ""
 
+# Close Obsidian if running (to prevent file locking issues)
+Close-ObsidianIfRunning
+Write-Log ""
+
 # Run maintenance phases
 Rename-NonStandardApostrophes
 Resolve-ApostropheDuplicates
@@ -1061,3 +1149,6 @@ Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
 Write-Log "  Task tags added: $script:taskTagsAdded" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
+
+# Reopen Obsidian if we closed it at the start
+Reopen-ObsidianIfClosed
