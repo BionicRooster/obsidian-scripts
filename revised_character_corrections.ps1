@@ -9,6 +9,8 @@
 #   - Em dash (—) when used as parenthetical separator
 #   - Standard apostrophe (') when used in possessives
 #   - Standard quotes (") when used for quotations
+#   - Em dash (—) when "â"€" mojibake pattern appears
+#   - Em dash (—) when triple-encoded mojibake pattern appears
 #
 # Usage: powershell -ExecutionPolicy Bypass -File "C:\Users\awt\revised_character_corrections.ps1"
 #
@@ -21,8 +23,14 @@ $logPath = "C:\Users\awt\PowerShell\logs\character_corrections_log.txt"  # Log f
 $dryRun = $true                                              # Set to $true to preview changes without applying
 
 # Initialize counters
-$script:filesFixed = 0                                       # Number of files modified
+$script:filesFixed = 0                                       # Number of files modified for replacement char fix
 $script:totalReplacements = 0                                # Total replacement characters fixed
+$script:emDashFilesFixed = 0                                 # Number of files modified for em dash fix
+$script:emDashReplacements = 0                               # Total em dash mojibakes fixed
+$script:tripleEncFilesFixed = 0                              # Number of files modified for triple-encoded fix
+$script:tripleEncReplacements = 0                            # Total triple-encoded mojibakes fixed
+$script:hyphenFilesFixed = 0                                 # Number of files modified for hyphen fix
+$script:hyphenReplacements = 0                               # Total hyphen mojibakes fixed
 
 # Logging function
 function Write-Log {
@@ -121,6 +129,232 @@ function Fix-ReplacementCharacters {
 }
 
 # =============================================================================
+# Fix Em Dash Mojibake (â"€)
+# =============================================================================
+# Scans all markdown files for the "â"€" mojibake pattern and replaces with
+# proper em dash (—). This pattern occurs when UTF-8 encoded em dashes are
+# incorrectly decoded as Windows-1252 or similar encoding.
+# =============================================================================
+function Fix-EmDashMojibake {
+    Write-Log "=== Fixing Em Dash Mojibake ===" "Cyan"
+
+    # The mojibake pattern to find: â + " + € (three characters that represent corrupted em dash)
+    # Using character codes to avoid encoding issues in the script itself
+    # â = U+00E2, " = U+201C (left double quote), € = U+20AC
+    $mojibakePattern = [char]0x00E2 + [char]0x201C + [char]0x20AC  # The corrupted em dash pattern
+    $emDash = [char]0x2014                                         # Correct em dash character (U+2014)
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count                                  # Total markdown files to scan
+    $processedFiles = 0                                           # Counter for progress tracking
+
+    Write-Log "  Scanning $totalFiles markdown files for em dash mojibake..." "Gray"
+
+    foreach ($file in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "  Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            # Read file content as raw bytes to preserve encoding
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            if (-not $content) { continue }                       # Skip empty files
+
+            # Check if file contains the mojibake pattern
+            if (-not $content.Contains($mojibakePattern)) { continue }
+
+            $originalContent = $content                           # Store original for comparison
+            $replacementCount = 0                                 # Counter for replacements in this file
+
+            # Count occurrences before fixing
+            $replacementCount = ([regex]::Matches($content, [regex]::Escape($mojibakePattern))).Count
+
+            # Replace all occurrences of the mojibake pattern with em dash
+            $content = $content -replace [regex]::Escape($mojibakePattern), $emDash
+
+            # Check if content changed
+            if ($content -ne $originalContent) {
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would fix $replacementCount em dash mojibake(s) in: $($file.Name)" "Magenta"
+                } else {
+                    try {
+                        Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8 -ErrorAction Stop
+                        Write-Log "  Fixed $replacementCount em dash mojibake(s) in: $($file.Name)" "Green"
+                        $script:emDashFilesFixed++
+                    } catch {
+                        Write-Log "  ERROR: Could not write $($file.Name) - $_" "Red"
+                    }
+                }
+                $script:emDashReplacements += $replacementCount
+            }
+        } catch {
+            # Skip files that can't be read
+            continue
+        }
+    }
+
+    Write-Log "  Scan complete. Found $script:emDashReplacements em dash mojibake(s) in $script:emDashFilesFixed file(s)." "Green"
+}
+
+# =============================================================================
+# Fix Triple-Encoded Em Dash Mojibake
+# =============================================================================
+# Scans all markdown files for triple UTF-8 encoded em dash patterns and
+# replaces with proper em dash (—). This pattern occurs when UTF-8 encoded
+# em dashes are decoded/encoded incorrectly multiple times.
+# Pattern: ÃƒÂ¢Ã¢â€šÂ¬" -> —
+# =============================================================================
+function Fix-TripleEncodedEmDash {
+    Write-Log "=== Fixing Triple-Encoded Em Dash Mojibake ===" "Cyan"
+
+    # The triple-encoded mojibake patterns for em dash
+    # This is what an em dash looks like after being incorrectly decoded/encoded multiple times
+    # Building patterns from UTF-8 byte sequences to avoid script encoding issues
+    # There are two variations: one ending with regular quote (0x22) and one with left double quote (E2 80 9C)
+    $emDash = [char]0x2014                                       # Correct em dash character (U+2014)
+
+    # Pattern 1: Ends with regular double quote (")
+    $pattern1Bytes = [byte[]]@(0xC3, 0x83, 0xC6, 0x92, 0xC3, 0x82, 0xC2, 0xA2, 0xC3, 0x83, 0xC2, 0xA2, 0xC3, 0xA2, 0xE2, 0x82, 0xAC, 0xC5, 0xA1, 0xC3, 0x82, 0xC2, 0xAC, 0x22)
+    $pattern1 = [System.Text.Encoding]::UTF8.GetString($pattern1Bytes)
+
+    # Pattern 2: Ends with left double quotation mark (")
+    $pattern2Bytes = [byte[]]@(0xC3, 0x83, 0xC6, 0x92, 0xC3, 0x82, 0xC2, 0xA2, 0xC3, 0x83, 0xC2, 0xA2, 0xC3, 0xA2, 0xE2, 0x82, 0xAC, 0xC5, 0xA1, 0xC3, 0x82, 0xC2, 0xAC, 0xE2, 0x80, 0x9C)
+    $pattern2 = [System.Text.Encoding]::UTF8.GetString($pattern2Bytes)
+
+    # Collect all patterns to check
+    $patterns = @($pattern1, $pattern2)
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count                                 # Total markdown files to scan
+    $processedFiles = 0                                          # Counter for progress tracking
+
+    Write-Log "  Scanning $totalFiles markdown files for triple-encoded em dash..." "Gray"
+
+    foreach ($file in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "  Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            # Read file content
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            if (-not $content) { continue }                      # Skip empty files
+
+            $originalContent = $content                          # Store original for comparison
+            $replacementCount = 0                                # Counter for replacements in this file
+
+            # Check and replace each pattern variant
+            foreach ($pattern in $patterns) {
+                if ($content.Contains($pattern)) {
+                    # Count occurrences of this pattern
+                    $patternCount = ([regex]::Matches($content, [regex]::Escape($pattern))).Count
+                    $replacementCount += $patternCount
+
+                    # Replace all occurrences of this pattern with em dash
+                    $content = $content -replace [regex]::Escape($pattern), $emDash
+                }
+            }
+
+            # Check if content changed
+            if ($content -ne $originalContent) {
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would fix $replacementCount triple-encoded em dash(es) in: $($file.Name)" "Magenta"
+                } else {
+                    try {
+                        Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8 -ErrorAction Stop
+                        Write-Log "  Fixed $replacementCount triple-encoded em dash(es) in: $($file.Name)" "Green"
+                        $script:tripleEncFilesFixed++
+                    } catch {
+                        Write-Log "  ERROR: Could not write $($file.Name) - $_" "Red"
+                    }
+                }
+                $script:tripleEncReplacements += $replacementCount
+            }
+        } catch {
+            # Skip files that can't be read
+            continue
+        }
+    }
+
+    Write-Log "  Scan complete. Found $script:tripleEncReplacements triple-encoded em dash(es) in $script:tripleEncFilesFixed file(s)." "Green"
+}
+
+# =============================================================================
+# Fix Non-Breaking Hyphen Mojibake (â€')
+# =============================================================================
+# Scans all markdown files for the "â€'" mojibake pattern and replaces with
+# a regular hyphen (-). This pattern occurs when the non-breaking hyphen
+# (U+2011) is incorrectly decoded as Windows-1252.
+# =============================================================================
+function Fix-HyphenMojibake {
+    Write-Log "=== Fixing Non-Breaking Hyphen Mojibake ===" "Cyan"
+
+    # The mojibake pattern for non-breaking hyphen (U+2011)
+    # When UTF-8 bytes E2 80 91 are misinterpreted as Windows-1252: â€'
+    # Byte sequence: 0xC3, 0xA2, 0xE2, 0x82, 0xAC, 0x27
+    $patternBytes = [byte[]]@(0xC3, 0xA2, 0xE2, 0x82, 0xAC, 0x27)
+    $hyphenPattern = [System.Text.Encoding]::UTF8.GetString($patternBytes)  # The corrupted hyphen pattern
+    $hyphen = "-"                                                # Regular hyphen replacement
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count                                 # Total markdown files to scan
+    $processedFiles = 0                                          # Counter for progress tracking
+
+    Write-Log "  Scanning $totalFiles markdown files for hyphen mojibake..." "Gray"
+
+    foreach ($file in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "  Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            # Read file content
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            if (-not $content) { continue }                      # Skip empty files
+
+            # Check if file contains the mojibake pattern
+            if (-not $content.Contains($hyphenPattern)) { continue }
+
+            $originalContent = $content                          # Store original for comparison
+            $replacementCount = 0                                # Counter for replacements in this file
+
+            # Count occurrences before fixing
+            $replacementCount = ([regex]::Matches($content, [regex]::Escape($hyphenPattern))).Count
+
+            # Replace all occurrences of the mojibake pattern with hyphen
+            $content = $content -replace [regex]::Escape($hyphenPattern), $hyphen
+
+            # Check if content changed
+            if ($content -ne $originalContent) {
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would fix $replacementCount hyphen mojibake(s) in: $($file.Name)" "Magenta"
+                } else {
+                    try {
+                        Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8 -ErrorAction Stop
+                        Write-Log "  Fixed $replacementCount hyphen mojibake(s) in: $($file.Name)" "Green"
+                        $script:hyphenFilesFixed++
+                    } catch {
+                        Write-Log "  ERROR: Could not write $($file.Name) - $_" "Red"
+                    }
+                }
+                $script:hyphenReplacements += $replacementCount
+            }
+        } catch {
+            # Skip files that can't be read
+            continue
+        }
+    }
+
+    Write-Log "  Scan complete. Found $script:hyphenReplacements hyphen mojibake(s) in $script:hyphenFilesFixed file(s)." "Green"
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -144,14 +378,27 @@ if ($dryRun) {
 Write-Log "============================================" "Cyan"
 Write-Log ""
 
-# Run the fix
+# Run the fixes
 Fix-ReplacementCharacters
+Fix-EmDashMojibake
+Fix-TripleEncodedEmDash
+Fix-HyphenMojibake
 
 # Summary
 Write-Log "" "White"
 Write-Log "============================================" "Green"
 Write-Log "CHARACTER CORRECTIONS COMPLETE" "Green"
-Write-Log "  Files fixed: $script:filesFixed" "White"
-Write-Log "  Total replacements: $script:totalReplacements" "White"
+Write-Log "  Replacement char (�) fixes:" "White"
+Write-Log "    Files fixed: $script:filesFixed" "White"
+Write-Log "    Total replacements: $script:totalReplacements" "White"
+Write-Log "  Em dash mojibake fixes:" "White"
+Write-Log "    Files fixed: $script:emDashFilesFixed" "White"
+Write-Log "    Total replacements: $script:emDashReplacements" "White"
+Write-Log "  Triple-encoded em dash fixes:" "White"
+Write-Log "    Files fixed: $script:tripleEncFilesFixed" "White"
+Write-Log "    Total replacements: $script:tripleEncReplacements" "White"
+Write-Log "  Hyphen mojibake fixes:" "White"
+Write-Log "    Files fixed: $script:hyphenFilesFixed" "White"
+Write-Log "    Total replacements: $script:hyphenReplacements" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
