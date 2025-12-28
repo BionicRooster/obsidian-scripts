@@ -13,6 +13,7 @@
 #   8. Fixes UTF-8 encoding corruption (mojibake): smart quotes, accents, NBSP, BOM
 #   9. Deletes small image files (<3KB) in .resources folders (icons, trackers)
 #  10. Deletes empty folders left behind after cleanup
+#  11. Adds #task tag to uncompleted checkboxes missing the tag
 #
 # Safe to run repeatedly - only makes changes when needed
 #
@@ -41,6 +42,7 @@ $script:emptyNotesFound = 0
 $script:truncatedFilesFound = 0
 $script:smallImagesDeleted = 0
 $script:emptyFoldersDeleted = 0
+$script:taskTagsAdded = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -1180,6 +1182,65 @@ function Delete-EmptyFolders {
 }
 
 # =============================================================================
+# PHASE 11: Add #task tag to uncompleted checkboxes
+# =============================================================================
+# Finds all uncompleted checkbox patterns (- [ ]) that are not followed by
+# the #task tag and adds the tag. This ensures all tasks are properly tagged
+# for Obsidian task queries and plugins.
+# =============================================================================
+function Add-TaskTagsToCheckboxes {
+    Write-Log "=== Phase 11: Adding #task tags to checkboxes ===" "Cyan"
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count
+    $processedFiles = 0
+    $filesModifiedThisPhase = 0
+
+    foreach ($mdFile in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "  Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            # Read file content as UTF-8
+            $content = Get-Content -Path $mdFile.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            if ($null -eq $content) { continue }
+
+            # Pattern: Match '- [ ] ' followed by optional extra spaces (0-3),
+            # but NOT followed by #task. Capture the first non-whitespace character after.
+            # This ensures we only add #task where it's missing.
+            $pattern = '(- \[ \] {0,3})(?!#task)(\S)'
+            $replacement = '- [ ] #task $2'
+
+            # Count matches before replacement
+            $matches = [regex]::Matches($content, $pattern)
+
+            if ($matches.Count -gt 0) {
+                # Perform replacement
+                $newContent = [regex]::Replace($content, $pattern, $replacement)
+
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would add $($matches.Count) #task tags: $($mdFile.Name)" "Magenta"
+                    $script:taskTagsAdded += $matches.Count
+                } else {
+                    # Write back to file
+                    Set-Content -Path $mdFile.FullName -Value $newContent -NoNewline -Encoding UTF8 -ErrorAction Stop
+                    $script:taskTagsAdded += $matches.Count
+                    $filesModifiedThisPhase++
+                }
+            }
+        } catch {
+            # Skip files that can't be read or written
+            continue
+        }
+    }
+
+    Write-Log "  Added #task tag to $($script:taskTagsAdded) checkboxes in $filesModifiedThisPhase files" "Green"
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -1206,6 +1267,7 @@ Generate-TruncatedFilenamesList
 Fix-EncodingCorruption
 Delete-SmallResourceImages
 Delete-EmptyFolders
+Add-TaskTagsToCheckboxes
 
 # Summary
 Write-Log "" "White"
@@ -1221,5 +1283,6 @@ Write-Log "  Truncated filenames found: $script:truncatedFilesFound" "White"
 Write-Log "  Encoding issues fixed: $script:encodingIssuesFixed" "White"
 Write-Log "  Small images deleted: $script:smallImagesDeleted" "White"
 Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
+Write-Log "  Task tags added: $script:taskTagsAdded" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
