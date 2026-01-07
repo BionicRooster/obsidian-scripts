@@ -4,6 +4,7 @@
 # Purpose: Comprehensive maintenance for an Obsidian vault:
 #   1a. Normalizes smart/curly apostrophes to standard apostrophes in file names
 #   1b. Resolves duplicate files (smart vs standard apostrophe versions)
+#   1c. Trims leading/trailing whitespace from filenames and fixes associated links
 #   2. Renames unknown_filename images to meaningful names based on parent folder
 #   3. Updates all markdown links to match renamed files
 #   4. Fixes broken links pointing to moved resources
@@ -41,6 +42,8 @@ $standardApostrophe = "'"          # ' (standard apostrophe)
 # Initialize counters
 $script:filesRenamed = 0
 $script:duplicatesResolved = 0
+$script:filenamesTrimmed = 0
+$script:trimmedLinksFixed = 0
 $script:imagesRenamed = 0
 $script:linksFixed = 0
 $script:filesModified = 0
@@ -243,6 +246,128 @@ function Resolve-ApostropheDuplicates {
     } else {
         Write-Log "  Found $duplicatesFound duplicate pairs, resolved $($script:duplicatesResolved)" "Green"
     }
+}
+
+# =============================================================================
+# PHASE 1c: Trim leading/trailing whitespace from filenames
+# =============================================================================
+# Finds markdown files with leading or trailing whitespace in their names,
+# renames them to trimmed versions, and fixes any links that referenced
+# the old names (since Obsidian doesn't auto-update these links).
+# =============================================================================
+
+# Track trimmed files for link fixing
+$script:trimmedFileRenames = [System.Collections.ArrayList]@()
+
+function Trim-FilenameWhitespace {
+    Write-Log "=== Phase 1c: Trimming whitespace from filenames ===" "Cyan"
+
+    # Find all markdown files with leading or trailing whitespace in names
+    $filesToTrim = Get-ChildItem -Path $vaultPath -Recurse -Filter "*.md" -ErrorAction SilentlyContinue |
+        Where-Object { $_.BaseName -ne $_.BaseName.Trim() }
+
+    if ($filesToTrim.Count -eq 0) {
+        Write-Log "  No files need whitespace trimming" "Green"
+        return
+    }
+
+    Write-Log "  Found $($filesToTrim.Count) files with whitespace in names" "Yellow"
+
+    foreach ($file in $filesToTrim) {
+        # Skip if file no longer exists
+        if (-not (Test-Path $file.FullName)) { continue }
+
+        $oldName = $file.BaseName
+        $newName = $oldName.Trim()
+        $newPath = Join-Path $file.DirectoryName "$newName.md"
+
+        # Check if target already exists
+        if (Test-Path $newPath) {
+            Write-Log "  SKIP: Target exists: $newName" "DarkYellow"
+            continue
+        }
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would trim: '$oldName' -> '$newName'" "Magenta"
+            $script:filenamesTrimmed++
+        } else {
+            try {
+                Rename-Item -Path $file.FullName -NewName "$newName.md" -ErrorAction Stop
+
+                # Track the rename for link fixing
+                [void]$script:trimmedFileRenames.Add([PSCustomObject]@{
+                    OldName = $oldName
+                    NewName = $newName
+                })
+
+                $script:filenamesTrimmed++
+            } catch {
+                Write-Log "  ERROR: Failed to trim '$oldName' - $_" "Red"
+            }
+        }
+    }
+
+    Write-Log "  Trimmed $($script:filenamesTrimmed) filenames" "Green"
+
+    # Now fix links to the renamed files
+    if ($script:trimmedFileRenames.Count -gt 0 -and -not $dryRun) {
+        Write-Log "  Fixing links to trimmed files..." "Gray"
+        Fix-TrimmedFileLinks
+    }
+}
+
+# Helper function to fix links after filename trimming
+function Fix-TrimmedFileLinks {
+    if ($script:trimmedFileRenames.Count -eq 0) { return }
+
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count
+    $processedFiles = 0
+
+    foreach ($mdFile in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "    Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            $content = Get-Content -Path $mdFile.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            if (-not $content) { continue }
+        } catch {
+            continue
+        }
+
+        $originalContent = $content
+        $fileModified = $false
+
+        foreach ($rename in $script:trimmedFileRenames) {
+            $oldName = $rename.OldName
+            $newName = $rename.NewName
+
+            # Escape special regex characters in the old name
+            $escapedOldName = [regex]::Escape($oldName)
+
+            # Pattern matches [[oldname]], [[oldname|alias]], [[oldname#heading]]
+            # Replace with the trimmed name while preserving alias/heading
+            if ($content -match "\[\[$escapedOldName(\]\]|\||#)") {
+                $content = $content -replace "\[\[$escapedOldName\]\]", "[[$newName]]"
+                $content = $content -replace "\[\[$escapedOldName\|", "[[$newName|"
+                $content = $content -replace "\[\[$escapedOldName#", "[[$newName#"
+                $fileModified = $true
+                $script:trimmedLinksFixed++
+            }
+        }
+
+        if ($fileModified -and $content -ne $originalContent) {
+            try {
+                Set-Content -Path $mdFile.FullName -Value $content -NoNewline -Encoding UTF8 -ErrorAction Stop
+            } catch {
+                Write-Log "    ERROR: Failed to update $($mdFile.Name) - $_" "Red"
+            }
+        }
+    }
+
+    Write-Log "  Fixed $($script:trimmedLinksFixed) links to trimmed files" "Green"
 }
 
 # =============================================================================
@@ -1946,6 +2071,7 @@ Write-Log ""
 # Run maintenance phases
 Rename-NonStandardApostrophes
 Resolve-ApostropheDuplicates
+Trim-FilenameWhitespace
 Rename-UnknownFilenameImages
 Build-FileIndex
 Fix-BrokenLinks
@@ -1966,6 +2092,8 @@ Write-Log "============================================" "Green"
 Write-Log "MAINTENANCE COMPLETE" "Green"
 Write-Log "  Files/folders renamed (apostrophes): $script:filesRenamed" "White"
 Write-Log "  Apostrophe duplicates resolved: $script:duplicatesResolved" "White"
+Write-Log "  Filenames trimmed (whitespace): $script:filenamesTrimmed" "White"
+Write-Log "  Links fixed (trimmed files): $script:trimmedLinksFixed" "White"
 Write-Log "  Images renamed (unknown_filename): $script:imagesRenamed" "White"
 Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
