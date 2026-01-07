@@ -1360,11 +1360,12 @@ function Generate-OrphanFilesList {
     $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
 
     # Build a map of all file base names for link resolution
-    # Key = lowercase base name, Value = file object
+    # Key = lowercase base name (trimmed), Value = file object
     $fileMap = @{}
     foreach ($file in $mdFiles) {
         $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
-        $fileMap[$baseName.ToLower()] = $file
+        # Trim the key to handle files with trailing spaces in names
+        $fileMap[$baseName.ToLower().Trim()] = $file
     }
 
     Write-Log "  Scanning $($mdFiles.Count) files for links..." "Gray"
@@ -1420,7 +1421,7 @@ function Generate-OrphanFilesList {
         if ($file.Name -eq "Empty Notes.md") { continue }
         if ($file.Name -eq "Truncated Filenames.md") { continue }
 
-        if (-not $linkedFiles.ContainsKey($baseName.ToLower())) {
+        if (-not $linkedFiles.ContainsKey($baseName.ToLower().Trim())) {
             # Handle files in vault root (DirectoryName may be null or equal to vaultPath)
             $folderName = if ($file.DirectoryName -and $file.DirectoryName -ne $vaultPath) {
                 Split-Path $file.DirectoryName -Leaf
