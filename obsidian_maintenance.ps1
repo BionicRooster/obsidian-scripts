@@ -13,6 +13,11 @@
 #   8. Deletes small image files (<3KB) in .resources folders (icons, trackers)
 #   9. Deletes empty folders left behind after cleanup
 #  10. Adds #task tag to uncompleted checkboxes missing the tag
+#  11. Fixes broken image links by finding images elsewhere in vault
+#      (including OneNote exported images with wrong directory paths)
+#  12. Generates "Orphan Files.md" listing notes with no incoming links
+#  13. Fixes mojibake encoding (em dash, ellipsis) from UTF-8/Windows-1252 mismatch
+#  14. Comprehensive mojibake repair for severely corrupted files
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -33,9 +38,6 @@ $leftApostrophe = [char]0x2018     # ' (left single quote)
 $backtick = [char]0x0060           # ` (backtick/grave accent)
 $standardApostrophe = "'"          # ' (standard apostrophe)
 
-# Track if we closed Obsidian (so we can reopen it at the end)
-$script:obsidianWasClosed = $false
-
 # Initialize counters
 $script:filesRenamed = 0
 $script:duplicatesResolved = 0
@@ -47,6 +49,11 @@ $script:truncatedFilesFound = 0
 $script:smallImagesDeleted = 0
 $script:emptyFoldersDeleted = 0
 $script:taskTagsAdded = 0
+$script:brokenImageLinksFixed = 0
+$script:oneNoteImageLinksFixed = 0
+$script:orphanFilesFound = 0
+$script:mojibakeFixed = 0
+$script:comprehensiveMojibakeFixed = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -66,87 +73,6 @@ function Write-Log {
     $logMessage = "[$timestamp] $Message"
     Write-Host $Message -ForegroundColor $Color
     Add-Content -Path $logPath -Value $logMessage
-}
-
-# =============================================================================
-# Obsidian Process Management
-# =============================================================================
-# Checks if Obsidian is running, closes it if needed, and reopens at the end.
-# This prevents file locking issues during maintenance operations.
-# =============================================================================
-
-# Function to close Obsidian if running
-function Close-ObsidianIfRunning {
-    Write-Log "=== Checking for running Obsidian process ===" "Cyan"
-
-    # Check if Obsidian is running
-    $obsidianProcess = Get-Process -Name "Obsidian" -ErrorAction SilentlyContinue
-
-    if ($obsidianProcess) {
-        Write-Log "  Obsidian is running - closing it for maintenance..." "Yellow"
-
-        if ($dryRun) {
-            Write-Log "  [DRY RUN] Would close Obsidian and wait 10 seconds" "Magenta"
-            $script:obsidianWasClosed = $true
-        } else {
-            try {
-                # Gracefully close Obsidian (sends close message to main window)
-                $obsidianProcess | ForEach-Object { $_.CloseMainWindow() | Out-Null }
-
-                # Wait a moment for graceful shutdown
-                Start-Sleep -Seconds 2
-
-                # Check if still running and force kill if necessary
-                $obsidianProcess = Get-Process -Name "Obsidian" -ErrorAction SilentlyContinue
-                if ($obsidianProcess) {
-                    Write-Log "  Obsidian didn't close gracefully, forcing termination..." "DarkYellow"
-                    $obsidianProcess | Stop-Process -Force -ErrorAction SilentlyContinue
-                }
-
-                $script:obsidianWasClosed = $true
-                Write-Log "  Obsidian closed. Waiting 10 seconds for file handles to release..." "Green"
-                Start-Sleep -Seconds 10
-                Write-Log "  Ready to proceed with maintenance." "Green"
-            } catch {
-                Write-Log "  ERROR: Failed to close Obsidian - $_" "Red"
-            }
-        }
-    } else {
-        Write-Log "  Obsidian is not running - proceeding with maintenance." "Green"
-    }
-}
-
-# Function to reopen Obsidian if we closed it
-function Reopen-ObsidianIfClosed {
-    if ($script:obsidianWasClosed) {
-        Write-Log "" "White"
-        Write-Log "=== Reopening Obsidian ===" "Cyan"
-
-        if ($dryRun) {
-            Write-Log "  [DRY RUN] Would reopen Obsidian" "Magenta"
-        } else {
-            try {
-                # Start Obsidian - it will open to the last used vault
-                Start-Process "Obsidian" -ErrorAction Stop
-                Write-Log "  Obsidian restarted successfully." "Green"
-            } catch {
-                # Try alternative path if Obsidian isn't in PATH
-                $obsidianPath = "$env:LOCALAPPDATA\Programs\Obsidian\Obsidian.exe"
-                if (Test-Path $obsidianPath) {
-                    try {
-                        Start-Process $obsidianPath -ErrorAction Stop
-                        Write-Log "  Obsidian restarted successfully." "Green"
-                    } catch {
-                        Write-Log "  ERROR: Failed to restart Obsidian - $_" "Red"
-                        Write-Log "  Please restart Obsidian manually." "Yellow"
-                    }
-                } else {
-                    Write-Log "  ERROR: Could not find Obsidian executable" "Red"
-                    Write-Log "  Please restart Obsidian manually." "Yellow"
-                }
-            }
-        }
-    }
 }
 
 # Function to normalize text (convert smart apostrophes to standard)
@@ -808,6 +734,9 @@ function Generate-TruncatedFilenamesList {
             'quinoa', 'acai', 'kombucha', 'matcha', 'chai', 'boba', 'pho', 'banh',
             # Names/surnames
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
+            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys',
+            # Tech/common terms from truncated filenames
+            'perl', 'wiki',
             # Other common terms
             'podcast', 'ebook', 'audiobook', 'vegan', 'keto', 'paleo', 'gluten', 'probiotic',
             'cryptocurrency', 'blockchain', 'bitcoin', 'ethereum', 'nft', 'defi',
@@ -1102,6 +1031,903 @@ function Add-TaskTagsToCheckboxes {
 }
 
 # =============================================================================
+# PHASE 11: Fix broken image links
+# =============================================================================
+# Finds image embeds (![[image.jpg]]) that point to non-existent paths,
+# locates the actual image file elsewhere in the vault by filename,
+# and updates the link to the correct path using forward slashes.
+#
+# Handles:
+# - Character encoding mismatches common in Evernote exports where
+#   special characters like » may appear differently in links vs actual files.
+# - OneNote export paths where images are in .md folders but links point to
+#   wrong directory (e.g., 12 - OneNote/... instead of 20 - Permanent Notes/...)
+# =============================================================================
+
+# Helper function to normalize a filename for fuzzy matching
+# Removes/replaces special characters that may be encoded differently
+function Normalize-ImageFileName {
+    param([string]$Name)
+
+    # Convert to lowercase first
+    $normalized = $Name.ToLower()
+
+    # Replace common problem characters with underscores
+    # » (U+00BB), « (U+00AB), various dashes, special quotes, etc.
+    $normalized = $normalized -replace '[\u00AB\u00BB\u2013\u2014\u2018\u2019\u201C\u201D\u2026]', '_'
+
+    # Collapse multiple underscores/spaces into single underscore
+    $normalized = $normalized -replace '[\s_]+', '_'
+
+    # Remove any remaining non-ASCII characters
+    $normalized = $normalized -replace '[^\x00-\x7F]', ''
+
+    return $normalized
+}
+
+# Helper function to extract a base prefix for fuzzy matching
+# Gets everything before _imgN or the last 20+ chars before extension
+function Get-ImageBasePrefix {
+    param([string]$Name)
+
+    try {
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($Name)
+    } catch {
+        # If path has illegal characters, just use the name directly
+        $baseName = $Name -replace '\.[^.]+$', ''
+    }
+
+    if (-not $baseName) { return "" }
+
+    # If filename contains _img followed by digits, get everything before it
+    if ($baseName -match '^(.+?)_img\d+$') {
+        return $Matches[1].ToLower()
+    }
+
+    # Otherwise return first 25 chars (if long enough) for prefix matching
+    if ($baseName.Length -gt 25) {
+        return $baseName.Substring(0, 25).ToLower()
+    }
+
+    return $baseName.ToLower()
+}
+
+# Helper function to fix OneNote exported image paths
+# OneNote exports create paths like: 12 - OneNote/.../Note.md/Exported image TIMESTAMP.ext
+# But images actually exist in: 20 - Permanent Notes/Note.md/Exported image TIMESTAMP.ext
+function Fix-OneNoteImagePaths {
+    param(
+        [string]$Content,           # File content to fix
+        [hashtable]$ImageIndex,     # Index of image filenames to paths
+        [ref]$FixCount              # Counter for fixes made
+    )
+
+    $result = $Content
+
+    # Pattern to match URL-encoded OneNote image paths
+    # Matches: 12%20-%20OneNote/.../Something.md/Exported%20image%20TIMESTAMP.ext
+    $pattern = '12%20-%20OneNote/.*?\.md/Exported%20image%20\d{14}-\d+\.(png|jpg|jpeg|gif|webp)'
+
+    $allMatches = [regex]::Matches($result, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+
+    foreach ($match in $allMatches) {
+        $brokenPath = $match.Value
+
+        # URL-decode the entire path to extract the image filename
+        $decodedPath = [System.Uri]::UnescapeDataString($brokenPath)
+
+        # Extract just the image filename (e.g., "Exported image 20240909143732-0.png")
+        if ($decodedPath -match '(Exported image \d{14}-\d+\.(png|jpg|jpeg|gif|webp))$') {
+            $imageFileName = $Matches[1]
+
+            # Look up this image in our index
+            if ($ImageIndex.ContainsKey($imageFileName)) {
+                $correctPath = $ImageIndex[$imageFileName]
+
+                # URL-encode the new path (but keep forward slashes)
+                $encodedCorrectPath = [System.Uri]::EscapeDataString($correctPath) -replace '%2F', '/'
+
+                # Replace in content
+                $result = $result.Replace($brokenPath, $encodedCorrectPath)
+                $FixCount.Value++
+            }
+        }
+    }
+
+    return $result
+}
+
+function Fix-BrokenImageLinks {
+    Write-Log "=== Phase 11: Fixing broken image links ===" "Cyan"
+
+    # Build index of all image files in the vault
+    # We create multiple lookup mechanisms:
+    # 1. Exact filename match (case-insensitive)
+    # 2. Normalized filename match (strips special chars)
+    # 3. Prefix-based match (for fuzzy matching)
+    # 4. OneNote "Exported image" files by timestamp filename
+    Write-Log "  Building image file index..." "Gray"
+    $imageIndex = @{}           # Exact filename -> full path
+    $normalizedIndex = @{}      # Normalized filename -> full path
+    $prefixIndex = @{}          # Base prefix -> list of full paths
+    $exportedImageIndex = @{}   # "Exported image TIMESTAMP.ext" -> relative path (for OneNote)
+    $imageExtensions = @('*.jpg', '*.jpeg', '*.png', '*.gif', '*.webp', '*.svg', '*.ico')
+
+    foreach ($ext in $imageExtensions) {
+        $images = Get-ChildItem -Path $vaultPath -Filter $ext -Recurse -ErrorAction SilentlyContinue
+        foreach ($img in $images) {
+            $fullPath = $img.FullName
+
+            # 1. Exact filename match (case-insensitive)
+            $exactKey = $img.Name.ToLower()
+            if (-not $imageIndex.ContainsKey($exactKey)) {
+                $imageIndex[$exactKey] = $fullPath
+            }
+
+            # 2. Normalized filename match
+            $normalizedKey = Normalize-ImageFileName $img.Name
+            if (-not $normalizedIndex.ContainsKey($normalizedKey)) {
+                $normalizedIndex[$normalizedKey] = $fullPath
+            }
+
+            # 3. Prefix-based index for fuzzy matching
+            $prefix = Get-ImageBasePrefix $img.Name
+            if ($prefix.Length -ge 15) {
+                if (-not $prefixIndex.ContainsKey($prefix)) {
+                    $prefixIndex[$prefix] = [System.Collections.ArrayList]@()
+                }
+                [void]$prefixIndex[$prefix].Add($fullPath)
+            }
+
+            # 4. OneNote "Exported image" files - index by exact filename for timestamp lookup
+            # These files are named like "Exported image 20240909143732-0.png"
+            if ($img.Name -match '^Exported image \d{14}-\d+\.(png|jpg|jpeg|gif|webp)$') {
+                $relativePath = $fullPath.Substring($vaultPath.Length + 1).Replace('\', '/')
+                # Prefer paths in "20 - Permanent Notes" for OneNote exported images
+                if (-not $exportedImageIndex.ContainsKey($img.Name) -or $relativePath -like "20 - Permanent Notes/*") {
+                    $exportedImageIndex[$img.Name] = $relativePath
+                }
+            }
+        }
+    }
+    Write-Log "  Indexed $($imageIndex.Count) image files (exact), $($normalizedIndex.Count) (normalized), $($prefixIndex.Count) (prefix), $($exportedImageIndex.Count) (OneNote exported)" "Gray"
+
+    # Scan markdown files for broken image links
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count
+    $processedFiles = 0
+    $filesModifiedThisPhase = 0
+
+    foreach ($mdFile in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "  Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            # Use -LiteralPath to handle files with special characters like [[ in the name
+            $content = Get-Content -LiteralPath $mdFile.FullName -Raw -Encoding UTF8 -ErrorAction Stop
+            if (-not $content) { continue }
+        } catch {
+            continue
+        }
+
+        $originalContent = $content
+        $fileModified = $false
+
+        # Strategy 0: Fix OneNote exported image paths first
+        # These have URL-encoded paths like 12%20-%20OneNote/.../Note.md/Exported%20image%20TIMESTAMP.ext
+        if ($content -match '12%20-%20OneNote.*?\.md/Exported%20image') {
+            $oneNoteFixCount = 0
+            $content = Fix-OneNoteImagePaths -Content $content -ImageIndex $exportedImageIndex -FixCount ([ref]$oneNoteFixCount)
+            if ($oneNoteFixCount -gt 0) {
+                $fileModified = $true
+                $script:brokenImageLinksFixed += $oneNoteFixCount
+                $script:oneNoteImageLinksFixed += $oneNoteFixCount
+            }
+        }
+
+        # Find all image embeds: ![[path/to/image.jpg]] or ![[image.jpg]]
+        $imagePattern = '\!\[\[([^\]]+\.(jpg|jpeg|png|gif|webp|svg|ico))\]\]'
+        $matches = [regex]::Matches($content, $imagePattern, 'IgnoreCase')
+
+        foreach ($match in $matches) {
+            $imagePath = $match.Groups[1].Value
+            $imageFileName = Split-Path $imagePath -Leaf
+
+            # Handle filenames with illegal characters (URLs mistakenly parsed as filenames)
+            try {
+                $imageExtension = [System.IO.Path]::GetExtension($imageFileName).ToLower()
+            } catch {
+                continue
+            }
+
+            # Build potential full paths to check existence
+            # Path could be absolute from vault root or relative to note location
+            $fullImagePath = Join-Path $vaultPath $imagePath
+            $noteFolder = Split-Path $mdFile.FullName -Parent
+            $relativeImagePath = Join-Path $noteFolder $imagePath
+
+            # Check if image exists at either location
+            $exists = $false
+            try {
+                $exists = (Test-Path -LiteralPath $fullImagePath) -or (Test-Path -LiteralPath $relativeImagePath)
+            } catch {
+                # Path has illegal characters, assume it doesn't exist
+                $exists = $false
+            }
+
+            if (-not $exists) {
+                $correctFullPath = $null
+
+                # Strategy 1: Exact filename match (case-insensitive)
+                $fileNameKey = $imageFileName.ToLower()
+                if ($imageIndex.ContainsKey($fileNameKey)) {
+                    $correctFullPath = $imageIndex[$fileNameKey]
+                }
+
+                # Strategy 2: Normalized filename match
+                if (-not $correctFullPath) {
+                    $normalizedKey = Normalize-ImageFileName $imageFileName
+                    if ($normalizedIndex.ContainsKey($normalizedKey)) {
+                        $correctFullPath = $normalizedIndex[$normalizedKey]
+                    }
+                }
+
+                # Strategy 3: Prefix-based fuzzy match
+                if (-not $correctFullPath) {
+                    $searchPrefix = Get-ImageBasePrefix $imageFileName
+                    $normalizedSearchPrefix = Normalize-ImageFileName $searchPrefix
+
+                    # Look for matching prefix in the index
+                    foreach ($indexPrefix in $prefixIndex.Keys) {
+                        $normalizedIndexPrefix = Normalize-ImageFileName $indexPrefix
+
+                        # Check if prefixes are similar (one contains the other or high overlap)
+                        if ($normalizedIndexPrefix -like "*$normalizedSearchPrefix*" -or
+                            $normalizedSearchPrefix -like "*$normalizedIndexPrefix*" -or
+                            ($normalizedSearchPrefix.Length -ge 15 -and $normalizedIndexPrefix.StartsWith($normalizedSearchPrefix.Substring(0, 15)))) {
+
+                            $candidates = $prefixIndex[$indexPrefix]
+                            # Find candidate with matching extension
+                            foreach ($candidate in $candidates) {
+                                if ($candidate.ToLower().EndsWith($imageExtension)) {
+                                    # Additional check: if filename contains _imgN pattern, try to match the number
+                                    if ($imageFileName -match '_img(\d+)\.') {
+                                        $wantedNum = $Matches[1]
+                                        if ($candidate -match "_img${wantedNum}\.") {
+                                            $correctFullPath = $candidate
+                                            break
+                                        }
+                                        # Don't return a mismatched image number
+                                    } else {
+                                        $correctFullPath = $candidate
+                                        break
+                                    }
+                                }
+                            }
+                            if ($correctFullPath) { break }
+                        }
+                    }
+                }
+
+                if ($correctFullPath) {
+                    # Convert to relative path from vault root with FORWARD SLASHES
+                    $correctRelPath = $correctFullPath.Substring($vaultPath.Length + 1).Replace('\', '/')
+
+                    # Build replacement
+                    $oldEmbed = $match.Value
+                    $newEmbed = "![[$correctRelPath]]"
+
+                    if ($oldEmbed -ne $newEmbed) {
+                        $content = $content.Replace($oldEmbed, $newEmbed)
+                        $fileModified = $true
+                        $script:brokenImageLinksFixed++
+                    }
+                }
+            }
+        }
+
+        # Write changes if any were made
+        if ($fileModified -and $content -ne $originalContent) {
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix image links in: $($mdFile.Name)" "Magenta"
+            } else {
+                try {
+                    Set-Content -LiteralPath $mdFile.FullName -Value $content -NoNewline -Encoding UTF8 -ErrorAction Stop
+                    $filesModifiedThisPhase++
+                } catch {
+                    Write-Log "  ERROR: Failed to update $($mdFile.Name) - $_" "Red"
+                }
+            }
+        }
+    }
+
+    Write-Log "  Fixed $($script:brokenImageLinksFixed) broken image links in $filesModifiedThisPhase files" "Green"
+}
+
+# =============================================================================
+# PHASE 12: Generate Orphan Files list
+# =============================================================================
+# Finds all markdown files that have no incoming links from any other file
+# in the vault. These "orphan" files are disconnected from the knowledge graph.
+# Creates/updates "Orphan Files.md" with links to these files grouped by folder.
+# =============================================================================
+function Generate-OrphanFilesList {
+    Write-Log "=== Phase 12: Generating Orphan Files list ===" "Cyan"
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    # Build a map of all file base names for link resolution
+    # Key = lowercase base name, Value = file object
+    $fileMap = @{}
+    foreach ($file in $mdFiles) {
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+        $fileMap[$baseName.ToLower()] = $file
+    }
+
+    Write-Log "  Scanning $($mdFiles.Count) files for links..." "Gray"
+
+    # Track which files have incoming links
+    # Key = lowercase base name of linked file
+    $linkedFiles = @{}
+
+    # Scan all files for outgoing wiki-style links
+    foreach ($file in $mdFiles) {
+        try {
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+        } catch {
+            continue
+        }
+
+        # Find all wiki-style links: [[link]] or [[link|alias]] or [[path/link]]
+        $linkMatches = [regex]::Matches($content, '\[\[([^\]|]+)(?:\|[^\]]+)?\]\]')
+
+        foreach ($match in $linkMatches) {
+            $linkTarget = $match.Groups[1].Value.Trim()
+
+            # Skip image embeds (handled separately)
+            if ($linkTarget -match '\.(jpg|jpeg|png|gif|webp|svg|ico|pdf)$') { continue }
+
+            # Remove heading anchors (e.g., [[Note#Section]] -> Note)
+            if ($linkTarget -match '^([^#]+)#') {
+                $linkTarget = $Matches[1]
+            }
+
+            # Handle path-style links (e.g., [[folder/note]] -> note)
+            if ($linkTarget -match '[/\\]') {
+                $linkTarget = Split-Path $linkTarget -Leaf
+            }
+
+            $linkTargetLower = $linkTarget.ToLower()
+
+            # Mark this target as having an incoming link
+            if ($fileMap.ContainsKey($linkTargetLower)) {
+                $linkedFiles[$linkTargetLower] = $true
+            }
+        }
+    }
+
+    # Find orphans: files with no incoming links
+    $orphans = @()
+    foreach ($file in $mdFiles) {
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+
+        # Skip system/generated files
+        if ($file.Name -eq "Orphan Files.md") { continue }
+        if ($file.Name -eq "Empty Notes.md") { continue }
+        if ($file.Name -eq "Truncated Filenames.md") { continue }
+
+        if (-not $linkedFiles.ContainsKey($baseName.ToLower())) {
+            # Handle files in vault root (DirectoryName may be null or equal to vaultPath)
+            $folderName = if ($file.DirectoryName -and $file.DirectoryName -ne $vaultPath) {
+                Split-Path $file.DirectoryName -Leaf
+            } else {
+                "(Root)"
+            }
+            $orphans += @{
+                Name = $baseName
+                RelPath = $file.FullName.Replace($vaultPath + '\', '').Replace('\', '/')
+                Folder = $folderName
+            }
+        }
+    }
+
+    # Sort by folder then name
+    $orphans = $orphans | Sort-Object { $_.Folder }, { $_.Name }
+
+    $script:orphanFilesFound = $orphans.Count
+
+    # Group by folder for organized output
+    $orphansByFolder = $orphans | Group-Object { $_.Folder } | Sort-Object { $_.Count } -Descending
+
+    # Create markdown content
+    $mdContent = "# Orphan Files`n`n"
+    $mdContent += "Notes with no incoming links from other files in the vault.`n`n"
+    $mdContent += "**Total: $($orphans.Count) orphan files**`n`n"
+    $mdContent += "*Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*`n`n"
+
+    foreach ($group in $orphansByFolder) {
+        $mdContent += "## $($group.Name) ($($group.Count))`n`n"
+        foreach ($orphan in $group.Group) {
+            $mdContent += "- [[$($orphan.Name)]]`n"
+        }
+        $mdContent += "`n"
+    }
+
+    # Write to file
+    $outputPath = Join-Path $vaultPath "Orphan Files.md"
+
+    if ($dryRun) {
+        Write-Log "  [DRY RUN] Would create Orphan Files.md with $($orphans.Count) entries" "Magenta"
+    } else {
+        try {
+            Set-Content -Path $outputPath -Value $mdContent -Encoding UTF8 -NoNewline
+            Write-Log "  Created Orphan Files.md with $($orphans.Count) entries in $($orphansByFolder.Count) folders" "Green"
+        } catch {
+            Write-Log "  ERROR: Failed to create Orphan Files.md - $_" "Red"
+        }
+    }
+
+    Write-Log "  Files with incoming links: $($linkedFiles.Count)" "Gray"
+}
+
+# =============================================================================
+# PHASE 13: Fix mojibake encoding issues
+# =============================================================================
+# Fixes common UTF-8 mojibake patterns that occur when UTF-8 text is incorrectly
+# decoded as Windows-1252. These patterns appear in Evernote exports and other
+# imported content.
+#
+# Common patterns fixed:
+#   - Em dash mojibake: â€" -> — (U+2014)
+#   - Ellipsis mojibake: â€¦ -> … (U+2026)
+# =============================================================================
+function Fix-MojibakeEncoding {
+    Write-Log "=== Phase 13: Fixing mojibake encoding issues ===" "Cyan"
+
+    # Define mojibake patterns and their correct replacements
+    # These patterns occur when UTF-8 bytes are incorrectly decoded as Windows-1252
+
+    # Em dash: UTF-8 bytes E2 80 94 decoded as Windows-1252 become â€"
+    # We extract the pattern from a known file to ensure byte-accurate matching
+    $emDashPattern = [char]0x00E2 + [char]0x20AC + [char]0x201C  # â€"
+    $emDashReplacement = [char]0x2014  # — (em dash U+2014)
+
+    # Ellipsis: UTF-8 bytes E2 80 A6 decoded as Windows-1252 become â€¦
+    $ellipsisPattern = [char]0x00E2 + [char]0x20AC + [char]0x00A6  # â€¦
+    $ellipsisReplacement = [char]0x2026  # … (ellipsis U+2026)
+
+    $emDashFixed = 0
+    $ellipsisFixed = 0
+    $filesModifiedThisPhase = 0
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count
+    $processedFiles = 0
+
+    foreach ($mdFile in $mdFiles) {
+        $processedFiles++
+        if ($processedFiles % 500 -eq 0) {
+            Write-Log "  Processing $processedFiles / $totalFiles files..." "Gray"
+        }
+
+        try {
+            # Read file content using .NET to preserve exact byte sequences
+            $content = [System.IO.File]::ReadAllText($mdFile.FullName, [System.Text.Encoding]::UTF8)
+            if ($null -eq $content) { continue }
+        } catch {
+            continue
+        }
+
+        $original = $content
+        $fileModified = $false
+
+        # Count and fix em dash mojibake
+        $emDashMatches = ([regex]::Matches($content, [regex]::Escape($emDashPattern))).Count
+        if ($emDashMatches -gt 0) {
+            $content = $content.Replace($emDashPattern, $emDashReplacement)
+            $emDashFixed += $emDashMatches
+            $fileModified = $true
+        }
+
+        # Count and fix ellipsis mojibake
+        $ellipsisMatches = ([regex]::Matches($content, [regex]::Escape($ellipsisPattern))).Count
+        if ($ellipsisMatches -gt 0) {
+            $content = $content.Replace($ellipsisPattern, $ellipsisReplacement)
+            $ellipsisFixed += $ellipsisMatches
+            $fileModified = $true
+        }
+
+        if ($fileModified -and $content -ne $original) {
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix mojibake in: $($mdFile.Name) (em dash: $emDashMatches, ellipsis: $ellipsisMatches)" "Magenta"
+            } else {
+                try {
+                    [System.IO.File]::WriteAllText($mdFile.FullName, $content, [System.Text.Encoding]::UTF8)
+                    $filesModifiedThisPhase++
+                } catch {
+                    Write-Log "  ERROR: Failed to update $($mdFile.Name) - $_" "Red"
+                }
+            }
+        }
+    }
+
+    $script:mojibakeFixed = $emDashFixed + $ellipsisFixed
+    Write-Log "  Fixed $emDashFixed em dash and $ellipsisFixed ellipsis mojibake patterns in $filesModifiedThisPhase files" "Green"
+}
+
+# =============================================================================
+# PHASE 14: Comprehensive mojibake repair for corrupted files
+# =============================================================================
+# Detects and repairs files with encoding corruption (mojibake).
+# This goes beyond Phase 13 to handle files with garbage characters like
+# Ã, Â, ƒ, †, and the replacement character (�).
+#
+# The process:
+#   1. Scans files for garbage character concentration (threshold: 0.01%)
+#   2. Detects characteristic "A?" mojibake patterns
+#   3. Removes garbage character sequences
+#   4. Cleans up leftover punctuation patterns
+#   5. Normalizes smart quotes and removes replacement characters (U+FFFD)
+#   6. Tracks fixed files in a log to avoid re-processing
+# =============================================================================
+
+# Garbage character definitions - Unicode code points commonly found in mojibake
+$script:GarbageCharCodes = @(
+    # UTF-8 lead bytes misread as Latin-1
+    195,   # Ã - Latin capital A with tilde (UTF-8 lead byte misread)
+    194,   # Â - Latin capital A with circumflex (UTF-8 lead byte misread)
+    197,   # Å - Latin capital A with ring above (common in mojibake)
+    196,   # Ä - Latin capital A with diaeresis
+
+    # Common mojibake artifacts
+    402,   # ƒ - Latin small f with hook (very common in mojibake)
+    8224,  # † - Dagger (common in mojibake patterns)
+    8225,  # ‡ - Double dagger
+
+    # Other frequent garbage chars
+    162,   # ¢ - Cent sign
+    226,   # â - Latin small a with circumflex
+    8218,  # ‚ - Single low-9 quotation mark
+    8364,  # € - Euro sign
+    172,   # ¬ - Not sign
+    198,   # Æ - Latin capital AE
+    353,   # š - Latin small s with caron
+    161,   # ¡ - Inverted exclamation mark
+    8230,  # … - Horizontal ellipsis
+    382,   # ž - Latin small z with caron
+    166,   # ¦ - Broken bar
+    190,   # ¾ - Vulgar fraction three quarters
+    189,   # ½ - Vulgar fraction one half
+    188,   # ¼ - Vulgar fraction one quarter
+    191,   # ¿ - Inverted question mark
+    183,   # · - Middle dot
+    157,   # Control character
+    129,   # Control character
+    128,   # Control character
+    141,   # Control character
+    143,   # Control character
+    144,   # Control character
+    152,   # Control character
+    163,   # £ - Pound sign (when appearing in garbage context)
+    65533  #   - Replacement character (indicates encoding failure)
+)
+
+# Build a HashSet for fast garbage character lookup
+$script:GarbageCharSet = [System.Collections.Generic.HashSet[int]]::new()
+foreach ($code in $script:GarbageCharCodes) {
+    [void]$script:GarbageCharSet.Add($code)
+}
+
+# Path to log file tracking which files have been fixed (to avoid re-processing)
+$script:MojibakeFixedLogPath = "C:\Users\awt\PowerShell\logs\mojibake_fixed.log"
+
+# Load set of already-fixed files from log
+$script:MojibakeFixedFilesSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+
+function Initialize-MojibakeFixedLog {
+    # Load the set of already-fixed files from the log
+    if (Test-Path $script:MojibakeFixedLogPath) {
+        $logEntries = Get-Content $script:MojibakeFixedLogPath -ErrorAction SilentlyContinue
+        foreach ($entry in $logEntries) {
+            if ($entry -and $entry.Trim() -ne "") {
+                [void]$script:MojibakeFixedFilesSet.Add($entry.Trim())
+            }
+        }
+    }
+}
+
+function Add-ToMojibakeFixedLog {
+    param([string]$FilePath)  # Full path to the file that was fixed
+    # Append the file path to the log
+    Add-Content -Path $script:MojibakeFixedLogPath -Value $FilePath -Encoding UTF8
+    # Also add to in-memory set
+    [void]$script:MojibakeFixedFilesSet.Add($FilePath)
+}
+
+# Test a file for mojibake by checking garbage character percentage
+function Test-FileForMojibake {
+    param(
+        [string]$FilePath,         # Path to the file to analyze
+        [double]$Threshold = 0.01  # Percentage threshold (0.01% catches nearly all garbage)
+    )
+
+    # Read file content as UTF-8
+    try {
+        $content = [System.IO.File]::ReadAllText($FilePath, [System.Text.Encoding]::UTF8)
+    }
+    catch {
+        return @{
+            Path = $FilePath
+            Error = $_.Exception.Message
+            IsAffected = $false
+        }
+    }
+
+    # Skip empty files
+    if ($content.Length -eq 0) {
+        return @{
+            Path = $FilePath
+            TotalChars = 0
+            GarbageChars = 0
+            GarbagePercent = 0
+            IsAffected = $false
+        }
+    }
+
+    # Count garbage characters
+    $garbageCount = 0
+    $totalChars = $content.Length
+
+    foreach ($char in $content.ToCharArray()) {
+        $code = [int]$char
+        if ($script:GarbageCharSet.Contains($code)) {
+            $garbageCount++
+        }
+    }
+
+    # Calculate percentage
+    $garbagePercent = [math]::Round(($garbageCount / $totalChars) * 100, 2)
+
+    # Check for the distinctive "A?" pattern that indicates mojibake
+    $hasAQPattern = $content -match "A\?'|A'[^a-zA-Z]"
+
+    # Determine if file is affected:
+    # - If threshold is 0, flag any file with at least one garbage character
+    # - Otherwise use percentage threshold or pattern detection
+    $isAffected = if ($Threshold -eq 0) {
+        $garbageCount -gt 0
+    } else {
+        ($garbagePercent -ge $Threshold) -or ($hasAQPattern -and $garbageCount -gt 0)
+    }
+
+    # Return analysis results
+    return @{
+        Path = $FilePath
+        TotalChars = $totalChars
+        GarbageChars = $garbageCount
+        GarbagePercent = $garbagePercent
+        HasAQPattern = $hasAQPattern
+        IsAffected = $isAffected
+    }
+}
+
+# Repair a file with mojibake by removing garbage characters and cleaning up
+function Repair-MojibakeFile {
+    param(
+        [string]$FilePath,   # Path to the file to repair
+        [switch]$DryRunMode  # If true, don't actually modify the file
+    )
+
+    # Read the file
+    try {
+        $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+        $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+    }
+    catch {
+        Write-Log "    ERROR: Could not read file: $($_.Exception.Message)" "Red"
+        return $false
+    }
+
+    $originalSize = $content.Length
+
+    # ---- PHASE 1: Remove BOM characters from start ----
+    # BOM (Byte Order Mark) = U+FEFF (code 65279)
+    while ($content.Length -gt 0 -and [int]$content[0] -eq 65279) {
+        $content = $content.Substring(1)
+    }
+
+    # ---- PHASE 2: Remove garbage character sequences ----
+    # Process character by character, detecting and removing garbage runs
+    $result = [System.Text.StringBuilder]::new()
+    $i = 0
+    $removedSequences = 0
+
+    while ($i -lt $content.Length) {
+        $char = $content[$i]
+        $code = [int]$char
+
+        # Check if this is a standalone garbage character
+        if ($script:GarbageCharSet.Contains($code)) {
+            $i++
+            continue
+        }
+
+        # Check for "A'" or "A" followed by garbage (common mojibake pattern)
+        if ($char -eq 'A' -and ($i + 1) -lt $content.Length) {
+            $nextChar = $content[$i + 1]
+            $nextCode = [int]$nextChar
+
+            # If A is followed by ' or a garbage char, check if it's a garbage sequence
+            if ($nextChar -eq "'" -or $script:GarbageCharSet.Contains($nextCode)) {
+                # Scan ahead to measure the garbage run
+                $j = $i + 1
+                $garbageRun = 0
+
+                while ($j -lt $content.Length -and $j -lt $i + 100) {
+                    $testChar = $content[$j]
+                    $testCode = [int]$testChar
+
+                    # Characters that are part of garbage sequences
+                    if ($script:GarbageCharSet.Contains($testCode) -or
+                        $testChar -eq "'" -or
+                        $testChar -eq 'A' -or
+                        $testChar -eq '?' -or
+                        $testChar -eq '.' -or
+                        $testChar -eq ',' -or
+                        $testChar -eq '_' -or
+                        $testChar -eq ' ') {
+                        $garbageRun++
+                    }
+                    else {
+                        break
+                    }
+                    $j++
+                }
+
+                # If we found a significant garbage run (>10 chars), skip it
+                if ($garbageRun -gt 10) {
+                    $removedSequences++
+                    $i = $j
+                    continue
+                }
+            }
+        }
+
+        # Keep this character
+        [void]$result.Append($char)
+        $i++
+    }
+
+    $content = $result.ToString()
+
+    # ---- PHASE 3: Clean up leftover punctuation patterns ----
+    # After removing garbage, we often have leftover patterns like '' '' '''
+    $content = [regex]::Replace($content, "['\.\,_\s]{4,}", " ")
+
+    # ---- PHASE 4: Normalize characters ----
+    # Convert smart quotes to regular apostrophes
+    $content = $content -replace [char]0x2019, "'"  # Right single quote
+    $content = $content -replace [char]0x2018, "'"  # Left single quote
+
+    # Remove replacement characters
+    $content = $content -replace [char]0xFFFD, ""
+
+    # ---- PHASE 5: Clean whitespace ----
+    $content = [regex]::Replace($content, "[ ]{2,}", " ")      # Multiple spaces -> single
+    $content = [regex]::Replace($content, "[ ]+`n", "`n")      # Trailing spaces
+    $content = [regex]::Replace($content, "`n[ ]+", "`n")      # Leading spaces on lines
+    $content = [regex]::Replace($content, "`n{3,}", "`n`n")    # Multiple newlines -> double
+
+    # Trim the whole content
+    $content = $content.Trim()
+
+    # ---- RESULTS ----
+    $newSize = $content.Length
+    $removed = $originalSize - $newSize
+
+    # Check if any changes were actually made
+    $originalContent = [System.Text.Encoding]::UTF8.GetString($bytes)
+    $hasChanges = ($content -ne $originalContent)
+
+    if (-not $hasChanges) {
+        return $false
+    }
+
+    # Save the file
+    if (-not $DryRunMode) {
+        [System.IO.File]::WriteAllText($FilePath, $content, [System.Text.Encoding]::UTF8)
+        # Add to the fixed log so it won't be processed again
+        Add-ToMojibakeFixedLog -FilePath $FilePath
+    }
+
+    return $true
+}
+
+function Fix-ComprehensiveMojibake {
+    Write-Log "=== Phase 14: Comprehensive mojibake repair ===" "Cyan"
+
+    # Initialize the log of previously fixed files
+    Initialize-MojibakeFixedLog
+    $skippedFromLog = 0
+
+    # Get all markdown files
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+    $totalFiles = $mdFiles.Count
+
+    Write-Log "  Scanning $totalFiles files for severe mojibake..." "Gray"
+
+    # Find affected files
+    $affectedFiles = @()
+    $scanned = 0
+
+    foreach ($file in $mdFiles) {
+        $scanned++
+
+        # Progress indicator (every 500 files)
+        if ($scanned % 500 -eq 0) {
+            Write-Progress -Activity "Scanning for mojibake" -Status "$scanned / $totalFiles" -PercentComplete (($scanned / $totalFiles) * 100)
+        }
+
+        # Skip files that have already been fixed (tracked in log)
+        if ($script:MojibakeFixedFilesSet.Contains($file.FullName)) {
+            $skippedFromLog++
+            continue
+        }
+
+        $result = Test-FileForMojibake -FilePath $file.FullName -Threshold 0.01
+
+        if ($result.IsAffected) {
+            $affectedFiles += $result
+        }
+    }
+
+    Write-Progress -Activity "Scanning for mojibake" -Completed
+
+    if ($skippedFromLog -gt 0) {
+        Write-Log "  Skipped $skippedFromLog previously fixed files" "Gray"
+    }
+
+    if ($affectedFiles.Count -eq 0) {
+        Write-Log "  No files with severe mojibake detected" "Green"
+        return
+    }
+
+    Write-Log "  Found $($affectedFiles.Count) files with severe mojibake" "Yellow"
+
+    # Fix all affected files
+    $fixed = 0
+    $failed = 0
+
+    foreach ($file in $affectedFiles) {
+        $relativePath = $file.Path.Replace($vaultPath + '\', '')
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would fix: $relativePath (garbage: $($file.GarbagePercent)%)" "Magenta"
+            $fixed++
+        } else {
+            $result = Repair-MojibakeFile -FilePath $file.Path -DryRunMode:$dryRun
+            if ($result) {
+                $fixed++
+            }
+            else {
+                $failed++
+            }
+        }
+    }
+
+    $script:comprehensiveMojibakeFixed = $fixed
+    Write-Log "  Fixed $fixed files" "Green"
+    if ($failed -gt 0) {
+        Write-Log "  Failed/no changes: $failed files" "Yellow"
+    }
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -1116,10 +1942,6 @@ if ($dryRun) { Write-Log "MODE: DRY RUN (no changes will be made)" "Magenta" }
 Write-Log "============================================" "Cyan"
 Write-Log ""
 
-# Close Obsidian if running (to prevent file locking issues)
-Close-ObsidianIfRunning
-Write-Log ""
-
 # Run maintenance phases
 Rename-NonStandardApostrophes
 Resolve-ApostropheDuplicates
@@ -1132,6 +1954,10 @@ Generate-TruncatedFilenamesList
 Delete-SmallResourceImages
 Delete-EmptyFolders
 Add-TaskTagsToCheckboxes
+Fix-BrokenImageLinks
+Generate-OrphanFilesList
+Fix-MojibakeEncoding
+Fix-ComprehensiveMojibake
 
 # Summary
 Write-Log "" "White"
@@ -1147,8 +1973,9 @@ Write-Log "  Truncated filenames found: $script:truncatedFilesFound" "White"
 Write-Log "  Small images deleted: $script:smallImagesDeleted" "White"
 Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
 Write-Log "  Task tags added: $script:taskTagsAdded" "White"
+Write-Log "  Broken image links fixed: $script:brokenImageLinksFixed (OneNote: $script:oneNoteImageLinksFixed)" "White"
+Write-Log "  Orphan files found: $script:orphanFilesFound" "White"
+Write-Log "  Mojibake patterns fixed: $script:mojibakeFixed" "White"
+Write-Log "  Severe mojibake files fixed: $script:comprehensiveMojibakeFixed" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
-
-# Reopen Obsidian if we closed it at the start
-Reopen-ObsidianIfClosed
