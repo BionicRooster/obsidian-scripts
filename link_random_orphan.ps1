@@ -1,24 +1,32 @@
 <#
 .SYNOPSIS
-    Obsidian Random Orphan MOC Linker - Subsection-Based Keywords Version
+    Obsidian Random Orphan MOC Linker - AI-Enhanced Subsection-Based Keywords Version
 
 .DESCRIPTION
     This script finds a random orphan file in the Obsidian vault
     and creates UNIDIRECTIONAL links FROM MOC subsections TO the orphan file based
     on content and tag analysis using STATIC curated keyword matching at the
-    SUBSECTION level.
+    SUBSECTION level, with optional AI-powered suitability verification.
 
-    This version (v4.0) uses a hierarchical $subsectionKeywords lookup table:
+    This version (v5.0) adds AI suitability checking via Claude API:
     1. Automatically discovers ALL MOC files in the vault
     2. Extracts subsections (identified by "## " heading prefix) from each MOC
     3. Looks up keywords from the static $subsectionKeywords hashtable
        organized by: MOC Name -> Subsection Name -> Keywords Array
     4. Matches orphan files against curated keywords for each MOC subsection
     5. Uses BOTH content analysis AND tag extraction for categorization
-    6. Creates UNIDIRECTIONAL links (MOC subsection -> orphan only)
+    6. **NEW** Uses Claude AI to verify match suitability (unless -SkipAI is set)
+    7. **NEW** Automatically relocates notes to correct subsections when AI detects mismatch
+    8. Creates UNIDIRECTIONAL links (MOC subsection -> orphan only)
 
     An "orphan" is defined as a file with no incoming links from any other file
     in the vault.
+
+    **AI SUITABILITY CHECK**:
+    When enabled (default), the script uses Claude API to analyze whether keyword
+    matches are contextually appropriate. If a note doesn't truly belong in the
+    matched subsection, Claude suggests the correct location and the link is
+    created there instead. Requires ANTHROPIC_API_KEY environment variable.
 
     **CRITICAL SAFETY CONSTRAINT**:
     This script ONLY links to EXISTING MOC files. It will NEVER create new MOC files.
@@ -41,9 +49,14 @@
     removed from the in-memory list before processing the next. Orphans are
     selected randomly. Defaults to 1.
 
+.PARAMETER SkipAI
+    When specified, disables the AI-based suitability checking and uses only
+    keyword matching. Useful when the API is unavailable, for faster processing,
+    or for testing keyword matching without AI validation.
+
 .EXAMPLE
     .\link_random_orphan.ps1
-    Runs the script in live mode, modifying files and logging results.
+    Runs the script with AI verification enabled (requires ANTHROPIC_API_KEY).
 
 .EXAMPLE
     .\link_random_orphan.ps1 -DryRun
@@ -51,7 +64,11 @@
 
 .EXAMPLE
     .\link_random_orphan.ps1 -Count 5
-    Processes 5 randomly selected orphan files in sequence.
+    Processes 5 randomly selected orphan files with AI verification.
+
+.EXAMPLE
+    .\link_random_orphan.ps1 -Count 10 -SkipAI
+    Processes 10 orphan files using only keyword matching (no AI verification).
 
 .EXAMPLE
     .\link_random_orphan.ps1 -Count 10 -DryRun
@@ -59,8 +76,9 @@
 
 .NOTES
     Author: Claude Code Assistant
-    Version: 4.1 - Multi-Orphan Processing with -Count Parameter
+    Version: 5.0 - AI-Enhanced Suitability Checking with Automatic Relocation
     Requires: PowerShell 5.1+
+    Optional: ANTHROPIC_API_KEY environment variable for AI features
 
     This script appends to a persistent log file for tracking all linking operations
     across multiple runs.
@@ -81,7 +99,12 @@ param(
     # $Count: Number of orphan files to process in this run
     # Each processed orphan is removed from the in-memory list before processing the next
     # Default is 1 for backwards compatibility
-    [int]$Count = 1
+    [int]$Count = 1,
+
+    # $SkipAI: Switch to disable AI-based suitability checking
+    # Default is $true (AI disabled) for faster processing without API dependency
+    # Use -SkipAI:$false to enable AI validation (requires ANTHROPIC_API_KEY)
+    [switch]$SkipAI = $true
 )
 
 #region Configuration Variables
@@ -3243,97 +3266,247 @@ function Get-TagToSubsectionMap {
     # Key = lowercase tag name, Value = array of @(MOCName, SubsectionName) pairs
     $tagMap = @{
         # Bahá'í Faith tags
-        "bahai" = @(@("Bahá'í Faith", "Core Teachings"))
-        "baha'i" = @(@("Bahá'í Faith", "Core Teachings"))
-        "bahá'í" = @(@("Bahá'í Faith", "Core Teachings"))
-        "lsa" = @(@("Bahá'í Faith", "Administrative Guidance"))
-        "nsa" = @(@("Bahá'í Faith", "Administrative Guidance"))
-        "ridvan" = @(@("Bahá'í Faith", "Ridván Messages"))
-        "ridván" = @(@("Bahá'í Faith", "Ridván Messages"))
+        "bahai" = ,@("Bahá'í Faith", "Core Teachings")
+        "baha'i" = ,@("Bahá'í Faith", "Core Teachings")
+        "bahá'í" = ,@("Bahá'í Faith", "Core Teachings")
+        "lsa" = ,@("Bahá'í Faith", "Administrative Guidance")
+        "nsa" = ,@("Bahá'í Faith", "Administrative Guidance")
+        "ridvan" = ,@("Bahá'í Faith", "Ridván Messages")
+        "ridván" = ,@("Bahá'í Faith", "Ridván Messages")
 
         # Finance tags
-        "investing" = @(@("Finance and Investment", "Investing Strategies"))
-        "dividendinvesting" = @(@("Finance and Investment", "Investing Strategies"))
-        "stocks" = @(@("Finance and Investment", "Investing Strategies"))
-        "value-investing" = @(@("Finance and Investment", "Investing Strategies"))
-        "taxes" = @(@("Finance and Investment", "Tax Software"))
+        "investing" = ,@("Finance and Investment", "Investing Strategies")
+        "dividendinvesting" = ,@("Finance and Investment", "Investing Strategies")
+        "stocks" = ,@("Finance and Investment", "Investing Strategies")
+        "value-investing" = ,@("Finance and Investment", "Investing Strategies")
+        "taxes" = ,@("Finance and Investment", "Tax Software")
 
         # Health tags
         "vegan" = @(@("Health and Nutrition", "Plant-Based Nutrition"), @("Recipes", "Main Dishes"))
-        "wfpb" = @(@("Health and Nutrition", "WFPB Resources"))
-        "health" = @(@("Health and Nutrition", "Medical and Health"))
-        "nutrition" = @(@("Health and Nutrition", "Plant-Based Nutrition"))
+        "wfpb" = ,@("Health and Nutrition", "WFPB Resources")
+        "health" = ,@("Health and Nutrition", "Medical and Health")
 
         # Recipe tags
-        "recipe" = @(@("Recipes", "Main Dishes"))
-        "cooking" = @(@("Recipes", "Main Dishes"))
-        "food" = @(@("Recipes", "Main Dishes"))
-        "soup" = @(@("Recipes", "Soups and Stews"))
-        "dessert" = @(@("Recipes", "Desserts and Sweets"))
-        "bread" = @(@("Recipes", "Breads and Baked Goods"))
+        "recipe" = ,@("Recipes", "Main Dishes")
+        "cooking" = ,@("Recipes", "Main Dishes")
+        "food" = ,@("Recipes", "Main Dishes")
+        "soup" = ,@("Recipes", "Soups and Stews")
+        "dessert" = ,@("Recipes", "Desserts and Sweets")
+        "bread" = ,@("Recipes", "Breads and Baked Goods")
 
         # Science tags
-        "science" = @(@("Science and Nature", "Life Sciences"))
-        "micrometeoroid" = @(@("Science and Nature", "Micrometeorites"))
-        "nature" = @(@("Science and Nature", "Gardening and Nature"))
-        "archaeology" = @(@("Science and Nature", "Archaeology and Anthropology"))
-        "paleontology" = @(@("Science and Nature", "Paleontology"))
-        "geology" = @(@("Science and Nature", "Earth Sciences and Geology"))
+        "science" = ,@("Science and Nature", "Life Sciences")
+        "micrometeoroid" = ,@("Science and Nature", "Micrometeorites")
+        "nature" = ,@("Science and Nature", "Gardening and Nature")
+        "archaeology" = ,@("Science and Nature", "Archaeology and Anthropology")
+        "paleontology" = ,@("Science and Nature", "Paleontology")
+        "geology" = ,@("Science and Nature", "Earth Sciences and Geology")
 
         # Technology tags
-        "technology" = @(@("Technology and Computing", "Software and Applications"))
-        "computing" = @(@("Technology and Computing", "System Administration"))
-        "programming" = @(@("Technology and Computing", "Programming and Development"))
-        "linux" = @(@("Technology and Computing", "System Administration"))
+        "technology" = ,@("Technology and Computing", "Software and Applications")
+        "computing" = ,@("Technology and Computing", "System Administration")
+        "programming" = ,@("Technology and Computing", "Programming and Development")
+        "linux" = ,@("Technology and Computing", "System Administration")
 
         # Music tags
-        "music" = @(@("Music and Record", "Music Theory and Performance"))
-        "recorder" = @(@("Music and Record", "Recorder Resources"))
-        "education" = @(@("Music and Record", "Music Theory and Performance"))
+        "music" = ,@("Music and Record", "Music Theory and Performance")
+        "recorder" = ,@("Music and Record", "Recorder Resources")
+        "education" = ,@("Music and Record", "Music Theory and Performance")
+        "folkmusic" = ,@("Music and Record", "Music Theory and Performance")
+        "blues" = ,@("Music and Record", "Music Theory and Performance")
+        "rockmusic" = ,@("Music and Record", "Music Theory and Performance")
+        "rockandroll" = ,@("Music and Record", "Music Theory and Performance")
 
         # NLP tags
-        "nlp" = @(@("NLP and Psychology", "Core NLP Concepts"))
-        "psychology" = @(@("NLP and Psychology", "Cognitive Science"))
-        "technique" = @(@("NLP and Psychology", "Techniques and Patterns"))
-        "learning" = @(@("NLP and Psychology", "Learning and Memory"))
+        "nlp" = ,@("NLP and Psychology", "Core NLP Concepts")
+        "psychology" = ,@("NLP and Psychology", "Cognitive Science")
+        "technique" = ,@("NLP and Psychology", "Techniques and Patterns")
+        "learning" = ,@("NLP and Psychology", "Learning and Memory")
 
         # PKM tags
-        "pkm" = @(@("Personal Knowledge Management", "PKM Systems and Methods"))
-        "obsidian" = @(@("Personal Knowledge Management", "Obsidian Integration"))
-        "knowledge" = @(@("Personal Knowledge Management", "Note-Taking and Learning"))
-        "productivity" = @(@("Personal Knowledge Management", "Productivity Philosophy"))
+        "pkm" = ,@("Personal Knowledge Management", "PKM Systems and Methods")
+        "obsidian" = ,@("Personal Knowledge Management", "Obsidian Integration")
+        "knowledge" = ,@("Personal Knowledge Management", "Note-Taking and Learning")
+        "productivity" = ,@("Personal Knowledge Management", "Productivity Philosophy")
 
         # Reading tags
-        "books" = @(@("Reading and Literature", "Key Books by Topic"))
-        "audiobook" = @(@("Reading and Literature", "Kindle Clippings"))
-        "library" = @(@("Reading and Literature", "Book Index"))
+        "books" = ,@("Reading and Literature", "Key Books by Topic")
+        "audiobook" = ,@("Reading and Literature", "Kindle Clippings")
+        "library" = ,@("Reading and Literature", "Book Index")
 
         # Soccer tags
-        "soccer" = @(@("Soccer", "Learning the Game"))
-        "football" = @(@("Soccer", "Learning the Game"))
-        "sports" = @(@("Soccer", "Learning the Game"))
-        "tedlasso" = @(@("Soccer", "Ted Lasso and English Football Culture"))
-        "mls" = @(@("Soccer", "Major League Soccer (MLS)"))
-        "worldcup" = @(@("Soccer", "World Cup and International Football"))
+        "soccer" = ,@("Soccer", "Learning the Game")
+        "football" = ,@("Soccer", "Learning the Game")
+        "sports" = ,@("Soccer", "Learning the Game")
+        "tedlasso" = ,@("Soccer", "Ted Lasso and English Football Culture")
+        "mls" = ,@("Soccer", "Major League Soccer (MLS)")
+        "worldcup" = ,@("Soccer", "World Cup and International Football")
 
         # Social Issues tags
-        "politics" = @(@("Social Issues", "Justice and Politics"))
-        "justice" = @(@("Social Issues", "Justice and Politics"))
-        "culture" = @(@("Social Issues", "Cultural Commentary"))
-        "peace" = @(@("Social Issues", "Peace and Unity"))
-        "racism" = @(@("Social Issues", "Race and Equity"))
+        "politics" = ,@("Social Issues", "Justice and Politics")
+        "justice" = ,@("Social Issues", "Justice and Politics")
+        "culture" = ,@("Social Issues", "Cultural Commentary")
+        "peace" = ,@("Social Issues", "Peace and Unity")
+        "racism" = ,@("Social Issues", "Race and Equity")
 
         # Travel tags
-        "travel" = @(@("Travel and Exploration", "Specific Locations"))
-        "canal" = @(@("Travel and Exploration", "Narrowboat and Canal Travel"))
-        "rv" = @(@("Travel and Exploration", "RV and Alternative Living"))
-        "nationalpark" = @(@("Travel and Exploration", "National Parks and Nature"))
+        "travel" = ,@("Travel and Exploration", "Specific Locations")
+        "canal" = ,@("Travel and Exploration", "Narrowboat and Canal Travel")
+        "rv" = ,@("Travel and Exploration", "RV and Alternative Living")
+        "nationalpark" = ,@("Travel and Exploration", "National Parks and Nature")
 
         # Home and Practical Life tags
-        "genealogy" = @(@("Home and Practical Life", "Genealogy"))
-        "diy" = @(@("Home and Practical Life", "Home Projects and Repairs"))
-        "gardening" = @(@("Home and Practical Life", "Gardening and Urban Farming"))
-        "sustainable" = @(@("Home and Practical Life", "Sustainable Building and Alternative Homes"))
+        "genealogy" = ,@("Home and Practical Life", "Genealogy")
+        "diy" = ,@("Home and Practical Life", "Home Projects and Repairs")
+        "gardening" = ,@("Home and Practical Life", "Gardening and Urban Farming")
+        "sustainable" = ,@("Home and Practical Life", "Sustainable Building and Alternative Homes")
+        "movie" = ,@("Home and Practical Life", "Entertainment & Film")
+        "film" = ,@("Home and Practical Life", "Entertainment & Film")
+
+        # Bahá'í Faith - additional subsections
+        "central-figures" = ,@("Bahá'í Faith", "Central Figures")
+        "institution" = ,@("Bahá'í Faith", "Bahá'í Institutions")
+        "uhj" = ,@("Bahá'í Faith", "Bahá'í Institutions")
+
+        # Recipes - additional subsections
+        "ferment" = ,@("Recipes", "Fermented Foods")
+        "fermented" = ,@("Recipes", "Fermented Foods")
+        "kimchi" = ,@("Recipes", "Fermented Foods")
+        "sauerkraut" = ,@("Recipes", "Fermented Foods")
+        "condiment" = ,@("Recipes", "Sauces, Dips & Condiments")
+        "sauce" = ,@("Recipes", "Sauces, Dips & Condiments")
+        "beverage" = ,@("Recipes", "Beverages")
+        "tea" = ,@("Recipes", "Beverages")
+
+        # Science - additional subsections
+        "space" = ,@("Science and Nature", "Space & Planetary Science")
+        "nasa" = ,@("Science and Nature", "Space & Planetary Science")
+        "planetary" = ,@("Science and Nature", "Space & Planetary Science")
+
+        # Technology - additional subsections
+        "ai" = ,@("Technology and Computing", "AI & Machine Learning")
+        "machine-learning" = ,@("Technology and Computing", "AI & Machine Learning")
+        "llm" = ,@("Technology and Computing", "AI & Machine Learning")
+        "maker" = ,@("Technology and Computing", "Maker Projects")
+        "arduino" = ,@("Technology and Computing", "Maker Projects")
+        "raspberry-pi" = ,@("Technology and Computing", "Maker Projects")
+        "robot" = ,@("Technology and Computing", "Maker Projects")
+        "robotics" = ,@("Technology and Computing", "Maker Projects")
+        "retro-computer" = ,@("Technology and Computing", "Retro Computing & Hardware")
+        "z80" = ,@("Technology and Computing", "Retro Computing & Hardware")
+        "rc2014" = ,@("Technology and Computing", "Retro Computing & Hardware")
+
+        # NLP - additional subsections
+        "metamodel" = ,@("NLP and Psychology", "Meta Model & Language")
+
+        # Social Issues - additional subsections
+        "religion" = ,@("Social Issues", "Religion & Society")
+        "cult" = ,@("Social Issues", "Cult Awareness")
+        "cults" = ,@("Social Issues", "Cult Awareness")
+
+        # Travel - additional subsections
+        "pilgrimage" = ,@("Travel and Exploration", "Pilgrimage")
+
+        # ===================================================================
+        # NEW TAGS ADDED 2026-01-12
+        # ===================================================================
+
+        # Bahá'í Faith - newly added subsections
+        "nineyearplan" = ,@("Bahá'í Faith", "Nine Year Plan")
+        "growth" = ,@("Bahá'í Faith", "Nine Year Plan")
+        "teaching" = ,@("Bahá'í Faith", "Community & Service")
+        "pioneering" = ,@("Bahá'í Faith", "Community & Service")
+        "unity" = ,@("Bahá'í Faith", "Social Issues & Unity")
+        "equity" = ,@("Bahá'í Faith", "Social Issues & Unity")
+        "clippings" = ,@("Bahá'í Faith", "Clippings & Resources")
+        "news" = ,@("Bahá'í Faith", "Clippings & Resources")
+        "interfaith" = ,@("Bahá'í Faith", "Related Topics")
+
+        # Finance & Investment - newly added subsections
+        "finance" = ,@("Finance & Investment", "Resources & Books")
+        "money" = ,@("Finance & Investment", "Financial Management")
+        "management" = ,@("Finance & Investment", "Financial Management")
+        "insurance" = ,@("Finance & Investment", "Insurance")
+
+        # Health & Nutrition - newly added subsections
+        "breathing" = ,@("Health & Nutrition", "Exercise & Wellness")
+        "medical" = ,@("Health & Nutrition", "Health Articles & Clippings")
+        "diet" = ,@("Health & Nutrition", "Resources & Indexes")
+
+        # Home & Practical Life - newly added subsections
+        "organization" = ,@("Home & Practical Life", "Life Productivity & Organization")
+        "lifehacking" = ,@("Home & Practical Life", "Practical Tips & Life Hacks")
+        "cooltools" = ,@("Home & Practical Life", "Practical Tips & Life Hacks")
+        "sketchplanations" = ,@("Home & Practical Life", "Sketchplanations")
+        "fol" = ,@("Home & Practical Life", "FOL Board Members & Contacts")
+        "bod" = ,@("Home & Practical Life", "FOL Board Members & Contacts")
+        "hcas" = ,@("Home & Practical Life", "Hill Country Authors Series (HCAS)")
+        "charity" = @(@("Home & Practical Life", "FOL Operations & Procedures"), @("Home & Practical Life", "Giving Season & Fundraising"))
+        "givingseason" = ,@("Home & Practical Life", "Giving Season & Fundraising")
+        "lgl" = ,@("Home & Practical Life", "Little Green Light (FOL Database)")
+
+        # Music & Records - newly added subsections
+        "faith" = ,@("Music & Records", "Songs & Hymns")
+        "vinyl" = ,@("Music & Records", "Record Labels & Resources")
+        "concert" = ,@("Music & Records", "Music Performances & Articles")
+
+        # NLP & Psychology - newly added subsections
+        "reframe" = ,@("NLP & Psychology", "Reframing")
+        "phobia" = ,@("NLP & Psychology", "Phobia & Trauma Work")
+        "personaldevelopment" = @(@("NLP & Psychology", "Change Work"), @("NLP & Psychology", "Related Resources"))
+        "levels" = ,@("NLP & Psychology", "Logical Levels")
+        "language" = ,@("NLP & Psychology", "Language Patterns")
+        "modeling" = ,@("NLP & Psychology", "Strategies & Modeling")
+        "mentalecology" = ,@("NLP & Psychology", "Outcomes & Ecology")
+        "compuserve" = ,@("NLP & Psychology", "Historical NLP Resources (CompuServe Era)")
+        "training" = ,@("NLP & Psychology", "Andrew Moreno Series")
+
+        # Personal Knowledge Management - newly added subsections
+        "workflow" = ,@("Personal Knowledge Management", "GTD and Productivity Methods")
+        "pencil" = ,@("Personal Knowledge Management", "Writing Tools")
+        "journal" = ,@("Personal Knowledge Management", "Writing Tools")
+        "tags" = ,@("Personal Knowledge Management", "Indexes and Tags")
+        "template" = ,@("Personal Knowledge Management", "Templates")
+
+        # Reading and Literature - newly added subsections
+        "spirituality" = ,@("Reading and Literature", "Spirituality and Religion")
+        "socialissues" = ,@("Reading and Literature", "Social Issues")
+        "craft" = ,@("Reading and Literature", "Crafts and Making")
+        "fiction" = ,@("Reading and Literature", "Fiction and Literature")
+        "reading" = ,@("Reading and Literature", "All Book Notes")
+        "web" = ,@("Reading and Literature", "Chrome/Web Clippings")
+
+        # Recipes - newly added subsections
+        "nutrition" = @(@("Health & Nutrition", "Plant-Based Nutrition"), @("Recipes", "Related"))
+
+        # Science and Nature - newly added subsections
+        "meteorology" = ,@("Science and Nature", "Weather")
+
+        # Soccer - newly added subsections
+        "fifaworldcup" = ,@("Soccer", "2022 Qatar World Cup")
+
+        # Social Issues - newly added subsections
+        "social" = ,@("Social Issues", "Culture")
+
+        # Technology & Computers - newly added subsections
+        "computer" = @(@("Technology & Computers", "Computer Sciences"), @("Technology & Computers", "Computing Fundamentals"), @("Technology & Computers", "Chromebook"))
+        "microsoftaccess" = ,@("Technology & Computers", "Databases & Access")
+        "db" = ,@("Technology & Computers", "Databases & Access")
+        "microsoftexcel" = ,@("Technology & Computers", "Excel VBA")
+        "hardware" = @(@("Technology & Computers", "Hardware & Electronics"), @("Technology & Computers", "Devices & Hardware"))
+        "electronics" = ,@("Technology & Computers", "Hardware & Electronics")
+        "howto" = ,@("Technology & Computers", "Troubleshooting & Guides")
+        "media" = ,@("Technology & Computers", "Media & Entertainment")
+        "entertainment" = ,@("Technology & Computers", "Media & Entertainment")
+        "design" = ,@("Technology & Computers", "UX & Design")
+
+        # Travel and Exploration - newly added subsections
+        "washingtonstate" = ,@("Travel and Exploration", "Washington State")
+        "santafe" = ,@("Travel and Exploration", "Santa Fe")
+        "texas" = ,@("Travel and Exploration", "Atlanta")
+        "europe" = ,@("Travel and Exploration", "Moscow")
+        "japan" = ,@("Travel and Exploration", "Japan")
+        "index" = @(@("Music & Records", "Index"), @("Personal Knowledge Management", "Indexes and Tags"), @("Science and Nature", "Index"), @("Travel and Exploration", "Travel Index"))
     }
 
     return $tagMap
@@ -3671,6 +3844,287 @@ function Test-FileAgainstSubsection {
     }
 }
 
+#region AI Suitability Check Functions
+
+<#
+.SYNOPSIS
+    Invokes the Claude API to analyze text content.
+
+.DESCRIPTION
+    Makes a REST API call to the Anthropic Claude API. Uses the ANTHROPIC_API_KEY
+    environment variable for authentication. Returns Claude's response text.
+
+.PARAMETER Prompt
+    The prompt/instructions to send to Claude.
+
+.PARAMETER Content
+    The content to be analyzed by Claude.
+
+.PARAMETER MaxTokens
+    Maximum tokens in the response. Defaults to 500.
+
+.OUTPUTS
+    String containing Claude's response, or $null if the call fails.
+#>
+function Invoke-ClaudeAPI {
+    param(
+        # $Prompt: The system/user prompt for Claude
+        [string]$Prompt,
+
+        # $Content: The content to analyze
+        [string]$Content,
+
+        # $MaxTokens: Maximum response tokens
+        [int]$MaxTokens = 500
+    )
+
+    # $apiKey: The Anthropic API key from environment variable
+    $apiKey = $env:ANTHROPIC_API_KEY
+
+    if (-not $apiKey) {
+        Write-Log "ERROR: ANTHROPIC_API_KEY environment variable not set" -Level ERROR
+        return $null
+    }
+
+    # $apiUrl: The Claude API endpoint
+    $apiUrl = "https://api.anthropic.com/v1/messages"
+
+    # $headers: HTTP headers for the API request
+    $headers = @{
+        "x-api-key" = $apiKey
+        "anthropic-version" = "2023-06-01"
+        "content-type" = "application/json"
+    }
+
+    # Truncate content if too long (keep first 3000 chars to stay within token limits)
+    # $truncatedContent: Content truncated to fit API limits
+    $truncatedContent = if ($Content.Length -gt 3000) {
+        $Content.Substring(0, 3000) + "`n... [content truncated]"
+    } else {
+        $Content
+    }
+
+    # $body: The request body for Claude API
+    $body = @{
+        model = "claude-sonnet-4-20250514"
+        max_tokens = $MaxTokens
+        messages = @(
+            @{
+                role = "user"
+                content = "$Prompt`n`n---`nCONTENT TO ANALYZE:`n$truncatedContent"
+            }
+        )
+    } | ConvertTo-Json -Depth 10
+
+    try {
+        # $response: The API response from Claude
+        $response = Invoke-RestMethod -Uri $apiUrl -Method POST -Headers $headers -Body $body -ContentType "application/json; charset=utf-8"
+
+        # Extract and return the text response
+        if ($response.content -and $response.content.Count -gt 0) {
+            return $response.content[0].text
+        }
+        return $null
+    }
+    catch {
+        Write-Log "Claude API error: $($_.Exception.Message)" -Level ERROR
+        return $null
+    }
+}
+
+<#
+.SYNOPSIS
+    Uses Claude AI to validate if a note truly belongs in a proposed subsection.
+
+.DESCRIPTION
+    After keyword matching suggests a subsection, this function uses Claude AI
+    to evaluate whether the note's content actually fits the topic. If the match
+    is deemed unsuitable, Claude suggests the correct subsection from the
+    available options.
+
+.PARAMETER OrphanName
+    The name of the orphan file being evaluated.
+
+.PARAMETER OrphanContent
+    The content of the orphan file.
+
+.PARAMETER ProposedMOC
+    The MOC name suggested by keyword matching.
+
+.PARAMETER ProposedSubsection
+    The subsection name suggested by keyword matching.
+
+.PARAMETER AllSubsections
+    Hashtable of all available MOCs and their subsections for suggesting alternatives.
+    Format: @{ "MOC Name" = @("Subsection1", "Subsection2", ...) }
+
+.OUTPUTS
+    Hashtable with:
+    - IsSuitable: Boolean indicating if the proposed match is appropriate
+    - CorrectMOC: If not suitable, the suggested correct MOC name (or $null)
+    - CorrectSubsection: If not suitable, the suggested correct subsection (or $null)
+    - Reason: Explanation for the decision
+#>
+function Test-SubsectionSuitabilityWithAI {
+    param(
+        # $OrphanName: Name of the orphan file
+        [string]$OrphanName,
+
+        # $OrphanContent: Content of the orphan file
+        [string]$OrphanContent,
+
+        # $ProposedMOC: The MOC suggested by keyword matching
+        [string]$ProposedMOC,
+
+        # $ProposedSubsection: The subsection suggested by keyword matching
+        [string]$ProposedSubsection,
+
+        # $AllSubsections: All available MOC/subsection combinations
+        [hashtable]$AllSubsections
+    )
+
+    # Build a formatted list of all available MOCs and subsections for Claude
+    # $subsectionList: Formatted string listing all MOC/subsection options
+    $subsectionList = ""
+    foreach ($mocName in $AllSubsections.Keys | Sort-Object) {
+        $subsectionList += "`n$mocName :"
+        foreach ($sub in $AllSubsections[$mocName]) {
+            $subsectionList += "`n  - $sub"
+        }
+    }
+
+    # $prompt: The prompt asking Claude to evaluate the match
+    $prompt = @"
+You are evaluating whether a note belongs in a specific MOC (Map of Content) subsection in an Obsidian knowledge vault.
+
+FILE NAME: $OrphanName
+PROPOSED LOCATION: $ProposedMOC / $ProposedSubsection
+
+Your task:
+1. Read the note content below
+2. Determine if this note TRULY belongs in "$ProposedMOC / $ProposedSubsection"
+3. If NOT suitable, suggest the BEST alternative from the available subsections
+
+Available MOCs and Subsections:
+$subsectionList
+
+RESPOND IN EXACTLY THIS FORMAT (no other text):
+SUITABLE: YES or NO
+CORRECT_MOC: [MOC name if NO, otherwise leave blank]
+CORRECT_SUBSECTION: [Subsection name if NO, otherwise leave blank]
+REASON: [Brief 1-sentence explanation]
+
+Examples:
+- If suitable: "SUITABLE: YES`nCORRECT_MOC:`nCORRECT_SUBSECTION:`nREASON: The note discusses Bahá'í prayers and teachings."
+- If not suitable: "SUITABLE: NO`nCORRECT_MOC: Health & Nutrition`nCORRECT_SUBSECTION: Plant-Based Nutrition`nREASON: This is a vegan recipe, not related to technology."
+"@
+
+    # Call Claude API for evaluation
+    # $response: Claude's response to the suitability check
+    $response = Invoke-ClaudeAPI -Prompt $prompt -Content $OrphanContent -MaxTokens 300
+
+    if (-not $response) {
+        Write-Log "AI suitability check failed - API returned no response" -Level WARNING
+        # Return suitable=true to fall back to keyword-based matching
+        return @{
+            IsSuitable = $true
+            CorrectMOC = $null
+            CorrectSubsection = $null
+            Reason = "AI check unavailable - using keyword match"
+        }
+    }
+
+    # Parse Claude's response
+    # $isSuitable: Boolean extracted from SUITABLE: line
+    $isSuitable = $response -match "SUITABLE:\s*YES"
+
+    # $correctMOC: MOC name extracted from CORRECT_MOC: line
+    $correctMOC = $null
+    if ($response -match "CORRECT_MOC:\s*(.+?)(?:`n|$)") {
+        $correctMOC = $matches[1].Trim()
+        if ($correctMOC -eq "" -or $correctMOC -eq "N/A") {
+            $correctMOC = $null
+        }
+    }
+
+    # $correctSubsection: Subsection name extracted from CORRECT_SUBSECTION: line
+    $correctSubsection = $null
+    if ($response -match "CORRECT_SUBSECTION:\s*(.+?)(?:`n|$)") {
+        $correctSubsection = $matches[1].Trim()
+        if ($correctSubsection -eq "" -or $correctSubsection -eq "N/A") {
+            $correctSubsection = $null
+        }
+    }
+
+    # $reason: Explanation extracted from REASON: line
+    $reason = "No reason provided"
+    if ($response -match "REASON:\s*(.+?)(?:`n|$)") {
+        $reason = $matches[1].Trim()
+    }
+
+    return @{
+        IsSuitable = $isSuitable
+        CorrectMOC = $correctMOC
+        CorrectSubsection = $correctSubsection
+        Reason = $reason
+    }
+}
+
+<#
+.SYNOPSIS
+    Builds a hashtable of all available MOCs and their subsections.
+
+.DESCRIPTION
+    Iterates through all discovered MOCs and extracts their subsections,
+    returning a hashtable that maps MOC names to arrays of subsection names.
+    This is used to provide Claude with the complete list of available
+    categorization options.
+
+.PARAMETER MOCs
+    Array of MOC objects from Get-AllMOCs function.
+
+.OUTPUTS
+    Hashtable mapping MOC names to arrays of subsection names.
+#>
+function Get-AllAvailableSubsections {
+    param(
+        # $MOCs: Array of MOC objects
+        [array]$MOCs
+    )
+
+    # $result: Hashtable to store MOC -> subsections mapping
+    $result = @{}
+
+    foreach ($moc in $MOCs) {
+        # Read MOC content to extract subsections
+        # $mocContent: The full text content of the MOC file
+        $mocContent = Get-Content -LiteralPath $moc.FullPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+
+        if ($mocContent) {
+            # $subsections: Array of subsection names from this MOC
+            $subsections = Get-MOCSubsections -Content $mocContent
+
+            # Only include subsections that have keywords defined
+            # $subsectionsWithKeywords: Filtered list of subsections that have keyword mappings
+            $subsectionsWithKeywords = @()
+            foreach ($sub in $subsections) {
+                $keywords = Get-SubsectionKeywords -MOCName $moc.Name -SubsectionName $sub
+                if ($keywords.Count -gt 0) {
+                    $subsectionsWithKeywords += $sub
+                }
+            }
+
+            if ($subsectionsWithKeywords.Count -gt 0) {
+                $result[$moc.Name] = $subsectionsWithKeywords
+            }
+        }
+    }
+
+    return $result
+}
+
+#endregion AI Suitability Check Functions
+
 <#
 .SYNOPSIS
     Adds a link to a specific subsection within a MOC file.
@@ -3898,6 +4352,16 @@ foreach ($moc in $allMOCs) {
     Write-Log "  - $($moc.Name)" -Level INFO
 }
 
+# Build the available subsections map for AI suitability checking (unless SkipAI is set)
+# $allAvailableSubsections: Hashtable mapping MOC names to arrays of subsection names
+$allAvailableSubsections = $null
+if (-not $SkipAI) {
+    $allAvailableSubsections = Get-AllAvailableSubsections -MOCs $allMOCs
+    Write-Log "Built subsection map for AI validation ($($allAvailableSubsections.Count) MOCs with keywords)" -Level INFO
+} else {
+    Write-Log "AI suitability checking is DISABLED (-SkipAI flag)" -Level WARNING
+}
+
 # Step 2: Find all orphan files in the vault
 Write-LogSection "STEP 2: Finding Orphan Files"
 
@@ -3953,6 +4417,15 @@ for ($iteration = 1; $iteration -le $orphansToProcess; $iteration++) {
 
     # $orphanTags: Array of tags extracted from the orphan file
     $orphanTags = Get-FileTags -Content $orphanContent
+
+    # Virtual tag: Treat files in "09 - Kindle Clippings" folder as having the "books" tag
+    # $isKindleClipping: Boolean indicating if file is in the Kindle Clippings folder
+    $isKindleClipping = $randomOrphan.Folder -like "*09 - Kindle Clippings*"
+    if ($isKindleClipping -and $orphanTags -notcontains "books") {
+        # Add "books" tag virtually without modifying the actual file
+        $orphanTags += "books"
+        Write-Log "Added virtual 'books' tag (file is in 09 - Kindle Clippings folder)" -Level INFO
+    }
 
     Write-Log "Extracted $($orphanTags.Count) tag(s) from file:" -Level INFO
     foreach ($tag in $orphanTags) {
@@ -4105,6 +4578,109 @@ if ($validatedMatches.Count -eq 0) {
 $matchedSubsections = $validatedMatches
 
 Write-Log "Validated $($matchedSubsections.Count) match(es) for existing MOCs" -Level SUCCESS
+
+# Step 6.5: AI Suitability Check (if enabled)
+# This step uses Claude AI to verify that keyword matches are contextually appropriate
+# and relocates notes to correct subsections if the AI determines a mismatch
+if (-not $SkipAI -and $allAvailableSubsections -and $matchedSubsections.Count -gt 0) {
+    Write-LogSection "STEP 6.5: AI Suitability Verification"
+    Write-Log "Using Claude AI to verify match suitability..." -Level INFO
+
+    # $aiVerifiedMatches: Array to store matches that passed AI verification or were corrected
+    $aiVerifiedMatches = @()
+
+    # $relocatedCount: Counter for matches that were relocated to different subsections
+    $relocatedCount = 0
+
+    # $rejectedCount: Counter for matches rejected by AI with no valid alternative
+    $rejectedCount = 0
+
+    foreach ($match in $matchedSubsections) {
+        Write-Log "AI checking: $($match.DisplayName) / $($match.SubsectionName)" -Level INFO
+
+        # $aiResult: Result of AI suitability check
+        $aiResult = Test-SubsectionSuitabilityWithAI -OrphanName $randomOrphan.Name `
+                                                      -OrphanContent $orphanContent `
+                                                      -ProposedMOC $match.DisplayName `
+                                                      -ProposedSubsection $match.SubsectionName `
+                                                      -AllSubsections $allAvailableSubsections
+
+        if ($aiResult.IsSuitable) {
+            # AI confirms the match is appropriate
+            Write-Log "  AI CONFIRMED: $($aiResult.Reason)" -Level SUCCESS
+            $aiVerifiedMatches += $match
+        }
+        else {
+            # AI says the match is not suitable
+            Write-Log "  AI REJECTED: $($aiResult.Reason)" -Level WARNING
+
+            # Check if AI suggested a correction
+            if ($aiResult.CorrectMOC -and $aiResult.CorrectSubsection) {
+                Write-Log "  AI SUGGESTS: $($aiResult.CorrectMOC) / $($aiResult.CorrectSubsection)" -Level INFO
+
+                # Find the MOC object for the suggested correction
+                # $correctedMOC: The MOC object matching the AI's suggestion
+                $correctedMOC = $allMOCs | Where-Object { $_.Name -eq $aiResult.CorrectMOC } | Select-Object -First 1
+
+                if ($correctedMOC) {
+                    # Verify the suggested subsection exists in the MOC
+                    # $correctedMOCContent: Content of the corrected MOC
+                    $correctedMOCContent = Get-Content -LiteralPath $correctedMOC.FullPath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+                    # $correctedSubsections: Subsections available in the corrected MOC
+                    $correctedSubsections = Get-MOCSubsections -Content $correctedMOCContent
+
+                    if ($correctedSubsections -contains $aiResult.CorrectSubsection) {
+                        # Create a corrected match object
+                        # $correctedMatch: New match object with AI-suggested location
+                        $correctedMatch = @{
+                            MOCPath = $correctedMOC.RelativePath
+                            MOCName = $correctedMOC.FileName
+                            DisplayName = $correctedMOC.Name
+                            SubsectionName = $aiResult.CorrectSubsection
+                            Reason = "AI relocated: $($aiResult.Reason)"
+                            Confidence = 'AI-CORRECTED'
+                        }
+
+                        Write-Log "  RELOCATED to: $($aiResult.CorrectMOC) / $($aiResult.CorrectSubsection)" -Level SUCCESS
+                        $aiVerifiedMatches += $correctedMatch
+                        $relocatedCount++
+                    }
+                    else {
+                        Write-Log "  ERROR: Suggested subsection '$($aiResult.CorrectSubsection)' not found in MOC" -Level WARNING
+                        $rejectedCount++
+                    }
+                }
+                else {
+                    Write-Log "  ERROR: Suggested MOC '$($aiResult.CorrectMOC)' not found" -Level WARNING
+                    $rejectedCount++
+                }
+            }
+            else {
+                # AI rejected but no alternative suggested
+                Write-Log "  SKIPPED: No valid alternative suggested by AI" -Level WARNING
+                $rejectedCount++
+            }
+        }
+    }
+
+    # Update matchedSubsections with AI-verified/corrected matches
+    $matchedSubsections = $aiVerifiedMatches
+
+    Write-Log "" -Level INFO
+    Write-Log "AI Verification Summary:" -Level INFO
+    Write-Log "  Confirmed: $($aiVerifiedMatches.Count - $relocatedCount)" -Level SUCCESS
+    Write-Log "  Relocated: $relocatedCount" -Level WARNING
+    Write-Log "  Rejected: $rejectedCount" -Level WARNING
+
+    if ($matchedSubsections.Count -eq 0) {
+        Write-Log "No valid matches after AI verification. Skipping to next orphan..." -Level WARNING
+        $shuffledOrphans.RemoveAt(0)
+        continue
+    }
+}
+elseif ($SkipAI) {
+    Write-Log "Skipping AI suitability check (-SkipAI flag set)" -Level INFO
+}
 
 # Step 7: Create unidirectional links (MOC subsection -> orphan)
 Write-LogSection "STEP 7: Creating Unidirectional Links (MOC -> Orphan)"
