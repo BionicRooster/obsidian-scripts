@@ -21,6 +21,7 @@
 #  14. Comprehensive mojibake repair for severely corrupted files
 #  15. Removes link aliases from MOC files ([[target|alias]] -> [[target]])
 #  16. Simplifies MOC link paths ([[path/filename]] -> [[filename]])
+#  17. Moves #clippings tag to last position in files with multiple tags
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -61,6 +62,7 @@ $script:mojibakeFixed = 0
 $script:comprehensiveMojibakeFixed = 0
 $script:linkAliasesRemoved = 0
 $script:linkPathsSimplified = 0
+$script:clippingsTagsMoved = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -2219,6 +2221,190 @@ function Simplify-MocLinkPaths {
         Write-Log "  Processed $filesModified files, simplified $totalLinksSimplified links" "Green"
     }
 }
+
+# =============================================================================
+# PHASE 17: Move #clippings tag to last position
+# =============================================================================
+# In files with multiple tags, moves #clippings to the end of the tag list
+# Handles both inline hashtag format (#tag1 #tag2 #clippings) and YAML format
+# =============================================================================
+function Move-ClippingsTagToLast {
+    Write-Log "=== Phase 17: Moving #clippings tag to last position ===" "Cyan"
+
+    # Path to the Clippings folder
+    $clippingsPath = Join-Path $vaultPath "10 - Clippings"
+
+    # Check if folder exists
+    if (-not (Test-Path $clippingsPath)) {
+        Write-Log "  Clippings folder not found: $clippingsPath" "Yellow"
+        return
+    }
+
+    # Counter for tracking changes
+    $filesModified = 0
+    $tagsMovedCount = 0
+
+    # Get all markdown files in the Clippings folder (recursively)
+    $mdFiles = Get-ChildItem -Path $clippingsPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    if ($mdFiles.Count -eq 0) {
+        Write-Log "  No markdown files found in Clippings folder" "Gray"
+        return
+    }
+
+    Write-Log "  Checking $($mdFiles.Count) files in Clippings folder" "Yellow"
+
+    foreach ($file in $mdFiles) {
+        # Read file content with UTF-8 encoding
+        $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+
+        # Skip empty files
+        if ([string]::IsNullOrWhiteSpace($content)) {
+            continue
+        }
+
+        # Flag to track if we modified this file
+        $modified = $false
+        $originalContent = $content
+        $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+        # Check for YAML frontmatter
+        if ($content -match '^---\r?\n([\s\S]*?)\r?\n---') {
+            $yamlBlock = $Matches[0]
+            $yamlContent = $Matches[1]
+
+            # Check for YAML array format: tags: [tag1, tag2, clippings]
+            if ($yamlContent -match 'tags:\s*\[([^\]]+)\]') {
+                $tagsMatch = $Matches[0]
+                $tagsList = $Matches[1]
+
+                # Parse the tags (handle both quoted and unquoted)
+                $tags = $tagsList -split '\s*,\s*' | ForEach-Object { $_.Trim().Trim('"').Trim("'") }
+
+                # Check if clippings tag exists and there are multiple tags
+                if ($tags.Count -gt 1 -and ($tags -contains 'clippings' -or $tags -contains '#clippings')) {
+                    # Check if clippings is already last
+                    $lastTag = $tags[-1]
+                    if ($lastTag -ne 'clippings' -and $lastTag -ne '#clippings') {
+                        # Remove clippings from its current position
+                        $otherTags = $tags | Where-Object { $_ -ne 'clippings' -and $_ -ne '#clippings' }
+
+                        # Rebuild tags array with clippings at the end
+                        $newTagsList = ($otherTags + 'clippings') -join ', '
+                        $newTagsLine = "tags: [$newTagsList]"
+
+                        # Replace in YAML content
+                        $newYamlContent = $yamlContent -replace 'tags:\s*\[[^\]]+\]', $newTagsLine
+                        $newYamlBlock = "---`n$newYamlContent`n---"
+                        $content = $content -replace [regex]::Escape($yamlBlock), $newYamlBlock
+                        $modified = $true
+                        $tagsMovedCount++
+
+                        if ($dryRun) {
+                            Write-Log "  [DRY RUN] Would move clippings tag in YAML array: $relativePath" "Magenta"
+                        } else {
+                            Write-Log "  Moved clippings tag in YAML array: $relativePath" "Green"
+                        }
+                    }
+                }
+            }
+            # Check for YAML list format: tags:\n  - tag1\n  - tag2
+            elseif ($yamlContent -match 'tags:\s*\r?\n((?:\s*-\s*[^\r\n]+\r?\n?)+)') {
+                $tagsSection = $Matches[0]
+                $tagLines = $Matches[1]
+
+                # Parse tags from list format
+                $tags = @()
+                $tagLines -split '\r?\n' | ForEach-Object {
+                    if ($_ -match '^\s*-\s*(.+)$') {
+                        $tags += $Matches[1].Trim().Trim('"').Trim("'")
+                    }
+                }
+
+                # Check if clippings tag exists and there are multiple tags
+                if ($tags.Count -gt 1 -and ($tags -contains 'clippings' -or $tags -contains '#clippings')) {
+                    # Check if clippings is already last
+                    $lastTag = $tags[-1]
+                    if ($lastTag -ne 'clippings' -and $lastTag -ne '#clippings') {
+                        # Remove clippings from its current position
+                        $otherTags = $tags | Where-Object { $_ -ne 'clippings' -and $_ -ne '#clippings' }
+
+                        # Rebuild tags section with clippings at the end
+                        $newTagLines = ($otherTags | ForEach-Object { "  - $_" }) -join "`n"
+                        $newTagLines += "`n  - clippings"
+                        $newTagsSection = "tags:`n$newTagLines"
+
+                        # Replace in content
+                        $content = $content -replace [regex]::Escape($tagsSection), $newTagsSection
+                        $modified = $true
+                        $tagsMovedCount++
+
+                        if ($dryRun) {
+                            Write-Log "  [DRY RUN] Would move clippings tag in YAML list: $relativePath" "Magenta"
+                        } else {
+                            Write-Log "  Moved clippings tag in YAML list: $relativePath" "Green"
+                        }
+                    }
+                }
+            }
+        }
+
+        # Check for inline hashtag format (outside YAML): #clippings #othertag
+        # Look for lines with multiple hashtags where one is #clippings
+        $lines = $content -split '\r?\n'
+        $newLines = @()
+        $inlineModified = $false
+
+        foreach ($line in $lines) {
+            # Match lines with multiple hashtags
+            if ($line -match '(?:^|\s)(#\w+(?:\s+#\w+)+)') {
+                $hashtagsMatch = $Matches[1]
+                $hashtags = [regex]::Matches($hashtagsMatch, '#\w+') | ForEach-Object { $_.Value }
+
+                if ($hashtags.Count -gt 1 -and $hashtags -contains '#clippings') {
+                    # Check if #clippings is already last
+                    if ($hashtags[-1] -ne '#clippings') {
+                        $otherHashtags = $hashtags | Where-Object { $_ -ne '#clippings' }
+                        $newHashtags = ($otherHashtags + '#clippings') -join ' '
+                        $newLine = $line -replace [regex]::Escape($hashtagsMatch), $newHashtags
+                        $newLines += $newLine
+                        $inlineModified = $true
+                        $tagsMovedCount++
+                        continue
+                    }
+                }
+            }
+            $newLines += $line
+        }
+
+        if ($inlineModified) {
+            $content = $newLines -join "`n"
+            $modified = $true
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would move clippings tag inline: $relativePath" "Magenta"
+            } else {
+                Write-Log "  Moved clippings tag inline: $relativePath" "Green"
+            }
+        }
+
+        if ($modified -and -not $dryRun) {
+            # Write back with UTF-8 encoding (no BOM)
+            $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($file.FullName, $content, $utf8NoBom)
+            $filesModified++
+        }
+    }
+
+    $script:clippingsTagsMoved = $tagsMovedCount
+
+    if ($tagsMovedCount -eq 0) {
+        Write-Log "  No #clippings tags needed repositioning" "Green"
+    } else {
+        Write-Log "  Moved $tagsMovedCount clippings tags in $filesModified files" "Green"
+    }
+}
+
 # =============================================================================
 # MAIN EXECUTION
 # =============================================================================
@@ -2266,6 +2452,7 @@ Fix-MojibakeEncoding
 Fix-ComprehensiveMojibake
 Remove-MocLinkAliases
 Simplify-MocLinkPaths
+Move-ClippingsTagToLast
 
 # Summary
 Write-Log "" "White"
@@ -2289,5 +2476,6 @@ Write-Log "  Mojibake patterns fixed: $script:mojibakeFixed" "White"
 Write-Log "  Severe mojibake files fixed: $script:comprehensiveMojibakeFixed" "White"
 Write-Log "  MOC link aliases removed: $script:linkAliasesRemoved" "White"
 Write-Log "  MOC link paths simplified: $script:linkPathsSimplified" "White"
+Write-Log "  Clippings tags repositioned: $script:clippingsTagsMoved" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
