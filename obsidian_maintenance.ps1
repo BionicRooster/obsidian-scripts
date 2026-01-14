@@ -267,8 +267,10 @@ function Trim-FilenameWhitespace {
     Write-Log "=== Phase 1c: Trimming whitespace from filenames ===" "Cyan"
 
     # Find all markdown files with leading or trailing whitespace in names
+    # NOTE: We check $_.Name directly because $_.BaseName is unreliable when there's
+    # a space before .md - Windows treats " .md" as the extension, so BaseName includes .md
     $filesToTrim = Get-ChildItem -Path $vaultPath -Recurse -Filter "*.md" -ErrorAction SilentlyContinue |
-        Where-Object { $_.BaseName -ne $_.BaseName.Trim() }
+        Where-Object { $_.Name -match '^\s' -or $_.Name -match '\s\.md$' }
 
     if ($filesToTrim.Count -eq 0) {
         Write-Log "  No files need whitespace trimming" "Green"
@@ -281,7 +283,9 @@ function Trim-FilenameWhitespace {
         # Skip if file no longer exists
         if (-not (Test-Path $file.FullName)) { continue }
 
-        $oldName = $file.BaseName
+        # Extract base name manually - don't use $file.BaseName as it's unreliable
+        # when there's a space before .md (Windows treats " .md" as extension)
+        $oldName = $file.Name -replace '\.md$', ''
         $newName = $oldName.Trim()
         $newPath = Join-Path $file.DirectoryName "$newName.md"
 
