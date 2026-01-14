@@ -19,6 +19,8 @@
 #  12. Generates "Orphan Files.md" listing notes with no incoming links
 #  13. Fixes mojibake encoding (em dash, ellipsis) from UTF-8/Windows-1252 mismatch
 #  14. Comprehensive mojibake repair for severely corrupted files
+#  15. Removes link aliases from MOC files ([[target|alias]] -> [[target]])
+#  16. Simplifies MOC link paths ([[path/filename]] -> [[filename]])
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -57,6 +59,8 @@ $script:oneNoteImageLinksFixed = 0
 $script:orphanFilesFound = 0
 $script:mojibakeFixed = 0
 $script:comprehensiveMojibakeFixed = 0
+$script:linkAliasesRemoved = 0
+$script:linkPathsSimplified = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -2054,6 +2058,164 @@ function Fix-ComprehensiveMojibake {
 }
 
 # =============================================================================
+# PHASE 15: Remove link aliases from MOC files
+# =============================================================================
+# Converts [[target|alias]] to [[target]] so displayed text reflects actual filename
+# This ensures that if a file is renamed, the displayed link text updates with it
+# =============================================================================
+function Remove-MocLinkAliases {
+    Write-Log "=== Phase 15: Removing link aliases from MOC files ===" "Cyan"
+
+    # Get all MOC files in the vault
+    $mocFiles = Get-ChildItem -Path $vaultPath -Recurse -Filter "*MOC*.md" -ErrorAction SilentlyContinue
+
+    if ($mocFiles.Count -eq 0) {
+        Write-Log "  No MOC files found" "Gray"
+        return
+    }
+
+    Write-Log "  Found $($mocFiles.Count) MOC files to process" "Yellow"
+
+    # Counter for changes in this phase
+    $totalChanges = 0
+    $filesModified = 0
+
+    foreach ($file in $mocFiles) {
+        # Read file content with UTF-8 encoding
+        $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+
+        # Regex pattern to match [[target|alias]] links
+        # Captures the target part (before the pipe) and replaces the whole thing with just [[target]]
+        $pattern = '\[\[([^\]|]+)\|[^\]]+\]\]'
+
+        # Find all matches
+        $matches = [regex]::Matches($content, $pattern)
+
+        if ($matches.Count -gt 0) {
+            $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would remove $($matches.Count) aliases from: $relativePath" "Magenta"
+            } else {
+                # Replace all alias links with just the target
+                $newContent = [regex]::Replace($content, $pattern, '[[$1]]')
+
+                # Write the modified content back to the file
+                Set-Content -Path $file.FullName -Value $newContent -NoNewline -Encoding UTF8
+                Write-Log "  Removed $($matches.Count) aliases from: $relativePath" "Green"
+            }
+
+            $totalChanges += $matches.Count
+            $filesModified++
+        }
+    }
+
+    $script:linkAliasesRemoved = $totalChanges
+
+    if ($totalChanges -eq 0) {
+        Write-Log "  No link aliases found in MOC files" "Green"
+    } else {
+        Write-Log "  Processed $filesModified files, removed $totalChanges aliases" "Green"
+    }
+}
+
+
+# =============================================================================
+# PHASE 16: Simplify MOC link paths
+# =============================================================================
+# Converts [[path/filename]] to [[filename]] so links don't include folder paths
+# Obsidian can resolve links by filename alone, so full paths are unnecessary
+# Preserves heading/block references and aliases
+# =============================================================================
+function Simplify-MocLinkPaths {
+    Write-Log "=== Phase 16: Simplifying MOC link paths ===" "Cyan"
+
+    # Get all MOC files in the vault (files in Dashboard/Index/MOC directories or with MOC in name)
+    $mocFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
+        $_.DirectoryName -match '(Dashboard|Index|MOC)' -or $_.Name -match 'MOC'
+    }
+
+    if ($mocFiles.Count -eq 0) {
+        Write-Log "  No MOC files found" "Gray"
+        return
+    }
+
+    Write-Log "  Found $($mocFiles.Count) MOC files to process" "Yellow"
+
+    # Counters for this phase
+    $totalLinksSimplified = 0
+    $filesModified = 0
+
+    foreach ($file in $mocFiles) {
+        # Read file content with UTF-8 encoding (preserving diacriticals)
+        $fileContent = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+
+        # Skip if file is empty
+        if ([string]::IsNullOrWhiteSpace($fileContent)) {
+            continue
+        }
+
+        # Store original content for comparison
+        $originalContent = $fileContent
+        $fileLinksSimplified = 0
+
+        # Pattern to match [[path/filename]] or [[path/filename#heading]] or [[path/filename|alias]]
+        # Captures: 1=full path with filename, 2=optional #heading, 3=optional |alias
+        $linkPattern = '\[\[([^\]#|]+/[^\]#|]+)(#[^\]|]+)?(\|[^\]]+)?\]\]'
+
+        # Find all matches and process them
+        $linkMatches = [regex]::Matches($fileContent, $linkPattern)
+
+        # Process matches in reverse order to preserve string positions
+        $matchList = @($linkMatches)
+        [array]::Reverse($matchList)
+
+        foreach ($match in $matchList) {
+            $fullMatch = $match.Value
+            $pathPart = $match.Groups[1].Value           # e.g., "04 - Indexes/Religion/BahÃ¡'Ã­/RidvÃ¡n 2022 Message"
+            $headingPart = $match.Groups[2].Value        # e.g., "#heading" or empty
+            $aliasPart = $match.Groups[3].Value          # e.g., "|alias" or empty
+
+            # Extract just the filename from the path (part after last /)
+            $filename = $pathPart -replace '^.*/', ''
+
+            # Build the simplified link
+            $simplifiedLink = "[[$filename$headingPart$aliasPart]]"
+
+            # Only replace if it's actually different (has a path to remove)
+            if ($fullMatch -ne $simplifiedLink) {
+                $fileContent = $fileContent.Substring(0, $match.Index) + $simplifiedLink + $fileContent.Substring($match.Index + $match.Length)
+                $fileLinksSimplified++
+            }
+        }
+
+        # If content changed, save the file
+        if ($fileContent -ne $originalContent) {
+            $totalLinksSimplified += $fileLinksSimplified
+            $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would simplify $fileLinksSimplified links in: $relativePath" "Magenta"
+            } else {
+                # Write back with UTF-8 encoding (no BOM)
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($file.FullName, $fileContent, $utf8NoBom)
+                Write-Log "  Simplified $fileLinksSimplified links in: $relativePath" "Green"
+            }
+
+            $filesModified++
+        }
+    }
+
+    $script:linkPathsSimplified = $totalLinksSimplified
+
+    if ($totalLinksSimplified -eq 0) {
+        Write-Log "  No link paths needed simplification" "Green"
+    } else {
+        Write-Log "  Processed $filesModified files, simplified $totalLinksSimplified links" "Green"
+    }
+}
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -2066,6 +2228,19 @@ Write-Log "Vault: $vaultPath" "Cyan"
 Write-Log "Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" "Cyan"
 if ($dryRun) { Write-Log "MODE: DRY RUN (no changes will be made)" "Magenta" }
 Write-Log "============================================" "Cyan"
+Write-Log ""
+
+# Check if Obsidian is running, launch if not
+$obsidianProcess = Get-Process -Name "Obsidian" -ErrorAction SilentlyContinue
+if ($obsidianProcess) {
+    Write-Log "Obsidian is already running, continuing..." "Green"
+} else {
+    Write-Log "Launching Obsidian..." "Yellow"
+    Start-Process "obsidian:"
+    Write-Log "Waiting 15 seconds for Obsidian to initialize..." "Yellow"
+    Start-Sleep -Seconds 15
+    Write-Log "Proceeding with maintenance..." "Green"
+}
 Write-Log ""
 
 # Run maintenance phases
@@ -2085,6 +2260,8 @@ Fix-BrokenImageLinks
 Generate-OrphanFilesList
 Fix-MojibakeEncoding
 Fix-ComprehensiveMojibake
+Remove-MocLinkAliases
+Simplify-MocLinkPaths
 
 # Summary
 Write-Log "" "White"
@@ -2106,5 +2283,7 @@ Write-Log "  Broken image links fixed: $script:brokenImageLinksFixed (OneNote: $
 Write-Log "  Orphan files found: $script:orphanFilesFound" "White"
 Write-Log "  Mojibake patterns fixed: $script:mojibakeFixed" "White"
 Write-Log "  Severe mojibake files fixed: $script:comprehensiveMojibakeFixed" "White"
+Write-Log "  MOC link aliases removed: $script:linkAliasesRemoved" "White"
+Write-Log "  MOC link paths simplified: $script:linkPathsSimplified" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
