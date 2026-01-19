@@ -22,6 +22,11 @@
 #  15. Removes link aliases from MOC files ([[target|alias]] -> [[target]])
 #  16. Simplifies MOC link paths ([[path/filename]] -> [[filename]])
 #  17. Moves #clippings tag to last position in files with multiple tags
+#  18. Fixes YAML nav: lines with unquoted | characters
+#  19. Fixes broken wiki-links with missing closing brackets
+#  20. Fixes MOC formatting: bullet points ("-" -> "- ") and extra brackets ("]]]" -> "]]")
+#  21. Fixes wiki-links accidentally placed inside YAML frontmatter
+#  22. Fixes YAML tag indentation (mixed indented/unindented list items)
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -63,6 +68,11 @@ $script:comprehensiveMojibakeFixed = 0
 $script:linkAliasesRemoved = 0
 $script:linkPathsSimplified = 0
 $script:clippingsTagsMoved = 0
+$script:yamlNavFixed = 0
+$script:brokenWikiLinksFixed = 0
+$script:bulletPointsFixed = 0
+$script:yamlWikiLinksFixed = 0
+$script:yamlTagIndentFixed = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -2406,6 +2416,598 @@ function Move-ClippingsTagToLast {
 }
 
 # =============================================================================
+# PHASE 18: Fix YAML nav lines with unquoted pipe characters
+# =============================================================================
+# The | character has special meaning in YAML (literal block scalar).
+# Wraps nav: values containing | in quotes to make valid YAML.
+# Example: nav: [[Link|Alias]] | Text -> nav: "[[Link|Alias]] | Text"
+# =============================================================================
+function Fix-YamlNavQuoting {
+    Write-Log "=== Phase 18: Fixing YAML nav: lines with unquoted pipes ===" "Cyan"
+
+    # Counter for tracking changes
+    $filesFixed = 0
+    $totalFixed = 0
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Read the file content with UTF-8 encoding
+        try {
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+        } catch {
+            continue
+        }
+
+        # Skip empty files or files that couldn't be read
+        if ([string]::IsNullOrEmpty($content)) {
+            continue
+        }
+
+        # Skip files without YAML frontmatter
+        if (-not $content.StartsWith("---")) {
+            continue
+        }
+
+        # Find the end of YAML frontmatter
+        $yamlEndIndex = $content.IndexOf("`n---", 3)
+        if ($yamlEndIndex -eq -1) {
+            # Try Windows line endings
+            $yamlEndIndex = $content.IndexOf("`r`n---", 3)
+        }
+
+        if ($yamlEndIndex -eq -1) {
+            continue
+        }
+
+        # Extract the YAML section
+        $yamlSection = $content.Substring(0, $yamlEndIndex)
+
+        # Pattern: nav: followed by [[ (wiki-link) that isn't already quoted
+        # Uses negative lookahead to skip already-quoted values
+        $navPattern = '(?m)^nav:\s*(?!["\x27])(\[\[.+\|.+)$'
+
+        if ($yamlSection -match $navPattern) {
+            $totalFixed++
+            $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix nav: in: $relativePath" "Magenta"
+            } else {
+                # Fix the nav: line by wrapping the value in quotes
+                $fixedContent = $content -replace '(?m)^(nav:)\s*(\[\[.+)$', '$1 "$2"'
+
+                # Write the fixed content back with UTF-8 encoding (no BOM)
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($file.FullName, $fixedContent, $utf8NoBom)
+
+                $filesFixed++
+                Write-Log "  Fixed nav: in: $relativePath" "Green"
+            }
+        }
+    }
+
+    $script:yamlNavFixed = $totalFixed
+
+    if ($totalFixed -eq 0) {
+        Write-Log "  No YAML nav: lines needed quoting" "Green"
+    } else {
+        Write-Log "  Fixed $totalFixed nav: lines in $filesFixed files" "Green"
+    }
+}
+
+# =============================================================================
+# PHASE 19: Fix broken wiki-links with missing closing brackets
+# =============================================================================
+# Finds wiki-links like [[Link] or [[Link|Alias] and adds missing bracket.
+# Example: [[Clippings|Clippings]| -> [[Clippings|Clippings]]|
+# Excludes Markdown links [[text]( which are valid.
+# =============================================================================
+function Fix-BrokenWikiLinks {
+    Write-Log "=== Phase 19: Fixing broken wiki-links (missing brackets) ===" "Cyan"
+
+    # Counter for tracking changes
+    $filesFixed = 0
+    $totalFixed = 0
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Read the file content with UTF-8 encoding
+        try {
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+        } catch {
+            continue
+        }
+
+        # Skip empty files
+        if ([string]::IsNullOrEmpty($content)) {
+            continue
+        }
+
+        # Pattern to find wiki-links with only one closing bracket
+        # Matches: [[something] followed by | or whitespace (not ] or ()
+        # Excludes: [[text]( which is a valid Markdown link format
+        $brokenLinkPattern = '\[\[([^\[\]]+)\]([^\]\(])'
+
+        $matches = [regex]::Matches($content, $brokenLinkPattern)
+
+        if ($matches.Count -gt 0) {
+            $totalFixed += $matches.Count
+            $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix $($matches.Count) broken link(s) in: $relativePath" "Magenta"
+            } else {
+                # Fix all broken wiki-links by adding the missing closing bracket
+                $fixedContent = [regex]::Replace($content, $brokenLinkPattern, '[[$1]]$2')
+
+                # Write the fixed content back with UTF-8 encoding (no BOM)
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($file.FullName, $fixedContent, $utf8NoBom)
+
+                $filesFixed++
+                Write-Log "  Fixed $($matches.Count) broken link(s) in: $relativePath" "Green"
+            }
+        }
+    }
+
+    $script:brokenWikiLinksFixed = $totalFixed
+
+    if ($totalFixed -eq 0) {
+        Write-Log "  No broken wiki-links found" "Green"
+    } else {
+        Write-Log "  Fixed $totalFixed broken links in $filesFixed files" "Green"
+    }
+}
+
+# =============================================================================
+# PHASE 20: Fix MOC formatting issues
+# =============================================================================
+# Fixes two common formatting issues in MOC files:
+# 1. Bullet points missing space: -[[Link]] -> - [[Link]]
+# 2. Extra closing brackets: [[Link]]] -> [[Link]]
+# Only processes MOC files in the Home Dashboard folder.
+# =============================================================================
+function Fix-MocBulletPoints {
+    Write-Log "=== Phase 20: Fixing malformed bullet points in MOC files ===" "Cyan"
+
+    # Path to MOC files
+    $mocPath = Join-Path $vaultPath "00 - Home Dashboard"
+
+    # Check if folder exists
+    if (-not (Test-Path $mocPath)) {
+        Write-Log "  Home Dashboard folder not found: $mocPath" "Yellow"
+        return
+    }
+
+    # Counter for tracking changes
+    $filesFixed = 0
+    $totalFixed = 0
+
+    # Get all MOC markdown files
+    $mocFiles = Get-ChildItem -Path $mocPath -Filter "*MOC*.md" -ErrorAction SilentlyContinue
+
+    if ($mocFiles.Count -eq 0) {
+        Write-Log "  No MOC files found" "Gray"
+        return
+    }
+
+    Write-Log "  Checking $($mocFiles.Count) MOC files" "Yellow"
+
+    foreach ($file in $mocFiles) {
+        # Read the file content with UTF-8 encoding
+        try {
+            $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+        } catch {
+            continue
+        }
+
+        # Skip empty files
+        if ([string]::IsNullOrEmpty($content)) {
+            continue
+        }
+
+        $originalContent = $content
+        $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+        # Track fixes for this file
+        $fileIssues = 0
+        $fixedContent = $content
+
+        # Pattern 1: line starting with - followed immediately by [[ (no space)
+        # Replace with: - [[ (dash, space, brackets)
+        $bulletPattern = '(?m)^-(\[\[)'
+        $bulletMatches = [regex]::Matches($fixedContent, $bulletPattern)
+        if ($bulletMatches.Count -gt 0) {
+            $fileIssues += $bulletMatches.Count
+            $fixedContent = $fixedContent -replace $bulletPattern, '- $1'
+        }
+
+        # Pattern 2: triple closing brackets ]]] should be ]]
+        $tripleBracketPattern = '\]\]\]'
+        $tripleMatches = [regex]::Matches($fixedContent, $tripleBracketPattern)
+        if ($tripleMatches.Count -gt 0) {
+            $fileIssues += $tripleMatches.Count
+            $fixedContent = $fixedContent -replace $tripleBracketPattern, ']]'
+        }
+
+        if ($fileIssues -gt 0) {
+            $totalFixed += $fileIssues
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix $fileIssues issue(s) in: $relativePath" "Magenta"
+            } else {
+                # Write the fixed content back with UTF-8 encoding (no BOM)
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($file.FullName, $fixedContent, $utf8NoBom)
+
+                $filesFixed++
+                Write-Log "  Fixed $fileIssues formatting issue(s) in: $relativePath" "Green"
+            }
+        }
+    }
+
+    $script:bulletPointsFixed = $totalFixed
+
+    if ($totalFixed -eq 0) {
+        Write-Log "  No malformed bullet points found in MOC files" "Green"
+    } else {
+        Write-Log "  Fixed $totalFixed bullet points in $filesFixed MOC files" "Green"
+    }
+}
+
+# =============================================================================
+# PHASE 21: Fix wiki-links accidentally placed inside YAML frontmatter
+# =============================================================================
+# Detects wiki-links (- [[...]]) that were incorrectly placed inside the YAML
+# frontmatter block, causing the closing --- to be pushed far from the opening.
+# Moves these links outside the YAML as a proper markdown "Related" section.
+# Example fix:
+#   BEFORE:                      AFTER:
+#   ---                          ---
+#   tags: [Health]               tags: [Health]
+#   - [[Link1]]                  ---
+#   - [[Link2]]
+#   ---                          ## Related
+#   Content...                   - [[Link1]]
+#                                - [[Link2]]
+#
+#                                Content...
+# =============================================================================
+function Fix-YamlWikiLinks {
+    Write-Log "=== Phase 21: Fixing wiki-links inside YAML frontmatter ===" "Cyan"
+
+    # Counters for tracking changes
+    $filesFixed = 0
+    $totalFixed = 0
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Read the file content with UTF-8 encoding
+        try {
+            $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
+        } catch {
+            continue
+        }
+
+        # Skip empty files or files that couldn't be read
+        if ([string]::IsNullOrEmpty($content)) {
+            continue
+        }
+
+        # Skip files without YAML frontmatter
+        if (-not $content.StartsWith("---")) {
+            continue
+        }
+
+        # Find potential YAML end markers (skip the opening ---)
+        # Look for --- that appears after the first line
+        $lines = $content -split "`r?`n"
+
+        # Find where YAML actually ends by looking for the second ---
+        $yamlEndLine = -1
+        for ($i = 1; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^---\s*$') {
+                $yamlEndLine = $i
+                break
+            }
+        }
+
+        # Skip if no closing --- found
+        if ($yamlEndLine -eq -1) {
+            continue
+        }
+
+        # Check if there are wiki-links inside the YAML block (lines 1 to yamlEndLine-1)
+        $wikiLinksInYaml = @()
+        $yamlProperLines = @()
+        $foundWikiLinks = $false
+
+        for ($i = 1; $i -lt $yamlEndLine; $i++) {
+            $line = $lines[$i]
+            # Check if this line is a wiki-link list item: - [[...]]
+            if ($line -match '^\s*-\s*\[\[.+\]\]') {
+                $wikiLinksInYaml += $line
+                $foundWikiLinks = $true
+            } else {
+                $yamlProperLines += $line
+            }
+        }
+
+        # Skip if no wiki-links found inside YAML
+        if (-not $foundWikiLinks) {
+            continue
+        }
+
+        $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+        $totalFixed++
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would fix $($wikiLinksInYaml.Count) wiki-link(s) in YAML: $relativePath" "Magenta"
+            continue
+        }
+
+        # Build the corrected content:
+        # 1. Opening ---
+        # 2. Proper YAML lines (source, tags, etc.)
+        # 3. Closing ---
+        # 4. Related section with the wiki-links
+        # 5. Rest of the content
+
+        $newContent = [System.Text.StringBuilder]::new()
+
+        # Opening YAML marker
+        [void]$newContent.AppendLine("---")
+
+        # Add proper YAML lines
+        foreach ($yamlLine in $yamlProperLines) {
+            [void]$newContent.AppendLine($yamlLine)
+        }
+
+        # Closing YAML marker
+        [void]$newContent.AppendLine("---")
+        [void]$newContent.AppendLine("")
+
+        # Add Related section with the extracted wiki-links
+        [void]$newContent.AppendLine("## Related")
+        foreach ($wikiLink in $wikiLinksInYaml) {
+            # Ensure proper formatting: "- [[Link]]"
+            $cleanLink = $wikiLink.Trim()
+            if (-not $cleanLink.StartsWith("-")) {
+                $cleanLink = "- " + $cleanLink
+            }
+            [void]$newContent.AppendLine($cleanLink)
+        }
+        [void]$newContent.AppendLine("")
+
+        # Add the rest of the content (everything after the original YAML closing ---)
+        for ($i = $yamlEndLine + 1; $i -lt $lines.Count; $i++) {
+            if ($i -eq $lines.Count - 1) {
+                # Last line - don't add newline to avoid extra blank line at end
+                [void]$newContent.Append($lines[$i])
+            } else {
+                [void]$newContent.AppendLine($lines[$i])
+            }
+        }
+
+        # Write the fixed content back with UTF-8 encoding (no BOM)
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($file.FullName, $newContent.ToString(), $utf8NoBom)
+
+        $filesFixed++
+        Write-Log "  Fixed $($wikiLinksInYaml.Count) wiki-link(s) in YAML: $relativePath" "Green"
+    }
+
+    $script:yamlWikiLinksFixed = $totalFixed
+
+    if ($totalFixed -eq 0) {
+        Write-Log "  No wiki-links found inside YAML frontmatter" "Green"
+    } else {
+        Write-Log "  Fixed $totalFixed files with wiki-links in YAML" "Green"
+    }
+}
+
+# =============================================================================
+# PHASE 22: Fix YAML tag indentation issues
+# =============================================================================
+# Detects and fixes YAML frontmatter where tag list items have inconsistent
+# indentation. Some items may be properly indented under "tags:" while others
+# are at the root level, causing YAML parsing issues.
+# Example fix:
+#   BEFORE:                      AFTER:
+#   ---                          ---
+#   tags:                        tags:
+#     - Health                     - Health
+#   - WFPB                         - WFPB
+#   - HealthCare                   - HealthCare
+#   source: http://...           source: http://...
+#   ---                          ---
+# Also removes duplicate tags that appear due to the malformed structure.
+# =============================================================================
+function Fix-YamlTagIndentation {
+    Write-Log "=== Phase 22: Fixing YAML tag indentation ===" "Cyan"
+
+    # Counters for tracking changes
+    $filesFixed = 0        # Number of files modified
+    $totalFixed = 0        # Total indentation issues fixed
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Read the file content with UTF-8 encoding
+        try {
+            $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
+        } catch {
+            continue
+        }
+
+        # Skip empty files
+        if ([string]::IsNullOrEmpty($content)) {
+            continue
+        }
+
+        # Skip files without YAML frontmatter (must start with ---)
+        if (-not $content.StartsWith("---")) {
+            # Handle BOM: check if starts with BOM + ---
+            if (-not ($content.Length -gt 3 -and $content.Substring(1).StartsWith("---"))) {
+                continue
+            }
+        }
+
+        # Split into lines for processing
+        $lines = $content -split "`r?`n"
+
+        # Find the YAML block boundaries
+        $yamlStartLine = 0      # Line index of opening ---
+        $yamlEndLine = -1       # Line index of closing ---
+        $tagsKeyLine = -1       # Line index of "tags:" key
+
+        # Find opening --- (may be line 0 or after BOM)
+        for ($i = 0; $i -lt [Math]::Min(2, $lines.Count); $i++) {
+            if ($lines[$i] -match '^---\s*$' -or $lines[$i] -match '^\xEF\xBB\xBF---\s*$' -or $lines[$i] -match '^\uFEFF---\s*$') {
+                $yamlStartLine = $i
+                break
+            }
+        }
+
+        # Find closing --- and tags: key
+        for ($i = $yamlStartLine + 1; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^---\s*$') {
+                $yamlEndLine = $i
+                break
+            }
+            if ($lines[$i] -match '^tags:\s*$' -or $lines[$i] -match '^tags:\s*\[' -or $lines[$i] -match '^tags:\s*#') {
+                $tagsKeyLine = $i
+            }
+        }
+
+        # Skip if no valid YAML block or no tags key found
+        if ($yamlEndLine -eq -1 -or $tagsKeyLine -eq -1) {
+            continue
+        }
+
+        # Skip if tags is inline format like "tags: [Health, WFPB]" or "tags: #health"
+        if ($lines[$tagsKeyLine] -match '^tags:\s*[\[#]') {
+            continue
+        }
+
+        # Collect all tag items (both indented and unindented)
+        # Start from the line after "tags:" and collect until we hit a non-tag line
+        $tagItems = @()                 # Array to hold unique tag values
+        $unindentedTagLines = @()       # Line indices of unindented tags (the problem)
+        $indentedTagLines = @()         # Line indices of properly indented tags
+        $otherYamlLines = @()           # Other YAML lines to preserve
+
+        $inTagsSection = $false         # Flag: are we in the tags list section?
+
+        for ($i = $yamlStartLine + 1; $i -lt $yamlEndLine; $i++) {
+            $line = $lines[$i]
+
+            # Detect tags: key line
+            if ($i -eq $tagsKeyLine) {
+                $inTagsSection = $true
+                continue
+            }
+
+            if ($inTagsSection) {
+                # Check for properly indented tag item: "  - tagname"
+                if ($line -match '^\s{2,}-\s+(.+)$') {
+                    $tagValue = $Matches[1].Trim()
+                    if ($tagValue -and $tagItems -notcontains $tagValue) {
+                        $tagItems += $tagValue
+                    }
+                    $indentedTagLines += $i
+                }
+                # Check for unindented tag item at root level: "- tagname" (the problem)
+                elseif ($line -match '^-\s+(.+)$') {
+                    $tagValue = $Matches[1].Trim()
+                    if ($tagValue -and $tagItems -notcontains $tagValue) {
+                        $tagItems += $tagValue
+                    }
+                    $unindentedTagLines += $i
+                }
+                # Any other line means we've left the tags section
+                else {
+                    $inTagsSection = $false
+                    if ($line.Trim()) {
+                        $otherYamlLines += $i
+                    }
+                }
+            } else {
+                # Not in tags section - preserve other YAML lines
+                if ($line.Trim()) {
+                    $otherYamlLines += $i
+                }
+            }
+        }
+
+        # Skip if no unindented tags found (no problem to fix)
+        if ($unindentedTagLines.Count -eq 0) {
+            continue
+        }
+
+        $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+        $totalFixed++
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would fix $($unindentedTagLines.Count) unindented tag(s): $relativePath" "Magenta"
+            continue
+        }
+
+        # Build the corrected content
+        $newContent = [System.Text.StringBuilder]::new()
+
+        # Opening YAML marker (preserve BOM if present)
+        [void]$newContent.AppendLine($lines[$yamlStartLine])
+
+        # Add tags: key with properly indented items
+        [void]$newContent.AppendLine("tags:")
+        foreach ($tag in $tagItems) {
+            [void]$newContent.AppendLine("  - $tag")
+        }
+
+        # Add other YAML lines (source, Links, etc.)
+        foreach ($lineIdx in $otherYamlLines) {
+            [void]$newContent.AppendLine($lines[$lineIdx])
+        }
+
+        # Closing YAML marker
+        [void]$newContent.AppendLine("---")
+
+        # Add everything after the original YAML block
+        for ($i = $yamlEndLine + 1; $i -lt $lines.Count; $i++) {
+            if ($i -eq $lines.Count - 1) {
+                # Last line - don't add trailing newline
+                [void]$newContent.Append($lines[$i])
+            } else {
+                [void]$newContent.AppendLine($lines[$i])
+            }
+        }
+
+        # Write the fixed content back with UTF-8 encoding (no BOM)
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($file.FullName, $newContent.ToString(), $utf8NoBom)
+
+        $filesFixed++
+        Write-Log "  Fixed $($unindentedTagLines.Count) unindented tag(s): $relativePath" "Green"
+    }
+
+    $script:yamlTagIndentFixed = $totalFixed
+
+    if ($totalFixed -eq 0) {
+        Write-Log "  No YAML tag indentation issues found" "Green"
+    } else {
+        Write-Log "  Fixed $totalFixed files with tag indentation issues" "Green"
+    }
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -2453,6 +3055,11 @@ Fix-ComprehensiveMojibake
 Remove-MocLinkAliases
 Simplify-MocLinkPaths
 Move-ClippingsTagToLast
+Fix-YamlNavQuoting
+Fix-BrokenWikiLinks
+Fix-MocBulletPoints
+Fix-YamlWikiLinks
+Fix-YamlTagIndentation
 
 # Summary
 Write-Log "" "White"
@@ -2477,5 +3084,10 @@ Write-Log "  Severe mojibake files fixed: $script:comprehensiveMojibakeFixed" "W
 Write-Log "  MOC link aliases removed: $script:linkAliasesRemoved" "White"
 Write-Log "  MOC link paths simplified: $script:linkPathsSimplified" "White"
 Write-Log "  Clippings tags repositioned: $script:clippingsTagsMoved" "White"
+Write-Log "  YAML nav: lines fixed: $script:yamlNavFixed" "White"
+Write-Log "  Broken wiki-links fixed: $script:brokenWikiLinksFixed" "White"
+Write-Log "  MOC bullet points fixed: $script:bulletPointsFixed" "White"
+Write-Log "  YAML wiki-links fixed: $script:yamlWikiLinksFixed" "White"
+Write-Log "  YAML tag indentation fixed: $script:yamlTagIndentFixed" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
