@@ -27,6 +27,7 @@
 #  20. Fixes MOC formatting: bullet points ("-" -> "- ") and extra brackets ("]]]" -> "]]")
 #  21. Fixes wiki-links accidentally placed inside YAML frontmatter
 #  22. Fixes YAML tag indentation (mixed indented/unindented list items)
+#  23. Fixes YAML tag malformations (duplicate keys, inline hashtags, mixed formats)
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -73,6 +74,7 @@ $script:brokenWikiLinksFixed = 0
 $script:bulletPointsFixed = 0
 $script:yamlWikiLinksFixed = 0
 $script:yamlTagIndentFixed = 0
+$script:yamlTagMalformFixed = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -3008,6 +3010,288 @@ function Fix-YamlTagIndentation {
 }
 
 # =============================================================================
+# PHASE 23: Fix YAML tag malformations (comprehensive)
+# =============================================================================
+# Fixes multiple types of YAML frontmatter tag malformations:
+#   1. Duplicate tags: keys (e.g., "tags: #recipe" after proper tags list)
+#   2. Inline hashtag format (e.g., "tags: #tech" instead of list)
+#   3. Mixed inline format (e.g., "tags: - item #tech - item2")
+#   4. Hashtags in quoted strings (e.g., "#Education" -> Education)
+#   5. Double frontmatter blocks with tags split between them
+#   6. Tags without colon spacing (e.g., "tags:#clippings")
+#   7. Tags with wikilinks (e.g., "#[[Note]]" -> Note)
+#   8. Array format with trailing hashtag (e.g., "tags: [A, B] #tech")
+#
+# Example fixes:
+#   "tags: #recipe"                    -> "tags:\n  - recipe"
+#   "tags: - item #tech\n- item2"      -> "tags:\n  - item\n  - tech\n  - item2"
+#   "tags: [A, B] #tech"               -> "tags:\n  - A\n  - B\n  - tech"
+#   "---\ntags:\n  - A\n---\ntags: #B" -> "---\ntags:\n  - A\n  - B\n---"
+# =============================================================================
+function Fix-YamlTagMalformations {
+    Write-Log "=== Phase 23: Fixing YAML tag malformations ===" "Cyan"
+
+    # Counters for tracking changes
+    $totalFixed = 0        # Total files fixed
+
+    # Get all markdown files in the vault
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Read the file content with UTF-8 encoding
+        try {
+            $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
+        } catch {
+            continue
+        }
+
+        # Skip empty files or files without tags
+        if ([string]::IsNullOrEmpty($content) -or $content -notmatch 'tags:') {
+            continue
+        }
+
+        # Track if any changes were made to this file
+        $fileModified = $false
+        $originalContent = $content
+        $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+
+        # Split into lines for safe processing (avoids regex backtracking)
+        $lines = $content -split "`r?`n"
+
+        # =====================================================================
+        # Pattern 1: Double frontmatter - detect "tags: #..." after a closing ---
+        # Uses line-by-line processing to avoid catastrophic backtracking
+        # =====================================================================
+        $frontmatterCount = 0
+        $duplicateTagsLine = -1
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^---\s*$' -or $lines[$i] -match '^\xEF\xBB\xBF---\s*$') {
+                $frontmatterCount++
+            }
+            # Look for tags: line after the second --- (duplicate frontmatter)
+            if ($frontmatterCount -ge 2 -and $lines[$i] -match '^tags:\s*[#\[]') {
+                $duplicateTagsLine = $i
+                break
+            }
+        }
+
+        if ($duplicateTagsLine -gt 0) {
+            # Extract tags from the duplicate line
+            $dupLine = $lines[$duplicateTagsLine]
+            $parsedTags = @()
+
+            # Handle hashtag format
+            $hashMatches = [regex]::Matches($dupLine, '#([a-zA-Z0-9_]+)')
+            foreach ($match in $hashMatches) {
+                $parsedTags += $match.Groups[1].Value
+            }
+
+            # Handle array format
+            if ($dupLine -match '\[([^\]]+)\]') {
+                $arrayTags = $Matches[1] -split '\s*,\s*'
+                foreach ($tag in $arrayTags) {
+                    $cleanTag = $tag.Trim().Trim('"').Trim("'")
+                    if ($cleanTag) { $parsedTags += $cleanTag }
+                }
+            }
+
+            if ($parsedTags.Count -gt 0) {
+                # Remove the duplicate tags line and surrounding empty frontmatter
+                $newLines = @()
+                $skipNext = $false
+                for ($i = 0; $i -lt $lines.Count; $i++) {
+                    if ($i -eq $duplicateTagsLine) {
+                        $skipNext = $true  # Skip the --- after this line too
+                        continue
+                    }
+                    if ($skipNext -and $lines[$i] -match '^---\s*$') {
+                        $skipNext = $false
+                        continue
+                    }
+                    $newLines += $lines[$i]
+                }
+
+                # Now add the parsed tags to the existing tags section
+                $content = $newLines -join "`n"
+                # Add tags to existing tags block (find first tags: and add after it)
+                foreach ($tag in $parsedTags) {
+                    if ($content -match '(tags:\s*\r?\n(?:\s*-\s*[^\r\n]+\r?\n)*)') {
+                        $existingBlock = $Matches[1]
+                        $newBlock = $existingBlock + "  - $tag`n"
+                        $content = $content.Replace($existingBlock, $newBlock)
+                    }
+                }
+                $fileModified = $true
+            }
+        }
+
+        # =====================================================================
+        # Pattern 2: Inline hashtag only format (tags: #tech)
+        # =====================================================================
+        if ($content -match '(?m)^tags:\s*#([^\r\n]+)$') {
+            $hashtagLine = $Matches[0]
+            $tagsStr = $Matches[1]
+
+            $parsedTags = @()
+            $hashMatches = [regex]::Matches("#$tagsStr", '#([a-zA-Z0-9_]+)')
+            foreach ($match in $hashMatches) {
+                $parsedTags += $match.Groups[1].Value
+            }
+
+            if ($parsedTags.Count -gt 0) {
+                $newTagsBlock = "tags:`n"
+                foreach ($tag in $parsedTags) {
+                    $newTagsBlock += "  - $tag`n"
+                }
+                $content = $content -replace [regex]::Escape($hashtagLine), $newTagsBlock.TrimEnd()
+                $fileModified = $true
+            }
+        }
+
+        # =====================================================================
+        # Pattern 3: Mixed inline format (tags: - item #tech)
+        # =====================================================================
+        if ($content -match '(?m)^tags:\s*-\s*([^\r\n]+)$') {
+            $inlineLine = $Matches[0]
+            $inlineContent = $Matches[1]
+
+            if ($inlineContent -match '#' -or $inlineContent -match '\s-\s') {
+                $parsedTags = @()
+                $parts = $inlineContent -split '\s+-\s+'
+                foreach ($part in $parts) {
+                    $hashMatches = [regex]::Matches($part, '#([a-zA-Z0-9_]+)')
+                    foreach ($match in $hashMatches) {
+                        $parsedTags += $match.Groups[1].Value
+                    }
+                    $cleanPart = $part -replace '#[a-zA-Z0-9_]+', ''
+                    $cleanPart = $cleanPart.Trim().Trim('"').Trim("'")
+                    if ($cleanPart -and $parsedTags -notcontains $cleanPart) {
+                        $parsedTags += $cleanPart
+                    }
+                }
+
+                if ($parsedTags.Count -gt 0) {
+                    $newTagsBlock = "tags:`n"
+                    foreach ($tag in $parsedTags | Select-Object -Unique) {
+                        $newTagsBlock += "  - $tag`n"
+                    }
+                    $content = $content -replace [regex]::Escape($inlineLine), $newTagsBlock.TrimEnd()
+                    $fileModified = $true
+                }
+            }
+        }
+
+        # =====================================================================
+        # Pattern 4: Array format with trailing hashtag (tags: [A, B] #tech)
+        # =====================================================================
+        if ($content -match '(?m)^tags:\s*\[([^\]]+)\]\s*#([a-zA-Z0-9_]+)') {
+            $fullLine = $Matches[0]
+            $arrayContent = $Matches[1]
+            $trailingTag = $Matches[2]
+
+            $parsedTags = @()
+            $arrayTags = $arrayContent -split '\s*,\s*'
+            foreach ($tag in $arrayTags) {
+                $cleanTag = $tag.Trim().Trim('"').Trim("'")
+                if ($cleanTag) { $parsedTags += $cleanTag }
+            }
+            $parsedTags += $trailingTag
+
+            $newTagsBlock = "tags:`n"
+            foreach ($tag in $parsedTags | Select-Object -Unique) {
+                $newTagsBlock += "  - $tag`n"
+            }
+            $content = $content -replace [regex]::Escape($fullLine), $newTagsBlock.TrimEnd()
+            $fileModified = $true
+        }
+
+        # =====================================================================
+        # Pattern 5: Tags without colon spacing (tags:#clippings)
+        # =====================================================================
+        if ($content -match '(?m)^tags:#([^\r\n]+)$') {
+            $malformedLine = $Matches[0]
+            $tagsStr = $Matches[1]
+
+            $parsedTags = @()
+            $hashMatches = [regex]::Matches("#$tagsStr", '#([a-zA-Z0-9_]+)')
+            foreach ($match in $hashMatches) {
+                $parsedTags += $match.Groups[1].Value
+            }
+            $plainWords = $tagsStr -replace '#[a-zA-Z0-9_]+', '' -split '\s+' | Where-Object { $_.Trim() }
+            foreach ($word in $plainWords) {
+                if ($word -and $parsedTags -notcontains $word) {
+                    $parsedTags += $word.Trim()
+                }
+            }
+
+            if ($parsedTags.Count -gt 0) {
+                $newTagsBlock = "tags:`n"
+                foreach ($tag in $parsedTags | Select-Object -Unique) {
+                    $newTagsBlock += "  - $tag`n"
+                }
+                $content = $content -replace [regex]::Escape($malformedLine), $newTagsBlock.TrimEnd()
+                $fileModified = $true
+            }
+        }
+
+        # =====================================================================
+        # Pattern 6: Hashtags in quoted tag values ("- "#Education"") - ONLY in YAML
+        # =====================================================================
+        # Extract YAML frontmatter first (between --- markers)
+        $yamlMatch = [regex]::Match($content, '^(?:\xEF\xBB\xBF)?---\r?\n([\s\S]*?)\r?\n---')
+        if ($yamlMatch.Success) {
+            $yamlContent = $yamlMatch.Value
+            $yamlOriginal = $yamlContent
+
+            # Pattern 6: Hashtags in quoted tag values within YAML only
+            if ($yamlContent -match '(?m)^\s*-\s*"#([^"]+)"') {
+                $yamlContent = [regex]::Replace($yamlContent, '(?m)^(\s*-\s*)"#([^"]+)"', '$1$2')
+            }
+
+            # Pattern 7: Tags with wikilinks within YAML only ("#[[Note]]" -> Note)
+            # This should ONLY apply to tag values in YAML, not markdown content
+            if ($yamlContent -match '(?m)^\s*-\s*"?#?\[\[([^\]]+)\]\]"?') {
+                $yamlContent = [regex]::Replace($yamlContent, '(?m)^(\s*-\s*)"?#?\[\[([^\]]+)\]\]"?', '$1$2')
+            }
+
+            # Pattern 8: Empty dash lines in YAML tags section only
+            if ($yamlContent -match '(?m)^\s+-\s*$') {
+                $yamlContent = [regex]::Replace($yamlContent, '(?m)^\s+-\s*\r?\n', '')
+            }
+
+            # Apply YAML changes back to content if modified
+            if ($yamlContent -ne $yamlOriginal) {
+                $content = $content.Remove($yamlMatch.Index, $yamlMatch.Length).Insert($yamlMatch.Index, $yamlContent)
+                $fileModified = $true
+            }
+        }
+
+        # =====================================================================
+        # Write changes if file was modified
+        # =====================================================================
+        if ($fileModified -and $content -ne $originalContent) {
+            $totalFixed++
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix YAML tags: $relativePath" "Magenta"
+            } else {
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($file.FullName, $content, $utf8NoBom)
+                Write-Log "  Fixed YAML tag malformations: $relativePath" "Green"
+            }
+        }
+    }
+
+    $script:yamlTagMalformFixed = $totalFixed
+
+    if ($totalFixed -eq 0) {
+        Write-Log "  No YAML tag malformations found" "Green"
+    } else {
+        Write-Log "  Fixed $totalFixed files with YAML tag malformations" "Green"
+    }
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -3060,6 +3344,7 @@ Fix-BrokenWikiLinks
 Fix-MocBulletPoints
 Fix-YamlWikiLinks
 Fix-YamlTagIndentation
+Fix-YamlTagMalformations
 
 # Summary
 Write-Log "" "White"
@@ -3089,5 +3374,6 @@ Write-Log "  Broken wiki-links fixed: $script:brokenWikiLinksFixed" "White"
 Write-Log "  MOC bullet points fixed: $script:bulletPointsFixed" "White"
 Write-Log "  YAML wiki-links fixed: $script:yamlWikiLinksFixed" "White"
 Write-Log "  YAML tag indentation fixed: $script:yamlTagIndentFixed" "White"
+Write-Log "  YAML tag malformations fixed: $script:yamlTagMalformFixed" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
