@@ -124,7 +124,7 @@ $mocPattern = 'MOC - *.md'
 # $skipFolders: Array of folder names to exclude from orphan detection
 # These folders contain files that don't need linking (journals, templates, images, etc.)
 $skipFolders = @(
-    '0 - Journal',       # Daily journal entries - self-contained
+    '00 - Journal',      # Daily journal entries - self-contained
     '05 - Templates',    # Template files - not meant to be linked
     '00 - Images',       # Image attachments - linked via embeds
     'attachments',       # Alternative attachment folder
@@ -631,29 +631,6 @@ $subsectionKeywords = @{
     # Subsection-based keywords for home & practical life topics
     #===========================================================================
     "Home & Practical Life" = @{
-        "Genealogy" = @(
-            "genealogy", "DNA", "ancestry", "family tree",
-            "autosomal", "heritage", "ancestor", "descendant", "lineage",
-            "family history", "Talbot", "surname", "relatives",
-            "autosomal DNA",
-            "Y-DNA",
-            "mtDNA",
-            "mitochondrial DNA",
-            "haplogroup",
-            "centiMorgan",
-            "genetic distance",
-            "DNA match",
-            "shared DNA",
-            "chromosome browser",
-            "endogamy",
-            "pedigree collapse",
-            "genetic genealogy",
-            "FamilySearch",
-            "Find A Grave",
-            "Ancestry.com",
-            "23andMe",
-            "MyHeritage",
-            "GEDCOM")
         "Home Projects & Repairs" = @(
             "home project", "repair", "DIY", "maintenance", "fix", "install",
             "remodel", "renovation", "drywall", "flooring", "garage",
@@ -834,6 +811,72 @@ $subsectionKeywords = @{
     }
 
     #===========================================================================
+    # MOC: Genealogy
+    # Subsection-based keywords for genealogy and family history topics
+    #===========================================================================
+    "Genealogy" = @{
+        # Talbot Family Members: Individual profiles and records for Talbot relatives
+        "Talbot Family Members" = @(
+            "Talbot", "Alfred Talbot", "Alfred Wayne Talbot", "Alfred W. Talbot",
+            "Vera Talbot", "Vera Irene Talbot",
+            "Chester Talbot", "Chester Hale Talbot", "Hale Talbot", "Hale R Talbot",
+            "Jerry Talbot",
+            "Matthew Talbot", "Col Mathew Talbot", "Matthew Talbot Sons",
+            "Thomas Talbot",
+            "Florence Talbot", "Florence E Talbot",
+            "Clarence Talbot", "Clarence H Talbot",
+            "Bailey Talbot", "Clayton Talbot", "Carson Talbot", "Carson Wayne Talbot",
+            "Lorrie Talbot", "Ben Charles Talbot")
+        # Other Family Lines: Non-Talbot family members and connections
+        "Other Family Lines" = @(
+            "Joiner", "Delores Joiner",
+            "Tolbert", "James Tolbert",
+            "Battle records",
+            "Sutliff", "Nadine Sutliff",
+            "John Henry White")
+        # Obituaries & Death Records: Obituaries and memorial documentation
+        "Obituaries & Death Records" = @(
+            "obituary", "obit", "death record", "memorial",
+            "funeral", "burial", "cemetery", "gravestone",
+            "Find A Grave", "findagrave",
+            "death certificate", "death notice")
+        # Legal & Vital Records: Divorce records, probate, and legal documents
+        "Legal & Vital Records" = @(
+            "divorce", "divorce record", "divorce decree",
+            "probate", "will", "estate", "testament",
+            "marriage record", "marriage certificate",
+            "birth record", "birth certificate",
+            "vital records", "court record", "legal document")
+        # DNA & Genetic Genealogy: DNA testing, inheritance patterns, and genetic research
+        "DNA & Genetic Genealogy" = @(
+            "DNA", "genetic genealogy", "autosomal", "autosomal DNA",
+            "Y-DNA", "mtDNA", "mitochondrial DNA",
+            "haplogroup", "centiMorgan", "genetic distance",
+            "DNA match", "shared DNA", "chromosome browser",
+            "endogamy", "pedigree collapse",
+            "23andMe", "AncestryDNA", "MyHeritage DNA",
+            "FTDNA", "Family Tree DNA", "GEDmatch",
+            "genetic inheritance", "DNA segment", "triangulation")
+        # Talbot Heredity & Noble Lines: Royal descent and historical lineage
+        "Talbot Heredity & Noble Lines" = @(
+            "heredity", "royal blood", "noble", "nobility",
+            "Earl of Shrewsbury", "Blood Royal",
+            "Living Descendants", "royal descent",
+            "peerage", "aristocracy", "lineage",
+            "Egill Aunsson", "king", "monarch")
+        # Resources & How-Tos: Guides, references, and research tools
+        "Resources & How-Tos" = @(
+            "genealogy", "family tree", "ancestry", "ancestor", "descendant",
+            "family history", "heritage", "lineage", "surname",
+            "FamilySearch", "Ancestry.com", "MyHeritage",
+            "GEDCOM", "family tree software",
+            "genealogy library", "genealogy research",
+            "how to merge", "family trees",
+            "genealogy jamboree", "genealogy help",
+            "genealogy sites", "genealogy reference")
+    }
+
+    #===========================================================================
     # MOC: Music & Record
     # Subsection-based keywords for music & recorder topics
     #===========================================================================
@@ -964,14 +1007,16 @@ $subsectionKeywords = @{
     #===========================================================================
     "NLP & Psychology" = @{
         "Core NLP Concepts" = @(
+            # NOTE: Removed standalone "visual", "auditory", "kinesthetic" (too generic)
+            # Use compound terms that are NLP-specific
             "NLP", "neuro-linguistic programming", "presupposition",
             "representational systems",
-            "VAK",
-            "visual",
-            "auditory",
-            "kinesthetic",
+            "VAK model",
+            "visual representational system",
+            "auditory representational system",
+            "kinesthetic representational system",
             "submodalities",
-            "predicates",
+            "NLP predicates",
             "sensory acuity",
             "state management",
             "map of reality",
@@ -1110,12 +1155,20 @@ $subsectionKeywords = @{
             "systemic thinking",
             "consequences")
         "Communication & Influence" = @(
-            "communication", "influence", "persuasion", "belief",
-            "eliciting", "transderivational search", "yes sayer", "no sayer",
-            "pacing",
-            "leading",
-            "matching",
-            "mirroring",
+            # NOTE: Removed standalone "communication" (too generic)
+            # Use NLP-specific communication terms
+            "NLP communication",
+            "communication skills NLP",
+            "influence patterns",
+            "persuasion techniques",
+            "NLP belief",
+            "eliciting",
+            "transderivational search",
+            "yes sayer",
+            "no sayer",
+            "pacing and leading",
+            "NLP matching",
+            "NLP mirroring",
             "cross-over mirroring",
             "backtracking",
             "perceptual positions",
@@ -1123,8 +1176,8 @@ $subsectionKeywords = @{
             "second position",
             "third position",
             "meta position",
-            "associated",
-            "dissociated")
+            "associated state",
+            "dissociated state")
         "Cognitive Science" = @(
             "cognitive", "Kahneman", "thinking fast and slow", "bias",
             "heuristic", "attention", "cocktail party effect", "blindness",
@@ -1184,20 +1237,29 @@ $subsectionKeywords = @{
             "testing",
             "calibration")
         "NLP for Programmers & Technical Applications" = @(
-            "programmer", "technical",
-        ,
-            "cognitive load",
+            # NOTE: Removed standalone "programmer" and "technical" (too generic)
+            # Use NLP-specific compound terms
+            "NLP for programmers",
+            "NLP for software developers",
+            "cognitive load in programming",
             "debugging mindset",
             "problem decomposition",
-            "state machine",
-            "pattern matching",
+            "NLP state machine",
+            "NLP pattern matching",
             "refactoring thinking",
             "API for the mind",
             "mental debugging",
-            "cognitive optimization")
+            "cognitive optimization",
+            "programmer productivity NLP")
         "Historical NLP Resources (CompuServe Era)" = @(
-            "CompuServe", "historical", "FAQ", "1992", "archive",
-            "directory", "training", "NLP World",
+            # NOTE: Removed standalone "historical" and "training" (too generic)
+            # Focus on NLP-specific historical terms
+            "CompuServe NLP",
+            "NLP FAQ",
+            "1992 NLP",
+            "NLP archive",
+            "NLP directory",
+            "NLP World",
             "alt.psychology.nlp",
             "NLP newsgroup",
             "NLP mailing list",
@@ -1211,14 +1273,17 @@ $subsectionKeywords = @{
         "Andrew Moreno Series" = @(
             "Andrew Moreno", "NLP challenge", "NLP progress report",
             "NLP practitioner journal",
-            "skill development",
-            "practice log",
+            "NLP skill development",
+            "NLP practice log",
             "NLP exercises",
-            "daily practice",
-            "integration exercises")
+            "daily NLP practice",
+            "NLP integration exercises")
         "NLP Theory Discussions" = @(
+            # NOTE: Removed standalone "AI" and "neural net" (too generic)
+            # Focus on NLP-specific theory terms
             "NLP discussion", "NLP theory", "parts work", "NLP imprint",
-            "neural net", "AI",
+            "NLP and neural networks",
+            "NLP and AI",
             "epistemology of NLP",
             "modeling methodology",
             "structure of subjective experience",
@@ -2297,7 +2362,10 @@ $subsectionKeywords = @{
             "linked list")
         "Networking & Systems" = @(
             # Network infrastructure and protocols
-            "network",
+            # NOTE: Removed standalone "network" (too generic - matches social network, neural network, etc.)
+            # Use more specific networking terms
+            "computer network",
+            "network infrastructure",
             "networking",
             "TCP/IP",
             "TCP",
@@ -2316,7 +2384,7 @@ $subsectionKeywords = @{
             "bandwidth",
             "latency",
             "packet",
-            "protocol",
+            "network protocol",
             "Ethernet",
             "Wi-Fi",
             "802.11",
@@ -2416,8 +2484,11 @@ $subsectionKeywords = @{
             "fstab")
         "Maker Projects" = @(
             # DIY electronics and maker culture
-            "maker",
+            # NOTE: Removed standalone "maker" (too generic - matches guitar maker, bread maker, etc.)
+            # Use electronics/DIY-specific terms
             "maker project",
+            "maker movement",
+            "makerspace",
             "DIY electronics",
             "Raspberry Pi",
             "Arduino",
@@ -2427,15 +2498,15 @@ $subsectionKeywords = @{
             "PCB",
             "printed circuit board",
             "breadboard",
-            "LED",
-            "motor",
-            "sensor",
+            "LED project",
+            "motor controller",
+            "sensor project",
             "microcontroller",
             "GPIO",
             "wall plotter",
             "hanging plotter",
             "electronics project",
-            "hobbyist",
+            "electronics hobbyist",
             "single-board computer",
             "ESP32",
             "ESP8266",
@@ -2910,6 +2981,179 @@ $subsectionKeywords = @{
     }
 }
 
+# $exclusionKeywords: Nested hashtable defining words that PREVENT a match for each MOC
+# Structure: MOC Name (string) -> Exclusion Keywords (array)
+# If ANY of these words appear prominently in the content, the file should NOT be linked to this MOC
+# This prevents false positives from generic keyword matches
+$exclusionKeywords = @{
+    # Technology & Computers - exclude non-tech content
+    "Technology & Computers" = @(
+        # Food/cooking words that shouldn't match tech
+        "recipe", "recipes", "cooking", "bake", "baking", "ingredient", "ingredients",
+        "tablespoon", "teaspoon", "cup", "cups", "oven", "skillet", "simmer",
+        "stir", "chop", "dice", "flour", "sugar", "butter", "garlic", "onion",
+        # Music words that shouldn't match tech
+        "ukulele", "guitar", "piano", "violin", "chords", "melody", "singer",
+        "singing", "choir", "choral", "concert", "symphony", "orchestra",
+        "folk music", "folk song", "songwriter", "album", "record label",
+        # Health/medical that shouldn't match tech (unless AI/ML health)
+        "doctor", "patient", "diagnosis", "symptom", "treatment", "therapy",
+        "vitamin", "nutrition", "diet", "exercise", "workout", "yoga",
+        # Religion that shouldn't match tech
+        "prayer", "spiritual", "worship", "congregation", "scripture",
+        "Bahá'í", "Bahai", "Bible", "Torah", "Quran", "sermon",
+        # Gardening/nature
+        "plant", "garden", "flower", "seed", "harvest", "soil", "compost",
+        "tree", "shrub", "vegetable", "fruit tree",
+        # Genealogy
+        "obituary", "ancestor", "descendant", "genealogy", "family tree"
+    )
+
+    # NLP & Psychology - exclude non-NLP content
+    "NLP & Psychology" = @(
+        # Food/cooking
+        "recipe", "recipes", "cooking", "bake", "ingredient", "ingredients",
+        "tablespoon", "teaspoon", "simmer", "oven",
+        # Music
+        "ukulele", "guitar", "piano", "violin", "singer", "choral",
+        "folk music", "album", "orchestra",
+        # Technology (unless specifically about NLP for programmers)
+        "database", "SQL", "Excel", "spreadsheet", "VBA", "Linux", "Ubuntu",
+        "router", "firewall", "network infrastructure", "server rack",
+        # Religion (keep trauma/psychology terms but exclude religious content)
+        "prayer", "worship", "congregation", "scripture", "Bahá'í", "Bahai",
+        # Travel/geography
+        "tourist", "vacation", "airline", "airport", "hotel", "hostel",
+        # Historical events unrelated to NLP history
+        "World War", "Civil War", "Ancient Rome", "Ancient Greece",
+        "archaeology", "paleontology", "fossil", "dinosaur",
+        # Space/astronomy
+        "Mars", "Jupiter", "Saturn", "asteroid", "comet", "galaxy", "nebula",
+        "spacecraft", "NASA", "astronaut", "telescope"
+    )
+
+    # Bahá'í Faith - exclude non-Bahá'í content
+    "Bahá'í Faith" = @(
+        # Technology
+        "database", "SQL", "Excel", "VBA", "Linux", "programming",
+        "network", "router", "server", "AI", "machine learning",
+        # Music/entertainment (unless Bahá'í-related)
+        "folk music", "rock band", "pop star", "concert tour", "album release",
+        # Science (unless Bahá'í perspective)
+        "fossil", "dinosaur", "paleontology", "geology",
+        # Cooking/recipes
+        "recipe", "recipes", "cooking", "bake", "ingredient",
+        # Generic self-help (unless Bahá'í-related)
+        "productivity hack", "life hack"
+    )
+
+    # Health & Nutrition - exclude non-health content
+    "Health & Nutrition" = @(
+        # Technology
+        "database", "SQL", "Excel", "VBA", "programming", "Linux",
+        "network", "router", "firewall", "server", "algorithm",
+        # Music
+        "guitar", "piano", "ukulele", "folk song", "concert", "album",
+        # Genealogy
+        "obituary", "ancestor", "descendant", "family tree",
+        # Religion (unless health/spirituality connection)
+        "congregation", "scripture", "sermon",
+        # Travel
+        "tourist", "vacation", "airline", "airport",
+        # Legal/politics (unless health policy)
+        "lawyer", "court case", "lawsuit", "attorney"
+    )
+
+    # Genealogy - exclude non-genealogy content
+    "Genealogy" = @(
+        # Cooking/recipes
+        "recipe", "recipes", "cooking", "bake", "ingredient", "ingredients",
+        "tablespoon", "teaspoon", "simmer",
+        # Technology
+        "programming", "database", "SQL", "VBA", "Linux", "network",
+        # Music
+        "guitar", "piano", "ukulele", "folk music", "concert", "album",
+        # Science
+        "earthquake", "volcano", "climate", "fossil", "dinosaur",
+        # Health
+        "diet", "exercise", "workout", "vitamin", "therapy",
+        # Travel (unless family history travel)
+        "tourist", "vacation", "airline"
+    )
+
+    # Music & Record - exclude non-music content
+    "Music & Record" = @(
+        # Technology (unless music tech)
+        "database", "SQL", "VBA", "Linux", "network", "router", "firewall",
+        # Cooking
+        "recipe", "recipes", "cooking", "bake", "ingredient",
+        # Religion (unless religious music)
+        "congregation", "scripture", "sermon",
+        # Science
+        "fossil", "dinosaur", "paleontology", "earthquake",
+        # Medical
+        "diagnosis", "symptom", "treatment", "surgery"
+    )
+
+    # Home & Practical Life - exclude non-home content
+    "Home & Practical Life" = @(
+        # Deep technology
+        "algorithm", "database schema", "SQL query", "VBA macro",
+        "network protocol", "TCP/IP", "firewall rule",
+        # Academic/scientific
+        "paleontology", "fossil", "dinosaur", "archaeology site",
+        # Religion (unless home spirituality)
+        "congregation", "scripture", "sermon", "theological"
+    )
+
+    # Science & Nature - exclude non-science content
+    "Science & Nature" = @(
+        # Technology (keep science tech like telescopes)
+        "database", "SQL", "VBA", "Excel macro", "programming",
+        # Cooking (unless food science)
+        "recipe", "recipes", "bake", "ingredient",
+        # Religion
+        "congregation", "scripture", "sermon",
+        # Music
+        "guitar", "piano", "ukulele", "folk song", "concert", "album"
+    )
+
+    # Social Issues - exclude non-social content
+    "Social Issues" = @(
+        # Cooking
+        "recipe", "recipes", "cooking", "bake", "ingredient",
+        # Technology
+        "database", "SQL", "VBA", "programming", "Linux",
+        # Music (unless social protest music)
+        "guitar chord", "piano lesson", "music theory"
+    )
+
+    # Personal Knowledge Management - exclude non-PKM content
+    "Personal Knowledge Management" = @(
+        # Cooking
+        "recipe", "recipes", "cooking", "bake", "ingredient",
+        # Music
+        "guitar", "piano", "ukulele", "folk song", "concert",
+        # Religion
+        "congregation", "scripture", "sermon",
+        # Science (unless knowledge about science)
+        "fossil", "dinosaur", "paleontology"
+    )
+
+    # Recipes - exclude non-recipe content
+    "Recipes" = @(
+        # Technology
+        "database", "SQL", "VBA", "programming", "Linux", "network",
+        "algorithm", "server", "router", "firewall",
+        # Science
+        "fossil", "dinosaur", "paleontology", "earthquake",
+        # Religion
+        "congregation", "scripture", "sermon", "Bahá'í", "Bahai",
+        # Genealogy
+        "obituary", "ancestor", "family tree"
+    )
+}
+
 #endregion Configuration Variables
 
 #region Logging Functions
@@ -3198,6 +3442,164 @@ function Get-SubsectionKeywords {
     return $keywords
 }
 
+<#
+.SYNOPSIS
+    Returns exclusion keywords for a specific MOC from the static lookup table.
+
+.DESCRIPTION
+    Looks up the exclusion keywords for a given MOC name from the
+    $exclusionKeywords hashtable. Returns an empty array if no match is found.
+    Exclusion keywords are words that, if found in content, should PREVENT
+    a match to the MOC, even if positive keywords matched.
+
+.PARAMETER MOCName
+    The display name of the MOC (e.g., "Recipes", "Technology & Computers").
+
+.OUTPUTS
+    Array of exclusion keyword strings for the given MOC.
+#>
+function Get-ExclusionKeywords {
+    param(
+        # $MOCName: The topic name of the MOC (without "MOC - " prefix)
+        [string]$MOCName
+    )
+
+    # $keywords: Array to store the retrieved exclusion keywords
+    $keywords = @()
+
+    # Attempt direct lookup by MOC name
+    if ($exclusionKeywords.ContainsKey($MOCName)) {
+        $keywords = $exclusionKeywords[$MOCName]
+    }
+
+    # If no direct match, try alternate MOC name formats
+    if ($keywords.Count -eq 0) {
+        # $alternateMocNames: Array of possible alternate MOC name formats to try
+        $alternateMocNames = @()
+
+        # Try without trailing space
+        $alternateMocNames += $MOCName.TrimEnd()
+
+        # Handle Bahá'í encoding variations
+        if ($MOCName -match "Bah.*Faith" -or $MOCName -like "*Baha*Faith*") {
+            $alternateMocNames += "Bahá'í Faith"
+            $alternateMocNames += "Baha'i Faith"
+        }
+
+        foreach ($altName in $alternateMocNames) {
+            if ($exclusionKeywords.ContainsKey($altName)) {
+                $keywords = $exclusionKeywords[$altName]
+                break
+            }
+        }
+    }
+
+    return $keywords
+}
+
+<#
+.SYNOPSIS
+    Checks if content contains exclusion keywords that should prevent a match.
+
+.DESCRIPTION
+    Scans the file content for exclusion keywords that indicate the file
+    does NOT belong to the specified MOC, regardless of positive keyword matches.
+    This prevents false positives from generic keyword matches.
+
+.PARAMETER Content
+    The raw text content of the file.
+
+.PARAMETER MOCName
+    The name of the MOC to check exclusions for.
+
+.PARAMETER MatchedKeywords
+    Array of keywords that matched (for context in exclusion decision).
+
+.OUTPUTS
+    Hashtable with:
+    - ShouldExclude: Boolean indicating if the file should be excluded
+    - ExclusionReason: String explaining why exclusion occurred (or $null)
+#>
+function Test-ContentExclusion {
+    param(
+        # $Content: The file's text content to check for exclusion keywords
+        [string]$Content,
+
+        # $MOCName: The name of the MOC for exclusion lookup
+        [string]$MOCName,
+
+        # $MatchedKeywords: Keywords that matched (for contextual exclusion)
+        [array]$MatchedKeywords = @()
+    )
+
+    # $searchContent: Lowercase content for case-insensitive matching
+    $searchContent = if ($Content) { $Content.ToLower() } else { "" }
+
+    # Get exclusion keywords for this MOC
+    $exclusions = Get-ExclusionKeywords -MOCName $MOCName
+
+    if ($exclusions.Count -eq 0) {
+        return @{
+            ShouldExclude = $false
+            ExclusionReason = $null
+        }
+    }
+
+    # $exclusionMatchCount: Counter for exclusion keywords found
+    $exclusionMatchCount = 0
+
+    # $matchedExclusions: Array to track which exclusion keywords were found
+    $matchedExclusions = @()
+
+    foreach ($exclusion in $exclusions) {
+        if (-not $exclusion) { continue }
+
+        # $escapedExclusion: Regex-safe version of the exclusion keyword
+        $escapedExclusion = [regex]::Escape($exclusion.ToLower())
+
+        # Check for exclusion word as whole word (using word boundaries)
+        $wordPattern = "\b$escapedExclusion\b"
+        if ($searchContent -match $wordPattern) {
+            $exclusionMatchCount++
+            $matchedExclusions += $exclusion
+        }
+    }
+
+    # If 2 or more exclusion keywords found, exclude the file
+    # This prevents false exclusions from single-word matches
+    if ($exclusionMatchCount -ge 2) {
+        # $displayExclusions: First 3 matched exclusions for display
+        $displayExclusions = $matchedExclusions | Select-Object -First 3
+        return @{
+            ShouldExclude = $true
+            ExclusionReason = "Content contains exclusion keywords ($exclusionMatchCount): $($displayExclusions -join ', ')"
+        }
+    }
+
+    # If 1 exclusion keyword found and it's very specific, consider excluding
+    # This catches single but highly indicative exclusion words
+    $highConfidenceExclusions = @(
+        "recipe", "recipes", "obituary", "genealogy", "fossil", "dinosaur",
+        "ukulele", "guitar chord", "Bahá'í", "Bahai", "scripture", "congregation"
+    )
+
+    if ($exclusionMatchCount -eq 1) {
+        foreach ($highConf in $highConfidenceExclusions) {
+            if ($matchedExclusions -contains $highConf) {
+                return @{
+                    ShouldExclude = $true
+                    ExclusionReason = "Content contains high-confidence exclusion: '$($matchedExclusions[0])'"
+                }
+            }
+        }
+    }
+
+    return @{
+        ShouldExclude = $false
+        ExclusionReason = $null
+    }
+}
+
 #endregion MOC Discovery Functions
 
 #region Tag Extraction Functions
@@ -3355,8 +3757,17 @@ function Get-TagToSubsectionMap {
         "rv" = ,@("Travel and Exploration", "RV and Alternative Living")
         "nationalpark" = ,@("Travel and Exploration", "National Parks and Nature")
 
+        # Genealogy tags (new MOC)
+        "genealogy" = ,@("Genealogy", "Resources & How-Tos")
+        "dna" = ,@("Genealogy", "DNA & Genetic Genealogy")
+        "ancestry" = ,@("Genealogy", "Resources & How-Tos")
+        "familytree" = ,@("Genealogy", "Resources & How-Tos")
+        "talbot" = ,@("Genealogy", "Talbot Family Members")
+        "obituary" = ,@("Genealogy", "Obituaries & Death Records")
+        "probate" = ,@("Genealogy", "Legal & Vital Records")
+        "divorce" = ,@("Genealogy", "Legal & Vital Records")
+
         # Home and Practical Life tags
-        "genealogy" = ,@("Home and Practical Life", "Genealogy")
         "diy" = ,@("Home and Practical Life", "Home Projects and Repairs")
         "gardening" = ,@("Home and Practical Life", "Gardening and Urban Farming")
         "sustainable" = ,@("Home and Practical Life", "Sustainable Building and Alternative Homes")
@@ -3770,6 +4181,11 @@ function Test-FileAgainstSubsection {
     }
 
     # Check keywords from the subsection lookup
+    # $filenameMatch: Track if we found a keyword in filename
+    $filenameMatch = $null
+    # $headingMatch: Track if we found a keyword in heading
+    $headingMatch = $null
+
     foreach ($keyword in $Keywords) {
         if (-not $keyword) { continue }
 
@@ -3780,30 +4196,52 @@ function Test-FileAgainstSubsection {
         # This prevents "RV" from matching "SuRVivors" or "service"
         $wordBoundaryPattern = "\b$escapedKeyword\b"
 
-        # Check if keyword appears in filename (HIGH confidence)
+        # Check if keyword appears in filename (HIGH confidence candidate)
         # Using word boundaries to ensure whole-word matches only
-        if ($searchName -match $wordBoundaryPattern) {
-            return @{
-                Match = $true
-                Reason = "Keyword in filename: '$keyword'"
-                Confidence = 'HIGH'
-            }
+        if ($searchName -match $wordBoundaryPattern -and -not $filenameMatch) {
+            $filenameMatch = $keyword
         }
 
         # Check if keyword appears prominently in content (in a heading)
         # $headingPattern: Pattern to find keyword in markdown headings (whole word only)
         $headingPattern = "^#+\s+.*\b$escapedKeyword\b"
-        if ($searchContent -match $headingPattern) {
-            return @{
-                Match = $true
-                Reason = "Keyword in heading: '$keyword'"
-                Confidence = 'HIGH'
+        if ($searchContent -match $headingPattern -and -not $headingMatch) {
+            $headingMatch = $keyword
+        }
+    }
+
+    # Before returning HIGH confidence matches from filename/heading, check for exclusions
+    # Tag matches are NOT subject to exclusion (explicit user categorization)
+    if ($filenameMatch -or $headingMatch) {
+        # $exclusionResult: Check if content contains exclusion keywords for this MOC
+        $exclusionResult = Test-ContentExclusion -Content $Content -MOCName $MOCName -MatchedKeywords @($filenameMatch, $headingMatch)
+
+        if ($exclusionResult.ShouldExclude) {
+            # Exclusion keywords found - don't return this as a match
+            # Log for debugging (will be visible in verbose output)
+            # Continue to check for MEDIUM matches which might also be excluded
+        } else {
+            # No exclusions - return the HIGH confidence match
+            if ($filenameMatch) {
+                return @{
+                    Match = $true
+                    Reason = "Keyword in filename: '$filenameMatch'"
+                    Confidence = 'HIGH'
+                }
+            }
+            if ($headingMatch) {
+                return @{
+                    Match = $true
+                    Reason = "Keyword in heading: '$headingMatch'"
+                    Confidence = 'HIGH'
+                }
             }
         }
     }
 
     # Check for keywords in body content (MEDIUM confidence)
-    # Requires 2+ keyword matches to reduce false positives from generic words
+    # Requires 3+ keyword matches to reduce false positives from generic words
+    # (Increased from 2 to 3 for stricter matching)
     # $mediumMatchCount: Counter for keywords found in content
     $mediumMatchCount = 0
 
@@ -3825,8 +4263,20 @@ function Test-FileAgainstSubsection {
         }
     }
 
-    # Only return MEDIUM match if 2+ keywords matched (reduces false positives)
-    if ($mediumMatchCount -ge 2) {
+    # Only return MEDIUM match if 3+ keywords matched (increased threshold for stricter matching)
+    if ($mediumMatchCount -ge 3) {
+        # Check for exclusions before returning MEDIUM match
+        $exclusionResult = Test-ContentExclusion -Content $Content -MOCName $MOCName -MatchedKeywords $matchedKeywords
+
+        if ($exclusionResult.ShouldExclude) {
+            # Exclusion keywords found - don't return this as a match
+            return @{
+                Match = $false
+                Reason = "Excluded: $($exclusionResult.ExclusionReason)"
+                Confidence = $null
+            }
+        }
+
         # $displayKeywords: First 3 matched keywords for display in reason
         $displayKeywords = $matchedKeywords | Select-Object -First 3
         return @{

@@ -44,10 +44,25 @@ foreach ($file in $mdFiles) {
     }
 }
 
+# Folders to exclude from orphan identification (journal files should never be considered orphans)
+$skipFolders = @('00 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
+
 # Find orphans (files not linked by any other file)
 $orphans = @()
 foreach ($file in $mdFiles) {
     $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+    $relativePath = $file.FullName.Replace($vaultPath + "\", "")
+
+    # Skip files in excluded folders
+    $skip = $false
+    foreach ($folder in $skipFolders) {
+        if ($relativePath -match "^$([regex]::Escape($folder))") {
+            $skip = $true
+            break
+        }
+    }
+    if ($skip) { continue }
+
     if (-not $linkedFiles.ContainsKey($baseName.ToLower())) {
         $orphans += $file
     }

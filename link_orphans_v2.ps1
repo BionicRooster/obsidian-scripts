@@ -93,7 +93,7 @@ $categories = @{
 }
 
 # Skip these folders - they have their own natural organization
-$skipFolders = @('0 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
+$skipFolders = @('00 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
 
 # Initialize tracking
 $changes = @{
@@ -215,9 +215,9 @@ if ($DryRun) {
     Write-Host "DRY RUN MODE - No files will be modified" -ForegroundColor Yellow
 }
 
-# Read filtered orphan list
-$orphanList = Get-Content 'C:\Users\awt\orphan_filtered.txt'
-Write-Host "Found $($orphanList.Count) orphan files" -ForegroundColor Gray
+# Read filtered orphan list (only .md files)
+$orphanList = Get-Content 'C:\Users\awt\orphan_filtered.txt' | Where-Object { $_ -like "*.md" }
+Write-Host "Found $($orphanList.Count) orphan .md files" -ForegroundColor Gray
 
 # Filter out skip folders
 $orphanList = $orphanList | Where-Object {
