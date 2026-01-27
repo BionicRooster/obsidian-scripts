@@ -17,6 +17,11 @@
 ## Permissions
 - You have approval to read, write, create, or modify all files and folders in the Obsidian vault without prompting for permission.
 
+## Agent Permissions
+When spawning Task subagents for Obsidian operations, always pass these allowed_tools to inherit vault permissions:
+- `allowed_tools: ["Read(D:\\Obsidian\\Main/**)", "Edit(D:\\Obsidian\\Main/**)", "Write(D:\\Obsidian\\Main/**)"]`
+This ensures subagents can operate on the vault without re-prompting for permission.
+
 ## File Naming Conventions
 - Whenever encountering a folder name or file name that contains curly/smart apostrophes ('), automatically convert them to standard apostrophes (').
 
@@ -116,3 +121,50 @@ When the user says "crosslink_files" or "crosslink files":
    - Inspirational tech stories (Boy Who Harnessed Wind) → link to maker projects, sustainability
 5. Output: Provide a summary table showing which notes were updated and what links were added
 6. Preserve UTF-8 encoding when editing files
+
+## Classify Recent Notes Workflow
+When the user says "classify recent notes" or "link recent notes to MOCs":
+1. Purpose: Find notes created in the last N days (default: 2) and link them to appropriate MOC subsections
+2. Exclusions (always skip these):
+   - People folder (\\People\\)
+   - Journals folder (\\Journals\\, \\00 - Journal\\)
+   - Templates folder (\\Templates\\)
+   - Resources folders (\\.resources)
+   - Images folder (\\images\\, \\Attachments\\, \\00 - Images\\)
+   - Home Dashboard folder (MOC files themselves)
+   - System files (Orphan Files.md)
+3. Workflow:
+   - Run PowerShell script to find files by CreationTime within date range
+   - Read all MOC files to understand available subsections
+   - Read each recent file to analyze its content
+   - Classify using AI based on topic, tags, and content keywords
+   - Add wikilink to appropriate MOC subsection
+   - Add nav property to file pointing back to MOC (bidirectional linking)
+4. Classification guidelines:
+   - FOL/library content → MOC - Friends of the Georgetown Public Library
+   - Bahá'í content → MOC - Bahá'í Faith (match subsection: Core Teachings, Administrative Guidance, etc.)
+   - AI/tech content → MOC - Technology & Computers > AI & Machine Learning
+   - Health/nutrition → MOC - Health & Nutrition
+   - Psychology/cognition → MOC - NLP & Psychology
+   - Social/political → MOC - Social Issues
+   - Science/nature → MOC - Science & Nature
+   - xkcd/sketches → MOC - Home & Practical Life > Sketchplanations
+   - Micrometeorites → MOC - Science & Nature > Micrometeorites
+5. Output: Summary table showing files classified, their assigned MOC, and subsection
+6. Preserve UTF-8 encoding when editing files
+
+## Sort To-Do List Workflow
+When the user says "sort todo", "sort to-do list", or "resort todos":
+1. File location: D:\Obsidian\Main\To-Do List.md
+2. Purpose: Organize tasks with uncompleted first, then completed sorted by date descending
+3. Workflow:
+   - Read the To-Do List file with UTF-8 encoding (preserve BOM)
+   - Parse task lines between the header (---) and footer (--- ## Related Notes)
+   - Identify completed tasks: lines containing `[x]`
+   - Identify uncompleted tasks: lines containing `[ ]`
+   - Extract completion dates from each task (patterns: `✅ YYYY-MM-DD`, `" YYYY-MM-DD`, or trailing `YYYY-MM-DD`)
+   - Sort completed tasks by most recent date first (descending), dateless tasks at bottom
+   - Reconstruct file: header → uncompleted → blank line → completed (sorted) → footer
+   - Write back with UTF-8 encoding
+4. Output: Count of uncompleted and completed tasks
+5. Preserve original mojibake characters (°¸", ³, «, etc.) - do not attempt to fix encoding issues in task text
