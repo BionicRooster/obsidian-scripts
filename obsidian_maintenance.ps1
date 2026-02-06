@@ -855,11 +855,12 @@ function Generate-TruncatedFilenamesList {
             'kimchi', 'tofu', 'tempeh', 'hummus', 'falafel', 'tahini', 'miso', 'ramen', 'udon',
             'chutney', 'naan', 'chapati', 'samosa', 'biryani', 'teriyaki', 'wasabi', 'edamame',
             'quinoa', 'acai', 'kombucha', 'matcha', 'chai', 'boba', 'pho', 'banh',
+            'pesto', 'crema', 'penne', 'halwa', 'korma',
             # Names/surnames
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
-            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys',
+            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma',
             # Tech/common terms from truncated filenames
-            'perl', 'wiki',
+            'perl', 'wiki', 'blog',
             # Other common terms
             'podcast', 'ebook', 'audiobook', 'vegan', 'keto', 'paleo', 'gluten', 'probiotic',
             'cryptocurrency', 'blockchain', 'bitcoin', 'ethereum', 'nft', 'defi',
