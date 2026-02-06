@@ -9,7 +9,7 @@
 #   3. Updates all markdown links to match renamed files
 #   4. Fixes broken links pointing to moved resources
 #   5. Fixes legacy Evernote paths pointing to new image locations
-#   6. Generates "Empty Notes.md" listing notes with only a title (no content)
+#   6. Deletes empty notes (title-only, no content) and logs each deletion
 #   7. Generates "Truncated Filenames.md" listing notes with cut-off names
 #   8. Deletes small image files (<3KB) in .resources folders (icons, trackers)
 #   9. Deletes empty folders left behind after cleanup
@@ -56,7 +56,7 @@ $script:trimmedLinksFixed = 0
 $script:imagesRenamed = 0
 $script:linksFixed = 0
 $script:filesModified = 0
-$script:emptyNotesFound = 0
+$script:emptyNotesDeleted = 0
 $script:truncatedFilesFound = 0
 $script:smallImagesDeleted = 0
 $script:emptyFoldersDeleted = 0
@@ -751,22 +751,20 @@ function Fix-LegacyEvernotePaths {
 }
 
 # =============================================================================
-# PHASE 6: Generate Empty Notes list
+# PHASE 6: Delete Empty Notes
 # =============================================================================
 # Finds all markdown files that contain only a title heading and optional
 # metadata (frontmatter, nav line, tags) but no actual body content.
-# Creates/updates "Empty Notes.md" with links to these files.
+# Deletes them and logs each deletion.
 # =============================================================================
-function Generate-EmptyNotesList {
-    Write-Log "=== Phase 6: Generating Empty Notes list ===" "Cyan"
-
-    $emptyNotes = @()
+function Delete-EmptyNotes {
+    Write-Log "=== Phase 6: Deleting empty notes ===" "Cyan"
 
     # Get all markdown files in the vault
     $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
 
     foreach ($file in $mdFiles) {
-        # Skip the Empty Notes file itself
+        # Skip the Empty Notes file itself (legacy, if it still exists)
         if ($file.Name -eq "Empty Notes.md") { continue }
 
         try {
@@ -795,45 +793,23 @@ function Generate-EmptyNotesList {
                 $_ -notmatch '^\s*-\s*\[\[.+\]\]\s*$'
             }
 
-            # If no content lines, consider it empty
+            # If no content lines, delete the file
             if ($contentLines.Count -eq 0) {
-                $emptyNotes += @{
-                    Name = $file.BaseName
-                    RelPath = $file.FullName.Replace($vaultPath + '\', '').Replace('\', '/')
+                # Build relative path for logging
+                $relPath = $file.FullName.Replace($vaultPath + '\', '').Replace('\', '/')
+
+                if ($dryRun) {
+                    Write-Log "  [DRY RUN] Would delete empty note: $relPath" "Magenta"
+                } else {
+                    Remove-Item -LiteralPath $file.FullName -Force
+                    Write-Log "  Deleted empty note: $relPath" "Yellow"
                 }
+                $script:emptyNotesDeleted++
             }
         } catch {}
     }
 
-    # Sort by relative path
-    $emptyNotes = $emptyNotes | Sort-Object { $_.RelPath }
-
-    $script:emptyNotesFound = $emptyNotes.Count
-
-    # Create markdown content
-    $mdContent = "# Empty Notes (Title Only)`n`n"
-    $mdContent += "These notes contain no content other than a title heading and optional metadata.`n`n"
-    $mdContent += "**Total: $($emptyNotes.Count) files**`n`n"
-    $mdContent += "*Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*`n`n"
-
-    foreach ($note in $emptyNotes) {
-        # Create Obsidian wiki link using the base name
-        $mdContent += "- [[$($note.Name)]]`n"
-    }
-
-    # Write to file
-    $outputPath = Join-Path $vaultPath "Empty Notes.md"
-
-    if ($dryRun) {
-        Write-Log "  [DRY RUN] Would create Empty Notes.md with $($emptyNotes.Count) entries" "Magenta"
-    } else {
-        try {
-            Set-Content -Path $outputPath -Value $mdContent -Encoding UTF8 -NoNewline
-            Write-Log "  Created Empty Notes.md with $($emptyNotes.Count) entries" "Green"
-        } catch {
-            Write-Log "  ERROR: Failed to create Empty Notes.md - $_" "Red"
-        }
-    }
+    Write-Log "  Empty notes deleted: $($script:emptyNotesDeleted)" "Green"
 }
 
 # =============================================================================
@@ -3327,7 +3303,7 @@ Rename-UnknownFilenameImages
 Build-FileIndex
 Fix-BrokenLinks
 Fix-LegacyEvernotePaths
-Generate-EmptyNotesList
+Delete-EmptyNotes
 Generate-TruncatedFilenamesList
 Delete-SmallResourceImages
 Delete-EmptyFolders
@@ -3357,7 +3333,7 @@ Write-Log "  Links fixed (trimmed files): $script:trimmedLinksFixed" "White"
 Write-Log "  Images renamed (unknown_filename): $script:imagesRenamed" "White"
 Write-Log "  Markdown files updated: $script:filesModified" "White"
 Write-Log "  Links fixed: $script:linksFixed" "White"
-Write-Log "  Empty notes found: $script:emptyNotesFound" "White"
+Write-Log "  Empty notes deleted: $script:emptyNotesDeleted" "White"
 Write-Log "  Truncated filenames found: $script:truncatedFilesFound" "White"
 Write-Log "  Small images deleted: $script:smallImagesDeleted" "White"
 Write-Log "  Empty folders deleted: $script:emptyFoldersDeleted" "White"
