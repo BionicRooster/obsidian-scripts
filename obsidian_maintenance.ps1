@@ -28,6 +28,7 @@
 #  21. Fixes wiki-links accidentally placed inside YAML frontmatter
 #  22. Fixes YAML tag indentation (mixed indented/unindented list items)
 #  23. Fixes YAML tag malformations (duplicate keys, inline hashtags, mixed formats)
+#  24. Fixes filename title case (lowercase major words, MMS→Mms-type acronym errors)
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -75,6 +76,8 @@ $script:bulletPointsFixed = 0
 $script:yamlWikiLinksFixed = 0
 $script:yamlTagIndentFixed = 0
 $script:yamlTagMalformFixed = 0
+$script:titleCaseRenamed = 0
+$script:titleCaseLinksUpdated = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -855,7 +858,7 @@ function Generate-TruncatedFilenamesList {
             'kimchi', 'tofu', 'tempeh', 'hummus', 'falafel', 'tahini', 'miso', 'ramen', 'udon',
             'chutney', 'naan', 'chapati', 'samosa', 'biryani', 'teriyaki', 'wasabi', 'edamame',
             'quinoa', 'acai', 'kombucha', 'matcha', 'chai', 'boba', 'pho', 'banh',
-            'pesto', 'crema', 'penne', 'halwa', 'korma',
+            'pesto', 'crema', 'penne', 'halwa', 'korma', 'lassi', 'rellenos', 'ayam', 'banu',
             # Names/surnames
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
             'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma',
@@ -2127,7 +2130,7 @@ function Simplify-MocLinkPaths {
 
     # Get all MOC files in the vault (files in Dashboard/Index/MOC directories or with MOC in name)
     $mocFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
-        $_.DirectoryName -match '(Dashboard|Index|MOC)' -or $_.Name -match 'MOC'
+        $_.DirectoryName -match '(Dashboard|Index|MOC)' -or $_.Name -cmatch 'MOC'
     }
 
     if ($mocFiles.Count -eq 0) {
@@ -3269,6 +3272,372 @@ function Fix-YamlTagMalformations {
 }
 
 # =============================================================================
+# Phase 24: Fix Title Case in Filenames
+# =============================================================================
+function Fix-TitleCaseFilenames {
+    Write-Log "=== Phase 24: Fixing title case in filenames ===" "Cyan"
+
+    # --- Title Case Configuration ---
+
+    # Minor words that stay lowercase unless they're the first word
+    # Includes English minor words and common foreign particles
+    $minorWords = @('a','an','the','and','but','or','for','nor','at','by','in','of','on','to','with','from',
+        'vs','vs.','is','it','as',
+        'da','el','la','de','del','di','du','le','les','von','van','der','den','ka')
+
+    # Directories to exclude from scanning
+    $excludeDirs = @('.obsidian','.smart-env','00 - Images','00 - Journal','Templates','.resources')
+
+    # Known acronyms - these ALL CAPS words are correct and should NOT be changed
+    $acronyms = @(
+        # Standard acronyms
+        'MOC','LSA','UHJ','NLP','TX','CIT','GCCMA','WT','FEIN','AI','CNN','NFL','PDF','URL','PKM','FOL',
+        'DIY','DNS','VPN','HTTP','HTTPS','API','CSS','HTML','JS','SQL','JSON','XML','YAML','USB','GPU',
+        'CPU','RAM','SSD','HDD','LED','LCD','OLED','ADHD','OCD','PTSD','IQ','EQ','BMI','DNA','RNA',
+        'FDA','CDC','WHO','UN','EU','UK','US','USA','NYC','LA','DC','ATX','DFW','HVAC','IRS','SSN',
+        'LLC','INC','CEO','CFO','CTO','COO','VP','HR','IT','QA','PM','PR','FAQ','TL','DR','TLDR',
+        'ETA','FYI','ASAP','RSA','MVP','POC','KPI','ROI','SaaS','PaaS','SEO','SEM','CRM','ERP',
+        'PhD','MD','JD','MBA','BA','BS','MA','MS','LLM','II','III','IV','VI','VII','VIII','IX','XI','XII',
+        'USDA','BBC','PBS','NPR','GOP','NATO','NASA','JPEG','PNG','GIF','MP3','MP4',
+        # Vault-specific acronyms
+        'FM','USAA','HCAS','CC','LGL','USPS','HP','BPH','MRI','HOA','GTX','USI','FC','NLT','NSA',
+        'DEI','FEMA','UCLA','WWII','AA','PCB','IFTTT','LIT','PD','DVD','PC','NRPE','SCORM','SIMH',
+        'KVM','VBA','KB','XP','XBMC','OS','RV','NM','TSA','LICSW','BBQ','HSH','MCP','MLK','ASCII',
+        'DHCP','GISD','IBM','TRMNL','USMT','DIR','WFPB','XJ','TP','WCWBF','ROET','PT','REXCPM',
+        'NRPE','ACDF','CMD','DOS','CSV','EPUB','DRM','FTP','DVR','CMON','NLT','PARA','BLDGBLOG',
+        'SCORM','TSA','LICSW','MCP','EM','WKRP',
+        # Additional acronyms discovered during review
+        'TV','DDM','DCF','ID','DHS','GI','ICYMI','PRC','GUI','SUV','SIP','CO2','QRS','NYT','FW',
+        'HOWTO','NEED','LG','ORDER','AND','SMART','SCORE','HOW','WEBER','NM','NRPE','RC',
+        'MAKE','FUN','HERE','ESRD','YO','SMS','MMS'
+    )
+
+    # Plural/variant forms of acronyms (e.g., SUVs, URLs, SIPs) - strip trailing 's' for matching
+    $acronymVariants = @('SUVs','SIPs','URLs')
+
+    # Files/patterns to skip entirely - intentional lowercase brand names or special names
+    $skipPatterns = @(
+        '^iTunes','^xkcd','^eMail','^eMClient','^iRex','^firefox','^dupeGuru','^glasswire',
+        '^minibin','^piwheels','^calibre','^meta-iPod','^mind\.Depositor','^lgldatadictionary$',
+        '^README$','^medical$','^justice$','^micrometeorites$','^regex','^chronic',
+        '^bronchopulmonary','^industrial workers','^my knee$','^how do i suspend','^shore excursion',
+        '^linux -','^windows -','^quinoa and toasted p','^eggplant and tomato$',
+        '^ORDER BY','^Using AND and OR','^MD-MD-Keep','^37d03d',
+        '^\[pidp8\].*VC8E','^\[pidp8\].*pde$','^Folder Structure P\.A',
+        '^Vera Irene Talbot -I','^Easy, Healthy.*Da y$','^Javanese.*Aya m\)$',
+        '^Cool Tools - 15 x','^Vegan Carrot Halwa','^Ras el Hanout',
+        '^Q&A ','^D&R '
+    )
+
+    # Words that are brand names with mixed case - never change these
+    $mixedCaseBrands = @(
+        'iPhone','iPad','iPod','iMac','iOS','iTunes','iCloud',
+        'eBook','eBay','eMail','eMClient',
+        'YouTube','LinkedIn','GitHub','WordPress','JavaScript',
+        'PowerShell','FileZilla','LiveCode','FiberFirst',
+        'DiddyBorg','BlueTooth','BluRay','ChatGPT',
+        'VMware','NSClient','NSClient++',
+        'IGoogle','iGoogle','XSplit','VCam',
+        'CPUville','MAGAbert',
+        'PiDP8','PiDP_8','SimH','ImageFiles',
+        'WD-40','MS-DOS','RC2014','RC-3',
+        'microSD','MicroSD',
+        'waynetalbot@gmail.com',
+        'LG---','CO2','OS8','FW_','Fw_','Re_',
+        'feedly','dpkg','pidp8','buildroot',
+        'RVer','RVers',
+        'cat5','ebay',
+        'iCC','NYT',
+        'vbscript',
+        'sms'
+    )
+
+    # ALL CAPS words that should be converted to regular Title Case (not acronyms)
+    $capsToConvert = @{
+        'CORONA'    = 'Corona'
+        'LUCY'      = 'Lucy'
+        'DAD'       = 'Dad'
+        'OZ'        = 'Oz'
+        'BEAST'     = 'Beast'
+        'READ'      = 'Read'
+        'ACCESS'    = 'Access'
+        'HEALTHIER' = 'Healthier'
+        'EFFICIENT' = 'Efficient'
+        'FORWARD'   = 'Forward'
+        'REVIEW'    = 'Review'
+    }
+
+    # --- Title Case Conversion Function ---
+
+    # Converts a filename string to proper title case
+    function ConvertTo-TitleCase {
+        param([string]$Name)
+
+        # Split on spaces while preserving the delimiters structure
+        $words = $Name -split '(\s+)'
+        $result = @()
+        $wordIndex = 0  # Track actual word index (not counting spaces)
+
+        for ($i = 0; $i -lt $words.Count; $i++) {
+            $w = $words[$i]
+
+            # Preserve whitespace as-is
+            if ($w -match '^\s+$') {
+                $result += $w
+                continue
+            }
+
+            # Skip empty strings
+            if ($w -eq '') { continue }
+
+            # Check if it's a number-starting word - leave as-is
+            if ($w -match '^\d') {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check if it's a known mixed-case brand/product name - keep EXACT case
+            if ($mixedCaseBrands -ccontains $w) {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check if word contains @ (email address) - keep as-is
+            if ($w -match '@') {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Strip leading and trailing punctuation for acronym matching
+            $leading = ''
+            $trailing = ''
+            if ($w -match '^([\(\[\'']+)') {
+                $leading = $Matches[1]
+            }
+            if ($w -match '([,;:!?\.\)\]\''_]+)$') {
+                $trailing = $Matches[1]
+            }
+            $stripped = $w
+            if ($leading) { $stripped = $stripped.Substring($leading.Length) }
+            if ($trailing -and $stripped.Length -gt $trailing.Length) {
+                $stripped = $stripped.Substring(0, $stripped.Length - $trailing.Length)
+            } elseif ($trailing -and $stripped.Length -le $trailing.Length) {
+                # Word is entirely punctuation - keep as-is
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check if it's a known acronym variant (e.g., SUVs, URLs)
+            if ($acronymVariants -ccontains $stripped) {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check if it's a known acronym (exact ALL CAPS match)
+            if ($acronyms -contains $stripped.ToUpper() -and $stripped -ceq $stripped.ToUpper()) {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check for dotted abbreviations like U.S., Q.E.D., etc.
+            if ($stripped -cmatch '^([A-Z]\.)+[A-Z]?\.?$') {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check if word has internal mixed case (like iPhone, eBay) - preserve it
+            if ($w -cmatch '[a-z][A-Z]' -or $w -cmatch '^[a-z]+[A-Z]') {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Check capsToConvert for ALL CAPS words that need specific conversion
+            if ($stripped -ceq $stripped.ToUpper() -and $stripped.Length -gt 1 -and $capsToConvert.ContainsKey($stripped)) {
+                $replacement = $capsToConvert[$stripped]
+                $result += $leading + $replacement + $trailing
+                $wordIndex++
+                continue
+            }
+
+            # Check if it's ALL CAPS and not a known acronym - convert to Title Case
+            if ($stripped -ceq $stripped.ToUpper() -and $stripped.Length -gt 1 -and $stripped -cmatch '[A-Z]') {
+                $converted = $stripped.Substring(0,1).ToUpper() + $stripped.Substring(1).ToLower()
+                $result += $leading + $converted + $trailing
+                $wordIndex++
+                continue
+            }
+
+            # For the first word, always capitalize
+            if ($wordIndex -eq 0) {
+                if ($w.Length -gt 0 -and $w.Substring(0,1) -cmatch '[a-z]') {
+                    $result += $w.Substring(0,1).ToUpper() + $w.Substring(1)
+                } else {
+                    $result += $w
+                }
+                $wordIndex++
+                continue
+            }
+
+            # Check if it's a minor word - leave as-is (preserve current case)
+            $lower = $w.ToLower()
+            if ($minorWords -contains $lower) {
+                $result += $w
+                $wordIndex++
+                continue
+            }
+
+            # Major word - capitalize first letter if lowercase
+            if ($w.Length -gt 0 -and $w.Substring(0,1) -cmatch '[a-z]') {
+                $result += $w.Substring(0,1).ToUpper() + $w.Substring(1)
+            } else {
+                $result += $w
+            }
+            $wordIndex++
+        }
+
+        return ($result -join '')
+    }
+
+    # --- Scan for files needing title case fixes ---
+
+    $filesToFix = @()
+
+    Get-ChildItem -Path $vaultPath -Filter '*.md' -Recurse |
+        Where-Object {
+            $skip = $false
+            foreach ($d in $excludeDirs) {
+                if ($_.FullName -match [regex]::Escape($d)) { $skip = $true; break }
+            }
+            -not $skip
+        } |
+        ForEach-Object {
+            $file = $_
+            $name = $file.BaseName
+
+            # Check skip patterns
+            $shouldSkip = $false
+            foreach ($pattern in $skipPatterns) {
+                if ($name -match $pattern) {
+                    $shouldSkip = $true
+                    break
+                }
+            }
+            if ($shouldSkip) { return }
+
+            # Compute the title case version and compare
+            $newBaseName = ConvertTo-TitleCase $name
+
+            # Only include if the name actually changed
+            if ($newBaseName -cne $name) {
+                $filesToFix += [PSCustomObject]@{
+                    OldName   = $name
+                    NewName   = $newBaseName
+                    FullPath  = $file.FullName
+                    Directory = $file.DirectoryName
+                    Extension = $file.Extension
+                }
+            }
+        }
+
+    if ($filesToFix.Count -eq 0) {
+        Write-Log "  No title case issues found" "Green"
+        return
+    }
+
+    Write-Log "  Found $($filesToFix.Count) files to rename" "Yellow"
+
+    # --- Rename files using two-step approach for Windows case-insensitive filesystem ---
+
+    $renameMap = @{}  # Tracks old name -> new name for link updates
+
+    foreach ($fix in $filesToFix) {
+        $oldPath = $fix.FullPath
+        $finalName = $fix.NewName + $fix.Extension
+
+        # Two-step rename: old -> temp -> final (required because Windows is case-insensitive)
+        $tempName = $fix.NewName + '_TITLECASE_TEMP_' + $fix.Extension
+
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] Would rename: $($fix.OldName) -> $($fix.NewName)" "Magenta"
+            $script:titleCaseRenamed++
+            continue
+        }
+
+        try {
+            Rename-Item -LiteralPath $oldPath -NewName $tempName -ErrorAction Stop
+            $tempPath = Join-Path $fix.Directory $tempName
+            Rename-Item -LiteralPath $tempPath -NewName $finalName -ErrorAction Stop
+            $renameMap[$fix.OldName] = $fix.NewName
+            $script:titleCaseRenamed++
+            Write-Log "  Renamed: $($fix.OldName) -> $($fix.NewName)" "Green"
+        }
+        catch {
+            # If step 2 failed, try to restore the original name
+            $tempPath = Join-Path $fix.Directory $tempName
+            if (Test-Path $tempPath) {
+                try { Rename-Item -LiteralPath $tempPath -NewName ($fix.OldName + $fix.Extension) -ErrorAction Stop } catch {}
+            }
+            Write-Log "  ERROR: $($fix.OldName) - $($_.Exception.Message)" "Red"
+        }
+    }
+
+    # --- Update wikilinks across the vault to match renamed files ---
+
+    if ($renameMap.Count -gt 0 -and -not $dryRun) {
+        Write-Log "  Updating wikilinks for renamed files..." "Gray"
+
+        $allFiles = Get-ChildItem -Path $vaultPath -Filter '*.md' -Recurse |
+            Where-Object {
+                $skip = $false
+                foreach ($d in @('.obsidian','.smart-env')) {
+                    if ($_.FullName -match [regex]::Escape($d)) { $skip = $true; break }
+                }
+                -not $skip
+            }
+
+        foreach ($file in $allFiles) {
+            $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
+            $originalContent = $content
+
+            foreach ($oldName in $renameMap.Keys) {
+                $newName = $renameMap[$oldName]
+
+                # Replace [[OldName]] with [[NewName]]
+                $pattern1 = [regex]::Escape("[[" + $oldName + "]]")
+                if ($content -match $pattern1) {
+                    $content = $content -replace $pattern1, ("[[" + $newName + "]]")
+                    $script:titleCaseLinksUpdated++
+                }
+
+                # Replace [[OldName|display]] with [[NewName|display]]
+                $pattern2 = [regex]::Escape("[[" + $oldName + "|")
+                if ($content -match $pattern2) {
+                    $content = $content -replace $pattern2, ("[[" + $newName + "|")
+                    $script:titleCaseLinksUpdated++
+                }
+            }
+
+            # Write back if changed (preserve UTF-8 encoding)
+            if ($content -ne $originalContent) {
+                [System.IO.File]::WriteAllText($file.FullName, $content, [System.Text.Encoding]::UTF8)
+            }
+        }
+
+        Write-Log "  Updated $($script:titleCaseLinksUpdated) wikilinks" "Green"
+    }
+
+    Write-Log "  Renamed $($script:titleCaseRenamed) files" "Green"
+}
+
+# =============================================================================
 # MAIN EXECUTION
 # =============================================================================
 
@@ -3322,6 +3691,7 @@ Fix-MocBulletPoints
 Fix-YamlWikiLinks
 Fix-YamlTagIndentation
 Fix-YamlTagMalformations
+Fix-TitleCaseFilenames
 
 # Summary
 Write-Log "" "White"
@@ -3352,5 +3722,6 @@ Write-Log "  MOC bullet points fixed: $script:bulletPointsFixed" "White"
 Write-Log "  YAML wiki-links fixed: $script:yamlWikiLinksFixed" "White"
 Write-Log "  YAML tag indentation fixed: $script:yamlTagIndentFixed" "White"
 Write-Log "  YAML tag malformations fixed: $script:yamlTagMalformFixed" "White"
+Write-Log "  Title case files renamed: $script:titleCaseRenamed (links updated: $script:titleCaseLinksUpdated)" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
