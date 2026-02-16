@@ -1483,6 +1483,19 @@ function Fix-BrokenImageLinks {
 function Generate-OrphanFilesList {
     Write-Log "=== Phase 12: Generating Orphan Files list ===" "Cyan"
 
+    # Directories to exclude from orphan detection entirely
+    # Journals are daily notes (never linked to), templates are referenced by plugins,
+    # trash is deleted content, linter is system config, .obsidian is Obsidian internals
+    # Uses simple string Contains() matching against the full file path
+    $excludedDirSegments = @(
+        '\00 - Journal\',
+        '\05 - Templates\',
+        '\.trash\',
+        '\obsidian-linter\',
+        '\.obsidian\',
+        '.resources'
+    )
+
     # Get all markdown files
     $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
 
@@ -1501,13 +1514,30 @@ function Generate-OrphanFilesList {
     # Key = lowercase base name of linked file
     $linkedFiles = @{}
 
-    # Scan all files for outgoing wiki-style links
+    # Track which files have a nav property (connected to a MOC)
+    # A file with nav: "[[MOC - Something]]" is part of the knowledge graph
+    $filesWithNav = @{}
+
+    # Pre-compute list of files with brackets in their names
+    # The standard wikilink regex [^\]|]+ stops at ] characters inside filenames,
+    # so files like "[pidp8] Something" or "Recipe [feedly]" never get matched.
+    # We'll do a secondary substring search for these during the scan.
+    $bracketFileKeys = @($fileMap.Keys | Where-Object { $_ -match '\[' -or $_ -match '\]' })
+
+    # Scan all files for outgoing wiki-style links and nav properties
     foreach ($file in $mdFiles) {
         try {
             $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
             if (-not $content) { continue }
         } catch {
             continue
+        }
+
+        # Check if this file has a nav property in YAML frontmatter
+        # This indicates the file is connected to a MOC and is not a true orphan
+        $fileBaseLower = [System.IO.Path]::GetFileNameWithoutExtension($file.Name).ToLower().Trim()
+        if ($content -match '(?m)^nav:\s*"?\[\[') {
+            $filesWithNav[$fileBaseLower] = $true
         }
 
         # Find all wiki-style links: [[link]] or [[link|alias]] or [[path/link]]
@@ -1536,30 +1566,72 @@ function Generate-OrphanFilesList {
                 $linkedFiles[$linkTargetLower] = $true
             }
         }
+
+        # Secondary check for files with brackets in their names
+        # The regex above fails to parse [ ] inside filenames, so search by substring
+        foreach ($bKey in $bracketFileKeys) {
+            if (-not $linkedFiles.ContainsKey($bKey)) {
+                # Search for "[[" + basename (case-insensitive) in this file's content
+                $bBaseName = $fileMap[$bKey].BaseName
+                $found = $content.IndexOf("[[" + $bBaseName, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+                # Also handle Obsidian bracket-doubling: when a filename starts with [tag],
+                # the MOC wikilink may be [[[tag]] (extra ]) instead of [[[tag]
+                if (-not $found -and $bBaseName.StartsWith("[")) {
+                    $firstClose = $bBaseName.IndexOf("]")
+                    if ($firstClose -gt 0) {
+                        $altName = $bBaseName.Substring(0, $firstClose + 1) + "]" + $bBaseName.Substring($firstClose + 1)
+                        $found = $content.IndexOf("[[" + $altName, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+                    }
+                }
+                if ($found) {
+                    $linkedFiles[$bKey] = $true
+                }
+            }
+        }
     }
 
-    # Find orphans: files with no incoming links
+    Write-Log "  Files with incoming wikilinks: $($linkedFiles.Count)" "Gray"
+    Write-Log "  Files with nav property: $($filesWithNav.Count)" "Gray"
+
+    # Find orphans: files with no incoming links AND no nav property
     $orphans = @()
     foreach ($file in $mdFiles) {
         $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+        $baseNameLower = $baseName.ToLower().Trim()
 
         # Skip system/generated files
         if ($file.Name -eq "Orphan Files.md") { continue }
         if ($file.Name -eq "Empty Notes.md") { continue }
         if ($file.Name -eq "Truncated Filenames.md") { continue }
 
-        if (-not $linkedFiles.ContainsKey($baseName.ToLower().Trim())) {
-            # Handle files in vault root (DirectoryName may be null or equal to vaultPath)
-            $folderName = if ($file.DirectoryName -and $file.DirectoryName -ne $vaultPath) {
-                Split-Path $file.DirectoryName -Leaf
-            } else {
-                "(Root)"
+        # Skip files in excluded directories (journals, templates, trash, etc.)
+        $excluded = $false
+        foreach ($segment in $excludedDirSegments) {
+            if ($file.FullName.Contains($segment)) {
+                $excluded = $true
+                break
             }
-            $orphans += @{
-                Name = $baseName
-                RelPath = $file.FullName.Replace($vaultPath + '\', '').Replace('\', '/')
-                Folder = $folderName
-            }
+        }
+        if ($excluded) { continue }
+
+        # Skip folder notes (files whose base name matches their parent folder name)
+        $parentFolder = Split-Path $file.DirectoryName -Leaf
+        if ($baseName -eq $parentFolder) { continue }
+
+        # A file is NOT an orphan if it has incoming wikilinks OR a nav property
+        if ($linkedFiles.ContainsKey($baseNameLower)) { continue }
+        if ($filesWithNav.ContainsKey($baseNameLower)) { continue }
+
+        # Handle files in vault root (DirectoryName may be null or equal to vaultPath)
+        $folderName = if ($file.DirectoryName -and $file.DirectoryName -ne $vaultPath) {
+            Split-Path $file.DirectoryName -Leaf
+        } else {
+            "(Root)"
+        }
+        $orphans += @{
+            Name = $baseName
+            RelPath = $file.FullName.Replace($vaultPath + '\', '').Replace('\', '/')
+            Folder = $folderName
         }
     }
 
