@@ -139,6 +139,14 @@ class ContentConverter:
             if block.strip():
                 outlines.append(block)
 
+        # Also handle <one:InsertedFile> elements that are direct children of
+        # <one:Page> (OneNote places attached files here, NOT inside any OE).
+        # We append each attachment link as a separate block at the end.
+        for file_el in root.findall(_onetag("InsertedFile")):
+            link = self._process_attachment(file_el)
+            if link:
+                outlines.append(link)
+
         # Join outlines with a blank line between them
         return "\n\n".join(outlines).strip()
 

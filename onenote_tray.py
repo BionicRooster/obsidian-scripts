@@ -302,7 +302,12 @@ def run_tray():
     # Assign menu after icon is created so we can pass the icon reference
     icon.menu = _build_menu(icon)
 
-    print("Tray icon started. Left-click or right-click → Export to Obsidian.")
+    # Print startup message only when stdout is available (python.exe, not pythonw.exe)
+    if sys.stdout is not None:
+        try:
+            print("Tray icon started. Right-click -> Export to Obsidian.")
+        except Exception:
+            pass
     icon.run()   # blocks until icon.stop() is called
 
 
