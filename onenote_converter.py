@@ -580,4 +580,6 @@ class ContentConverter:
         for data_row in rows_md[1:]:
             md_lines.append(_row_str(data_row))
 
-        return "\n".join(md_lines)
+        # Trailing newline ensures a blank line appears between the table and
+        # the next paragraph when _process_oe_children joins parts with "\n".
+        return "\n".join(md_lines) + "\n"
