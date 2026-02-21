@@ -18,10 +18,14 @@ To auto-start with Windows, run:
 """
 
 import argparse
+import atexit
 import json
 import logging
+import os
+import subprocess
 import sys
 import threading
+import time
 import winreg
 from pathlib import Path
 
@@ -62,6 +66,65 @@ STARTUP_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 # APP_NAME: registry value name used for the startup entry
 APP_NAME = "OneNoteObsidianExport"
+
+# PID_FILE: written on startup to track the running instance's process ID.
+# Used by _ensure_single_instance() to detect and kill a previous copy.
+PID_FILE = _SCRIPT_DIR / "onenote_tray.pid"
+
+
+# ---------------------------------------------------------------------------
+# Single-instance enforcement
+# ---------------------------------------------------------------------------
+
+def _cleanup_pid_file():
+    """
+    Delete the PID file if it still contains this process's PID.
+    Registered with atexit so it runs on any clean shutdown.
+    """
+    try:
+        if PID_FILE.exists() and PID_FILE.read_text().strip() == str(os.getpid()):
+            PID_FILE.unlink()
+    except Exception:
+        pass  # best-effort only
+
+
+def _ensure_single_instance():
+    """
+    Enforce only one running tray instance at a time.
+
+    Reads the PID file left by any previous instance.  If that process is
+    still alive it is killed via taskkill, so the new instance can take over
+    without the user needing to right-click → Exit first.
+
+    After handling any old instance, writes this process's PID to the PID
+    file and registers _cleanup_pid_file() with atexit.
+    """
+    if PID_FILE.exists():
+        try:
+            # old_pid: the PID written by the previous instance
+            old_pid = int(PID_FILE.read_text().strip())
+
+            # os.kill with signal 0 checks existence without actually signalling
+            os.kill(old_pid, 0)
+
+            # Still alive — force-kill it and wait briefly for Windows cleanup
+            logging.info("Stopping previous instance (PID %d).", old_pid)
+            subprocess.run(
+                ["taskkill", "/F", "/PID", str(old_pid)],
+                capture_output=True,   # suppress taskkill's stdout/stderr
+            )
+            time.sleep(0.5)   # give Windows time to remove the process
+
+        except (ValueError, OSError):
+            # PID file is corrupt, or the old process is already gone — fine
+            pass
+
+    # Write this instance's PID so the next launch can find and kill us
+    PID_FILE.write_text(str(os.getpid()))
+
+    # Remove the PID file when we exit normally (Exit menu item or exception)
+    atexit.register(_cleanup_pid_file)
+
 
 # ---------------------------------------------------------------------------
 # Icon drawing
@@ -184,7 +247,7 @@ def _do_export(icon: pystray.Icon, item):
             pass  # toast is non-critical
 
         # --- Open in Obsidian ---
-        import os, urllib.parse
+        import urllib.parse
         vault_name   = config.get("vault_name", "Main")
         vault_root   = Path(config["vault_path"])
         rel          = note_path.relative_to(vault_root).with_suffix("")
@@ -291,6 +354,9 @@ def _build_menu(icon: pystray.Icon) -> pystray.Menu:
 
 def run_tray():
     """Create and run the system tray icon (blocks until Exit is chosen)."""
+    # Kill any existing instance and claim the PID file before creating the icon
+    _ensure_single_instance()
+
     icon_image = _make_icon(size=64)
 
     icon = pystray.Icon(
