@@ -1,411 +1,335 @@
-# Classify and Link Orphan Files to MOCs
-# This script reads orphan files, classifies them by content, and creates links
+# Classify and move orphan files to appropriate 01 subdirectories
+# This script analyzes file content and moves files based on keywords and tags
 
 param(
-    # Maximum files to process (0 = all)
-    [int]$Limit = 0,
-    # Dry run - just output classifications without linking
-    [switch]$DryRun,
-    # Output classification results to JSON
-    [switch]$OutputJson
+    [int]$BatchSize = 50,  # Number of files to process per batch
+    [int]$BatchNumber = 1,  # Which batch to process (1-indexed)
+    [switch]$DryRun,        # If set, only report classifications without moving
+    [switch]$ListOnly       # If set, only list files without processing
 )
 
-# Vault configuration
-$vaultPath = 'D:\Obsidian\Main'
-$mocFolder = '00 - Home Dashboard'
+# Define source and destination paths
+$sourcePath = "D:\Obsidian\Main\20 - Permanent Notes"
+$destBase = "D:\Obsidian\Main\01"
 
-# Folders to exclude from orphan processing (journal files should never be considered orphans)
-$excludeFolders = @(
-    '00 - Journal',
-    '09 - Kindle Clippings',
-    '.trash',
-    '05 - Templates',
-    '.obsidian',
-    '.smart-env'
-)
-
-# MOC classification keywords - maps keywords to MOC and subsection
-$mocClassification = @{
-    # Technology & Computers
-    'Technology' = @{
-        'Programming & Development' = @('python', 'javascript', 'code', 'programming', 'script', 'api', 'github', 'developer', 'software', 'algorithm', 'function', 'variable', 'loop', 'class', 'object', 'json', 'xml', 'html', 'css', 'regex', 'perl', 'bash', 'powershell', 'vba', 'macro')
-        'AI & Machine Learning' = @('ai', 'artificial intelligence', 'machine learning', 'neural', 'gpt', 'chatgpt', 'claude', 'llm', 'deep learning', 'model', 'training')
-        'Linux Resources & Guides' = @('linux', 'ubuntu', 'debian', 'fedora', 'centos', 'bash', 'terminal', 'command line', 'sudo', 'apt', 'yum')
-        'Databases & Access' = @('sql', 'database', 'access', 'query', 'table', 'mysql', 'postgresql', 'sqlite', 'vba', 'acspreadsheet')
-        'Hardware & Electronics' = @('arduino', 'raspberry pi', 'circuit', 'pcb', 'electronics', 'hardware', 'cpu', 'memory', 'storage', 'ssd', 'hdd', 'usb', 'gpio', 'solder')
-        'Retro Computing & Hardware' = @('z80', 'apple ii', '8-bit', 'commodore', 'atari', 'retro', 'vintage computer', 'cp/m', 's100', 'rc2014', 'altair', 'digicomp')
-        'Networking & Systems' = @('network', 'dhcp', 'dns', 'tcp', 'ip', 'router', 'firewall', 'server', 'admin', 'sysadmin', 'windows server', 'active directory')
-        'Software & Tools' = @('software', 'app', 'tool', 'utility', 'freeware', 'open source', 'firefox', 'chrome', 'browser', 'extension', 'plugin')
-        'Troubleshooting & Guides' = @('troubleshoot', 'fix', 'error', 'problem', 'solution', 'how to', 'guide', 'tutorial', 'step by step', 'malware', 'virus', 'security')
-        'Maker Projects' = @('maker', 'diy', '3d print', 'cnc', 'laser', 'robot', 'project', 'build', 'construct')
-    }
-
-    # Health & Nutrition
-    'Health' = @{
-        'Plant-Based Nutrition' = @('vegan', 'plant-based', 'vegetarian', 'wfpb', 'whole food', 'plant protein', 'veggie burger')
-        'Medical & Health' = @('doctor', 'medical', 'health', 'disease', 'treatment', 'symptom', 'diagnosis', 'medicine', 'hospital', 'surgery', 'eye', 'dental', 'vision')
-        'Exercise & Wellness' = @('exercise', 'fitness', 'workout', 'yoga', 'meditation', 'wellness', 'running', 'walking', 'gym')
-        'Key Research & Books' = @('research', 'study', 'clinical', 'trial', 'greger', 'esselstyn', 'ornish', 'campbell')
-    }
-
-    # Bahá'í Faith
-    'Bahá''í' = @{
-        'Central Figures' = @('bahá''u''lláh', 'báb', '''abdu''l-bahá', 'shoghi effendi', 'guardian', 'manifestation')
-        'Core Teachings' = @('unity', 'oneness', 'progressive revelation', 'covenant', 'consultation', 'bahá''í', 'bahai')
-        'Administrative Guidance' = @('lsa', 'nsa', 'uhj', 'assembly', 'feast', 'administrative')
-        'Nine Year Plan' = @('nine year plan', 'cluster', 'growth', 'expansion')
-        'Bahá''í Books & Resources' = @('tablet', 'prayers', 'writings', 'kitáb', 'hidden words', 'seven valleys')
-    }
-
-    # Social Issues
-    'Social' = @{
-        'Race & Equity' = @('race', 'racism', 'equity', 'diversity', 'inclusion', 'black', 'white', 'discrimination', 'justice', 'civil rights')
-        'Justice & Politics' = @('politics', 'political', 'government', 'policy', 'law', 'legal', 'court', 'vote', 'election', 'democracy')
-        'Religion & Society' = @('religion', 'religious', 'faith', 'spiritual', 'church', 'christian', 'islam', 'jewish', 'hindu', 'buddhist')
-        'Cultural Commentary' = @('culture', 'society', 'social', 'community', 'media', 'news', 'commentary')
-    }
-
-    # Recipes
-    'Recipes' = @{
-        'Main Dishes' = @('main dish', 'dinner', 'lunch', 'entrée', 'chicken', 'beef', 'fish', 'tofu', 'tempeh', 'seitan', 'burger', 'sandwich', 'rice', 'pasta', 'casserole')
-        'Soups & Stews' = @('soup', 'stew', 'chili', 'broth', 'bisque', 'chowder')
-        'Sides & Salads' = @('side', 'salad', 'vegetable', 'coleslaw', 'slaw', 'potato')
-        'Desserts & Sweets' = @('dessert', 'sweet', 'cake', 'cookie', 'pie', 'brownie', 'chocolate', 'sugar', 'candy')
-        'Breads & Baked Goods' = @('bread', 'bake', 'muffin', 'biscuit', 'roll', 'loaf', 'flour', 'dough', 'yeast')
-        'Sauces/Dips & Condiments' = @('sauce', 'dip', 'condiment', 'dressing', 'marinade', 'gravy', 'pesto', 'hummus', 'salsa')
-        'Beverages' = @('drink', 'beverage', 'smoothie', 'juice', 'tea', 'coffee', 'cocktail')
-    }
-
-    # Home & Practical Life
-    'Home' = @{
-        'Home Projects & Repairs' = @('home', 'house', 'repair', 'fix', 'maintenance', 'plumbing', 'electrical', 'renovation', 'remodel', 'water heater')
-        'Sustainable Building & Alternative Homes' = @('sustainable', 'green building', 'solar', 'alternative home', 'tiny house', 'off-grid', 'sip', 'insulation')
-        'Gardening & Urban Farming' = @('garden', 'plant', 'grow', 'soil', 'compost', 'vegetable garden', 'fruit', 'seed', 'harvest')
-        'Life Productivity & Organization' = @('productivity', 'organize', 'declutter', 'minimize', 'efficient', 'gtd', 'to do', 'task', 'schedule')
-        'Practical Tips & Life Hacks' = @('tip', 'hack', 'shortcut', 'trick', 'lifehack', 'save money', 'save time', 'portable', 'travel tip')
-        'Entertainment & Film' = @('movie', 'film', 'tv', 'television', 'show', 'series', 'netflix', 'streaming', 'entertainment')
-    }
-
-    # Science & Nature
-    'Science' = @{
-        'Earth Sciences & Geology' = @('geology', 'earth', 'rock', 'mineral', 'volcano', 'earthquake', 'fossil', 'dinosaur', 'meteor', 'tsunami')
-        'Archaeology & Anthropology' = @('archaeology', 'ancient', 'civilization', 'artifact', 'excavation', 'history', 'prehistoric', 'maya', 'roman', 'egyptian')
-        'Space & Planetary Science' = @('space', 'mars', 'moon', 'planet', 'star', 'galaxy', 'nasa', 'astronomy', 'astronaut', 'satellite', 'cosmos')
-        'Life Sciences' = @('biology', 'evolution', 'species', 'animal', 'bird', 'insect', 'ecosystem', 'ecology', 'nature')
-        'Gardening & Nature' = @('nature', 'wildlife', 'forest', 'tree', 'flower', 'outdoor', 'hiking', 'camping', 'national park')
-        'Micrometeorites' = @('micrometeorite', 'cosmic dust', 'space dust', 'meteor')
-    }
-
-    # NLP & Psychology
-    'NLP_Psy' = @{
-        'Cognitive Science' = @('cognitive', 'brain', 'mind', 'thinking', 'decision', 'bias', 'heuristic', 'kahneman', 'memory', 'attention', 'perception')
-        'Learning & Memory' = @('learning', 'memory', 'recall', 'retention', 'study', 'education', 'teaching', 'dyslexia', 'reading')
-        'Core NLP Concepts' = @('nlp', 'neuro-linguistic', 'anchoring', 'reframing', 'rapport', 'modeling', 'strategy', 'submodality')
-        'Communication & Influence' = @('communication', 'persuasion', 'influence', 'negotiation', 'language pattern', 'hypnosis', 'milton model', 'meta model')
-    }
-
-    # Travel & Exploration
-    'Travel' = @{
-        'Narrowboat & Canal Travel' = @('narrowboat', 'canal', 'barge', 'waterway', 'lock', 'thames', 'britain canal')
-        'National Parks & Nature' = @('national park', 'park', 'hiking', 'trail', 'camping', 'wilderness', 'big bend')
-        'Specific Locations' = @('vacation', 'trip', 'itinerary', 'visit', 'atlanta', 'fort worth', 'moscow', 'santa fe', 'ireland', 'japan', 'europe', 'washington state')
-        'RV & Alternative Living' = @('rv', 'camper', 'mobile', 'van life', 'nomad', 'road trip')
-    }
-
-    # Music & Record
-    'Music' = @{
-        'Recorder Resources' = @('recorder', 'flute', 'baroque', 'renaissance music', 'wind instrument')
-        'Music Theory & Performance' = @('music', 'song', 'instrument', 'play', 'practice', 'chord', 'scale', 'melody', 'rhythm', 'sheet music')
-        'Songs & Hymns' = @('hymn', 'song', 'lyrics', 'bahá''í song', 'choral')
-    }
-
-    # Personal Knowledge Management
-    'PKM' = @{
-        'Obsidian Integration' = @('obsidian', 'vault', 'note', 'zettelkasten', 'backlink', 'graph', 'plugin')
-        'Note-Taking & Learning' = @('note-taking', 'notes', 'organize', 'knowledge', 'learn', 'research', 'reference')
-        'Productivity Philosophy' = @('productivity', 'workflow', 'system', 'method', 'process', 'automation')
-    }
-
-    # Reading & Literature
-    'Reading' = @{
-        'Key Books by Topic' = @('book', 'author', 'read', 'reading', 'literature', 'novel', 'kindle', 'ebook', 'e-reader')
-        'Kindle Clippings' = @('highlight', 'clipping', 'quote', 'excerpt', 'annotation')
-    }
-
-    # Finance & Investment
-    'Finance' = @{
-        'Investing Strategies' = @('invest', 'stock', 'bond', 'portfolio', 'dividend', 'index fund', 'etf', 'retirement', '401k', 'ira')
-        'Financial Management' = @('budget', 'finance', 'money', 'save', 'expense', 'income', 'debt', 'credit', 'loan', 'mortgage')
-        'Tax Software' = @('tax', 'irs', 'deduction', 'turbotax', 'form', 'filing')
-    }
-
-    # Genealogy
-    'Genealogy' = @{
-        'Talbot Family Members' = @('talbot', 'talbott', 'family', 'ancestor', 'genealogy', 'family tree', 'lineage')
-        'Obituaries & Death Records' = @('obituary', 'death', 'funeral', 'memorial', 'cemetery', 'grave')
-        'DNA & Genetic Genealogy' = @('dna', 'genetic', 'ancestry', '23andme', 'familytree dna', 'haplogroup')
-    }
-
-    # Soccer
-    'Soccer' = @{
-        'Learning the Game' = @('soccer', 'football', 'goal', 'kick', 'world cup', 'team', 'league', 'match', 'premier league', 'fifa')
-    }
+# Map category names to actual folder names (handles special characters)
+$categoryFolderMap = @{
+    "Bahá'í" = "Bahá'í"
+    "Finance" = "Finance"
+    "FOL" = "FOL"
+    "Genealogy" = "Genealogy"
+    "Health" = "Health"
+    "Home" = "Home"
+    "Music" = "Music"
+    "NLP_Psy" = "NLP_Psy"
+    "PKM" = "PKM"
+    "Reading" = "Reading"
+    "Recipes" = "Recipes"
+    "Religion" = "Religion"
+    "Science" = "Science"
+    "Soccer" = "Soccer"
+    "Social" = "Social"
+    "Technology" = "Technology"
+    "Travel" = "Travel"
 }
 
-# MOC file mapping
-$mocFiles = @{
-    'Technology' = '00 - Home Dashboard\MOC - Technology & Computers.md'
-    'Health' = '00 - Home Dashboard\MOC - Health & Nutrition.md'
-    'Bahá''í' = '00 - Home Dashboard\MOC - Bahá''í Faith.md'
-    'Social' = '00 - Home Dashboard\MOC - Social Issues.md'
-    'Recipes' = '00 - Home Dashboard\MOC - Recipes.md'
-    'Home' = '00 - Home Dashboard\MOC - Home & Practical Life.md'
-    'Science' = '00 - Home Dashboard\MOC - Science & Nature.md'
-    'NLP_Psy' = '00 - Home Dashboard\MOC - NLP & Psychology.md'
-    'Travel' = '00 - Home Dashboard\MOC - Travel & Exploration.md'
-    'Music' = '00 - Home Dashboard\MOC - Music & Record.md'
-    'PKM' = '00 - Home Dashboard\MOC - Personal Knowledge Management.md'
-    'Reading' = '00 - Home Dashboard\MOC - Reading & Literature.md'
-    'Finance' = '00 - Home Dashboard\MOC - Finance & Investment.md'
-    'Genealogy' = '00 - Home Dashboard\MOC - Genealogy.md'
-    'Soccer' = '00 - Home Dashboard\MOC - Soccer.md'
+# Define category keywords for classification
+$categories = @{
+    "Bahá'í" = @(
+        "Bahá'í", "Baha'i", "bahai", "Bahá'u'lláh", "Bahaullah", "Abdul-Baha", "Abdu'l-Bahá",
+        "Shoghi Effendi", "Universal House of Justice", "UHJ", "Bahá'í Faith",
+        "Naw-Rúz", "Ridván", "Feast", "LSA", "NSA", "Nineteen Day Feast",
+        "Kitáb-i-Aqdas", "Hidden Words", "Bahá'í prayers", "Bahá'í temple",
+        "unity of mankind", "unity of humanity", "oneness of humanity",
+        "oneness of God", "oneness of religion", "Bahá'í World Centre",
+        "Haifa", "Mount Carmel", "Bahji", "Shrine of the Báb", "The Báb", "Bab",
+        "Covenant", "Covenant-breaking", "Aghsan", "Afnan", "ascension", "Kitáb-i-'Ahd",
+        "Manifestation of God", "Nine Year Plan", "Ruhi", "devotional"
+    )
+    "Finance" = @(
+        "investing", "investment", "stocks", "bonds", "401k", "IRA", "retirement",
+        "financial", "money", "budget", "budgeting", "savings", "credit",
+        "mortgage", "loan", "debt", "interest rate", "compound interest",
+        "portfolio", "dividend", "mutual fund", "ETF", "stock market",
+        "banking", "credit card", "tax", "taxes", "income tax"
+    )
+    "FOL" = @(
+        "Friends of the Georgetown Public Library", "FOL", "Georgetown Library",
+        "library book sale", "library volunteer", "Georgetown Public Library"
+    )
+    "Genealogy" = @(
+        "genealogy", "ancestry", "family history", "DNA test", "23andMe",
+        "AncestryDNA", "family tree", "obituary", "birth record", "death record",
+        "marriage record", "census", "genealogical", "ancestor", "descendant",
+        "pedigree", "Talbot", "lineage", "heritage", "FamilySearch"
+    )
+    "Health" = @(
+        "health", "nutrition", "diet", "exercise", "workout", "fitness",
+        "medical", "medicine", "disease", "illness", "symptom", "treatment",
+        "doctor", "hospital", "WFPB", "vegan", "vegetarian", "plant-based",
+        "vitamin", "supplement", "wellness", "healthcare", "blood pressure",
+        "cholesterol", "diabetes", "cancer", "heart disease", "obesity",
+        "weight loss", "healthy eating", "nutrient", "calorie"
+    )
+    "Home" = @(
+        "home improvement", "DIY", "household", "cleaning", "gardening",
+        "garden", "plant care", "lawn", "repair", "maintenance", "renovation",
+        "furniture", "decor", "kitchen", "bathroom", "bedroom", "living room",
+        "storage", "organization", "declutter", "housekeeping", "laundry",
+        "cooking tip", "life hack", "practical tip"
+    )
+    "Music" = @(
+        "music", "song", "album", "artist", "band", "concert", "guitar",
+        "piano", "drum", "violin", "instrument", "musician", "singer",
+        "composer", "symphony", "orchestra", "jazz", "rock", "classical",
+        "hip hop", "rap", "country", "folk", "blues", "reggae", "electronic",
+        "playlist", "Spotify", "vinyl", "record player", "recorder", "flute"
+    )
+    "NLP_Psy" = @(
+        "psychology", "NLP", "neuro-linguistic programming", "cognitive",
+        "behavior", "mental health", "anxiety", "depression", "therapy",
+        "counseling", "brain", "neuroscience", "learning", "memory",
+        "perception", "emotion", "motivation", "personality", "intelligence",
+        "mindfulness", "meditation", "stress", "trauma", "PTSD",
+        "cognitive bias", "decision making", "thinking", "Kahneman",
+        "behavioral economics", "habit", "subconscious", "hypnosis"
+    )
+    "PKM" = @(
+        "personal knowledge management", "PKM", "note-taking", "Obsidian",
+        "Evernote", "Notion", "Roam Research", "Zettelkasten", "second brain",
+        "productivity", "workflow", "GTD", "Getting Things Done", "todo",
+        "task management", "knowledge base", "wiki", "linking", "backlinks",
+        "markdown", "digital garden", "atomic notes"
+    )
+    "Reading" = @(
+        "book review", "book notes", "reading list", "literature", "novel",
+        "fiction", "non-fiction", "author", "writing", "publishing", "ebook",
+        "Kindle", "audiobook", "library", "bookshelf", "bookmark",
+        "reading challenge", "book club", "bestseller"
+    )
+    "Recipes" = @(
+        "recipe", "cooking", "baking", "ingredient", "tablespoon", "teaspoon",
+        "cup", "ounce", "preheat", "oven", "stove", "skillet", "pan",
+        "sauté", "simmer", "boil", "fry", "grill", "roast", "bake",
+        "serve", "garnish", "seasoning", "spice", "herb", "flour",
+        "sugar", "salt", "pepper", "oil", "butter", "egg", "milk"
+    )
+    "Religion" = @(
+        "Christianity", "Christian", "Jesus", "Christ", "Bible", "Gospel",
+        "Judaism", "Jewish", "Torah", "Islam", "Muslim", "Quran", "Muhammad",
+        "Buddhism", "Buddhist", "Buddha", "Hinduism", "Hindu", "Vedas",
+        "spirituality", "spiritual", "prayer", "worship", "church", "mosque",
+        "synagogue", "temple", "faith", "God", "divine", "sacred", "holy",
+        "religion", "religious", "Amish", "forgiveness"
+    )
+    "Science" = @(
+        "science", "scientific", "research", "study", "experiment", "theory",
+        "physics", "chemistry", "biology", "geology", "astronomy", "space",
+        "planet", "star", "galaxy", "universe", "evolution", "genetics",
+        "DNA", "cell", "organism", "ecosystem", "climate", "weather",
+        "micrometeorite", "fossil", "mineral", "element", "atom", "molecule",
+        "Mars", "NASA", "telescope", "nature", "ecology", "environment"
+    )
+    "Soccer" = @(
+        "soccer", "football", "FIFA", "World Cup", "Premier League",
+        "Champions League", "goal", "goalkeeper", "striker", "midfielder",
+        "defender", "coach", "match", "stadium", "team", "league",
+        "Manchester United", "Liverpool", "Barcelona", "Real Madrid"
+    )
+    "Social" = @(
+        "politics", "political", "government", "election", "democracy",
+        "republican", "democrat", "congress", "senate", "president",
+        "social issue", "justice", "equality", "racism", "discrimination",
+        "civil rights", "human rights", "poverty", "inequality", "activism",
+        "protest", "society", "culture", "economics", "economy", "policy",
+        "immigration", "climate change", "environment", "Bernie Sanders"
+    )
+    "Technology" = @(
+        "computer", "programming", "software", "hardware", "code", "coding",
+        "developer", "algorithm", "database", "server", "network", "internet",
+        "web", "website", "app", "application", "AI", "artificial intelligence",
+        "machine learning", "Python", "JavaScript", "Java", "C++", "Linux",
+        "Windows", "Mac", "Apple", "Google", "Microsoft", "Amazon",
+        "Raspberry Pi", "Arduino", "3D printer", "gadget", "electronic",
+        "vintage computing", "PiDP", "maker", "hacker", "cybersecurity",
+        "malware", "VBA", "Excel", "Access", "PowerShell", "batch file"
+    )
+    "Travel" = @(
+        "travel", "vacation", "trip", "destination", "hotel", "flight",
+        "airport", "cruise", "RV", "camping", "hiking", "backpacking",
+        "tourism", "tourist", "sightseeing", "adventure", "explore",
+        "narrowboat", "canal", "road trip", "itinerary", "passport"
+    )
 }
 
-# Function to classify a file based on its content
-function Get-FileClassification {
+# Function to classify a file based on content
+function Get-FileCategory {
     param(
         [string]$FilePath,
         [string]$FileName
     )
 
-    # Read file content
-    $content = Get-Content -Path $FilePath -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-    if (-not $content) {
-        return $null
-    }
+    try {
+        # Read file content with UTF-8 encoding
+        $content = Get-Content -Path $FilePath -Raw -Encoding UTF8 -ErrorAction Stop
 
-    # Combine filename and content for analysis (lowercase for matching)
-    $searchText = ($FileName + " " + $content).ToLower()
+        # Combine filename and content for analysis
+        $textToAnalyze = "$FileName`n$content"
 
-    # Track best match
-    $bestMoc = $null
-    $bestSubsection = $null
-    $bestScore = 0
-
-    # Score each MOC and subsection
-    foreach ($mocName in $mocClassification.Keys) {
-        $mocData = $mocClassification[$mocName]
-
-        foreach ($subsection in $mocData.Keys) {
-            $keywords = $mocData[$subsection]
+        # Score each category
+        $scores = @{}
+        foreach ($category in $categories.Keys) {
             $score = 0
-
-            foreach ($keyword in $keywords) {
-                # Count keyword occurrences (weighted by specificity)
-                $matches = [regex]::Matches($searchText, [regex]::Escape($keyword.ToLower()))
-                if ($matches.Count -gt 0) {
-                    # Longer keywords are more specific and get higher weight
-                    $weight = [Math]::Max(1, $keyword.Length / 5)
-                    $score += $matches.Count * $weight
+            foreach ($keyword in $categories[$category]) {
+                # Case-insensitive matching
+                if ($textToAnalyze -match [regex]::Escape($keyword)) {
+                    # Weight title matches higher
+                    if ($FileName -match [regex]::Escape($keyword)) {
+                        $score += 3
+                    } else {
+                        $score += 1
+                    }
                 }
             }
+            $scores[$category] = $score
+        }
 
-            # Update best match if this score is higher
-            if ($score -gt $bestScore) {
-                $bestScore = $score
-                $bestMoc = $mocName
-                $bestSubsection = $subsection
+        # Find category with highest score
+        $maxScore = 0
+        $bestCategory = $null
+        foreach ($category in $scores.Keys) {
+            if ($scores[$category] -gt $maxScore) {
+                $maxScore = $scores[$category]
+                $bestCategory = $category
+            }
+        }
+
+        # Return best category if score is above threshold
+        if ($maxScore -ge 2) {
+            return @{
+                Category = $bestCategory
+                Score = $maxScore
+            }
+        } else {
+            return @{
+                Category = "Unknown"
+                Score = 0
             }
         }
     }
-
-    # Return classification if score is above threshold
-    if ($bestScore -gt 2) {
+    catch {
         return @{
-            MOC = $bestMoc
-            Subsection = $bestSubsection
-            Score = $bestScore
-            MOCPath = $mocFiles[$bestMoc]
+            Category = "Error"
+            Score = 0
+            Error = $_.Exception.Message
         }
     }
-
-    return $null
 }
 
-# Function to add bidirectional link
-function Add-BidirectionalLink {
-    param(
-        [string]$OrphanRelPath,
-        [string]$MOCRelPath,
-        [string]$SubsectionName
-    )
+# Get all markdown files in source
+$allFiles = Get-ChildItem -Path $sourcePath -Filter "*.md" | Sort-Object Name
 
-    $orphanFullPath = Join-Path $vaultPath $OrphanRelPath
-    $mocFullPath = Join-Path $vaultPath $MOCRelPath
+# Skip certain files
+$skipFiles = @("20 - Permanent Notes.md")
+$allFiles = $allFiles | Where-Object { $_.Name -notin $skipFiles }
 
-    if (-not (Test-Path $orphanFullPath)) {
-        Write-Warning "Orphan file not found: $OrphanRelPath"
-        return $false
+Write-Host "Total files to process: $($allFiles.Count)" -ForegroundColor Cyan
+
+if ($ListOnly) {
+    $allFiles | ForEach-Object { Write-Host $_.Name }
+    exit
+}
+
+# Calculate batch range
+$startIndex = ($BatchNumber - 1) * $BatchSize
+$endIndex = [Math]::Min($startIndex + $BatchSize - 1, $allFiles.Count - 1)
+
+if ($startIndex -ge $allFiles.Count) {
+    Write-Host "Batch $BatchNumber is out of range. Total batches: $([Math]::Ceiling($allFiles.Count / $BatchSize))" -ForegroundColor Red
+    exit
+}
+
+$batchFiles = $allFiles[$startIndex..$endIndex]
+
+Write-Host "`nProcessing batch $BatchNumber (files $($startIndex + 1) to $($endIndex + 1))..." -ForegroundColor Yellow
+
+# Track results
+$results = @()
+$categoryCounts = @{}
+
+foreach ($file in $batchFiles) {
+    $classification = Get-FileCategory -FilePath $file.FullName -FileName $file.BaseName
+
+    $result = [PSCustomObject]@{
+        FileName = $file.Name
+        Category = $classification.Category
+        Score = $classification.Score
+        Status = ""
     }
-    if (-not (Test-Path $mocFullPath)) {
-        Write-Warning "MOC file not found: $MOCRelPath"
-        return $false
-    }
 
-    $orphanName = [System.IO.Path]::GetFileNameWithoutExtension((Split-Path $OrphanRelPath -Leaf))
-    $mocName = [System.IO.Path]::GetFileNameWithoutExtension((Split-Path $MOCRelPath -Leaf))
-
-    # === Add link from orphan to MOC ===
-    $orphanContent = Get-Content -Path $orphanFullPath -Raw -Encoding UTF8
-    $mocLinkPath = $MOCRelPath.Replace('\', '/').Replace('.md', '')
-
-    # Check if link already exists
-    if ($orphanContent -notmatch [regex]::Escape("[[$mocLinkPath")) {
-        # Find or create Related Notes section
-        if ($orphanContent -match '## Related Notes') {
-            $orphanContent = $orphanContent -replace '(## Related Notes[^\n]*\n)', "`$1- [[$mocLinkPath|$mocName]]`n"
-        } else {
-            $orphanContent = $orphanContent.TrimEnd() + "`n`n---`n## Related Notes`n- [[$mocLinkPath|$mocName]]`n"
+    if ($classification.Category -ne "Unknown" -and $classification.Category -ne "Error") {
+        # Use the folder mapping for the category
+        $folderName = $categoryFolderMap[$classification.Category]
+        if (-not $folderName) {
+            $folderName = $classification.Category
         }
-        Set-Content -Path $orphanFullPath -Value $orphanContent -Encoding UTF8 -NoNewline
-    }
+        $destFolder = Join-Path $destBase $folderName
 
-    # === Add link from MOC to orphan under the subsection ===
-    $mocContent = Get-Content -Path $mocFullPath -Raw -Encoding UTF8
-    $orphanLinkPath = $OrphanRelPath.Replace('\', '/').Replace('.md', '')
+        if (-not (Test-Path $destFolder)) {
+            Write-Host "Warning: Destination folder does not exist: $destFolder" -ForegroundColor Red
+            $result.Status = "Folder missing"
+        }
+        else {
+            $destPath = Join-Path $destFolder $file.Name
 
-    # Check if orphan already linked in MOC
-    if ($mocContent -notmatch [regex]::Escape("[[$orphanLinkPath")) {
-        # Find the subsection and add the link after it
-        $escapedSubsection = [regex]::Escape($SubsectionName)
-        $subsectionPattern = "(?m)(^## $escapedSubsection[^\n]*\n)"
+            if (Test-Path $destPath) {
+                $result.Status = "Duplicate exists"
+            }
+            elseif ($DryRun) {
+                $result.Status = "Would move"
+            }
+            else {
+                try {
+                    Move-Item -Path $file.FullName -Destination $destPath -ErrorAction Stop
+                    $result.Status = "Moved"
 
-        if ($mocContent -match $subsectionPattern) {
-            $newLink = "- [[$orphanLinkPath|$orphanName]]`n"
-            $mocContent = $mocContent -replace $subsectionPattern, "`$1$newLink"
-            Set-Content -Path $mocFullPath -Value $mocContent -Encoding UTF8 -NoNewline
-            return $true
-        } else {
-            # Try level 3 headers
-            $subsectionPattern = "(?m)(^### $escapedSubsection[^\n]*\n)"
-            if ($mocContent -match $subsectionPattern) {
-                $newLink = "- [[$orphanLinkPath|$orphanName]]`n"
-                $mocContent = $mocContent -replace $subsectionPattern, "`$1$newLink"
-                Set-Content -Path $mocFullPath -Value $mocContent -Encoding UTF8 -NoNewline
-                return $true
+                    # Update category counts
+                    if (-not $categoryCounts.ContainsKey($classification.Category)) {
+                        $categoryCounts[$classification.Category] = 0
+                    }
+                    $categoryCounts[$classification.Category]++
+                }
+                catch {
+                    $result.Status = "Error: $($_.Exception.Message)"
+                }
             }
         }
     }
-
-    return $false
-}
-
-# Main processing
-Write-Host "=== Orphan File Classifier and Linker ===" -ForegroundColor Cyan
-Write-Host "Vault: $vaultPath" -ForegroundColor Gray
-Write-Host ""
-
-# Load orphan list
-$orphanListPath = "C:\Users\awt\orphan_list.json"
-if (-not (Test-Path $orphanListPath)) {
-    Write-Error "Orphan list not found. Run 'moc_orphan_linker.ps1 -Action get-orphans' first."
-    exit 1
-}
-
-$orphans = Get-Content -Path $orphanListPath -Raw -Encoding UTF8 | ConvertFrom-Json
-
-# Filter out excluded folders
-$filteredOrphans = @()
-foreach ($orphan in $orphans) {
-    $skip = $false
-    foreach ($folder in $excludeFolders) {
-        if ($orphan.RelativePath -match "^$([regex]::Escape($folder))") {
-            $skip = $true
-            break
-        }
-    }
-    if (-not $skip) {
-        $filteredOrphans += $orphan
-    }
-}
-
-Write-Host "Total orphans after filtering: $($filteredOrphans.Count)" -ForegroundColor White
-
-# Apply limit if specified
-if ($Limit -gt 0 -and $Limit -lt $filteredOrphans.Count) {
-    $filteredOrphans = $filteredOrphans | Select-Object -First $Limit
-    Write-Host "Processing first $Limit files" -ForegroundColor Yellow
-}
-
-# Process each orphan
-$classifications = @()
-$linked = 0
-$unclassified = 0
-
-foreach ($orphan in $filteredOrphans) {
-    $fullPath = $orphan.FullPath
-
-    # Skip if file doesn't exist
-    if (-not (Test-Path $fullPath)) {
-        continue
+    else {
+        $result.Status = "Unclassified"
     }
 
-    # Get classification
-    $classification = Get-FileClassification -FilePath $fullPath -FileName $orphan.Name
-
-    if ($classification) {
-        $result = @{
-            File = $orphan.Name
-            RelativePath = $orphan.RelativePath
-            MOC = $classification.MOC
-            Subsection = $classification.Subsection
-            Score = $classification.Score
-            MOCPath = $classification.MOCPath
-        }
-        $classifications += $result
-
-        Write-Host "[$($classification.MOC)] $($orphan.Name) -> $($classification.Subsection) (score: $($classification.Score))" -ForegroundColor Green
-
-        # Create links if not dry run
-        if (-not $DryRun) {
-            $linkResult = Add-BidirectionalLink -OrphanRelPath $orphan.RelativePath -MOCRelPath $classification.MOCPath -SubsectionName $classification.Subsection
-            if ($linkResult) {
-                $linked++
-            }
-        }
-    } else {
-        $unclassified++
-        Write-Host "[UNCLASSIFIED] $($orphan.Name)" -ForegroundColor Yellow
-    }
+    $results += $result
 }
+
+# Display results
+Write-Host "`n=== Classification Results ===" -ForegroundColor Green
+$results | Format-Table -Property FileName, Category, Score, Status -AutoSize
 
 # Summary
-Write-Host ""
-Write-Host "=== Summary ===" -ForegroundColor Cyan
-Write-Host "Classified: $($classifications.Count)" -ForegroundColor Green
-Write-Host "Unclassified: $unclassified" -ForegroundColor Yellow
-if (-not $DryRun) {
-    Write-Host "Links created: $linked" -ForegroundColor Green
+Write-Host "`n=== Summary ===" -ForegroundColor Green
+Write-Host "Total processed: $($results.Count)"
+Write-Host "Moved: $(($results | Where-Object { $_.Status -eq 'Moved' }).Count)"
+Write-Host "Unclassified: $(($results | Where-Object { $_.Status -eq 'Unclassified' }).Count)"
+Write-Host "Duplicates: $(($results | Where-Object { $_.Status -eq 'Duplicate exists' }).Count)"
+Write-Host "Errors: $(($results | Where-Object { $_.Status -like 'Error*' }).Count)"
+
+if ($categoryCounts.Count -gt 0) {
+    Write-Host "`n=== Files moved by category ===" -ForegroundColor Green
+    $categoryCounts.GetEnumerator() | Sort-Object Value -Descending | ForEach-Object {
+        Write-Host "$($_.Key): $($_.Value)"
+    }
 }
 
-# Output JSON if requested
-if ($OutputJson) {
-    $jsonOutput = @{
-        TotalProcessed = $filteredOrphans.Count
-        Classified = $classifications.Count
-        Unclassified = $unclassified
-        Classifications = $classifications
-    } | ConvertTo-Json -Depth 4
-
-    $outputPath = "C:\Users\awt\orphan_classifications.json"
-    $jsonOutput | Set-Content -Path $outputPath -Encoding UTF8
-    Write-Host "Classifications saved to: $outputPath" -ForegroundColor Gray
-}
-
-# Group by MOC for summary
-Write-Host ""
-Write-Host "=== By MOC ===" -ForegroundColor Cyan
-$byMoc = $classifications | Group-Object -Property MOC | Sort-Object Count -Descending
-foreach ($group in $byMoc) {
-    Write-Host "$($group.Name): $($group.Count) files" -ForegroundColor White
-}
+# Return results for further processing
+return $results

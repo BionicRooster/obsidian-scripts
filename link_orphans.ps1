@@ -209,9 +209,9 @@ if ($DryRun) {
     Write-Host "DRY RUN MODE - No files will be modified" -ForegroundColor Yellow
 }
 
-# Read filtered orphan list
-$orphanList = Get-Content 'C:\Users\awt\orphan_filtered.txt'
-Write-Host "Found $($orphanList.Count) orphan files to process" -ForegroundColor Gray
+# Read filtered orphan list (only .md files)
+$orphanList = Get-Content 'C:\Users\awt\orphan_filtered.txt' | Where-Object { $_ -like "*.md" }
+Write-Host "Found $($orphanList.Count) orphan .md files to process" -ForegroundColor Gray
 
 if ($MaxFiles -gt 0) {
     $orphanList = $orphanList | Select-Object -First $MaxFiles
