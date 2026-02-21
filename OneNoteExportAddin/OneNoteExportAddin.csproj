@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target .NET Framework 4.8 — required for COM add-ins loaded by Office -->
+    <TargetFramework>net48</TargetFramework>
+
+    <!-- Output is a DLL (class library) that Office loads as an add-in -->
+    <OutputType>Library</OutputType>
+
+    <!-- Assembly identity -->
+    <AssemblyName>OneNoteExportAddin</AssemblyName>
+    <RootNamespace>OneNoteExportAddin</RootNamespace>
+    <AssemblyTitle>OneNote Obsidian Export Add-in</AssemblyTitle>
+    <Company></Company>
+    <Version>1.0.0.0</Version>
+
+    <!-- COM registration: the assembly itself is not fully COM-visible;
+         individual classes opt in via [ComVisible(true)] -->
+    <ComVisible>false</ComVisible>
+
+    <!-- Suppress warnings about nullable in net48 -->
+    <Nullable>disable</Nullable>
+
+    <!-- Embed PDB so errors can be debugged via Event Viewer -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- No reference to office.dll — IRibbonExtensibility and IRibbonControl
+         are defined manually in ComInterfaces.cs, eliminating the runtime
+         dependency that prevented OneNote from loading the DLL. -->
+
+    <!-- System.Windows.Forms: used to show a MessageBox on export errors -->
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+</Project>
