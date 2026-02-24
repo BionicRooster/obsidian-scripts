@@ -861,9 +861,9 @@ function Generate-TruncatedFilenamesList {
             'pesto', 'crema', 'penne', 'halwa', 'korma', 'lassi', 'rellenos', 'ayam', 'banu',
             # Names/surnames
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
-            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma',
+            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma', 'bretz',
             # Tech/common terms from truncated filenames
-            'perl', 'wiki', 'blog',
+            'perl', 'wiki', 'blog', 'gmail',
             # Other common terms
             'podcast', 'ebook', 'audiobook', 'vegan', 'keto', 'paleo', 'gluten', 'probiotic',
             'cryptocurrency', 'blockchain', 'bitcoin', 'ethereum', 'nft', 'defi',
@@ -1526,6 +1526,14 @@ function Generate-OrphanFilesList {
 
     # Scan all files for outgoing wiki-style links and nav properties
     foreach ($file in $mdFiles) {
+        # Skip system/generated files so their wikilinks don't create spurious
+        # "incoming link" counts. If Orphan Files.md were scanned, every file it
+        # lists would appear linked on the next run, causing the orphan list to
+        # self-empty. Same principle applies to Empty Notes and Truncated Filenames.
+        if ($file.Name -eq "Orphan Files.md") { continue }
+        if ($file.Name -eq "Empty Notes.md") { continue }
+        if ($file.Name -eq "Truncated Filenames.md") { continue }
+
         try {
             $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
             if (-not $content) { continue }
@@ -1559,7 +1567,9 @@ function Generate-OrphanFilesList {
                 $linkTarget = Split-Path $linkTarget -Leaf
             }
 
-            $linkTargetLower = $linkTarget.ToLower()
+            # Trim again: heading anchor extraction (e.g. "Note " from "[[Note #Section]]")
+            # can leave trailing whitespace that prevents fileMap lookup
+            $linkTargetLower = $linkTarget.Trim().ToLower()
 
             # Mark this target as having an incoming link
             if ($fileMap.ContainsKey($linkTargetLower)) {
