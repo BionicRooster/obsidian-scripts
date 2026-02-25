@@ -1,39 +1,13 @@
 $cutoff = (Get-Date).AddDays(-2)
-$vaultPath = 'D:\Obsidian\Main'
+$excludes = @('People','Journals','00 - Journal','Templates','.resources','images','Attachments','00 - Images','00 - Home Dashboard')
 
-$excludePatterns = @(
-    '\\\.obsidian\\',
-    '\\\.smart-env\\',
-    '\\People\\',
-    '\\Journals\\',
-    '\\00 - Journal\\',
-    '\\Templates\\',
-    '\\\.resources',
-    '\\images\\',
-    '\\Attachments\\',
-    '\\00 - Images\\',
-    '\\00 - Home Dashboard\\'
-)
-
-$results = Get-ChildItem -Path $vaultPath -Filter '*.md' -Recurse | Where-Object {
-    $file = $_
-    if ($file.CreationTime -le $cutoff) { return $false }
-    if ($file.BaseName -eq 'Orphan Files') { return $false }
-
-    foreach ($pattern in $excludePatterns) {
-        if ($file.FullName -match $pattern) { return $false }
-    }
-    return $true
-} | ForEach-Object {
-    $content = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
-    $hasNav = $content -match '(?m)^nav:'
-    $relPath = $_.FullName.Replace($vaultPath + '\', '')
-
-    "$($_.CreationTime.ToString('yyyy-MM-dd HH:mm'))|$hasNav|$relPath"
-}
-
-Write-Host "Found $($results.Count) files"
-Write-Host "---"
-foreach ($r in ($results | Sort-Object -Descending)) {
-    Write-Host $r
-}
+Get-ChildItem -Path 'D:\Obsidian\Main' -Recurse -Filter '*.md' |
+Where-Object {
+    $f = $_.FullName
+    $_.CreationTime -ge $cutoff -and
+    $_.Name -ne 'Orphan Files.md' -and
+    -not ($excludes | Where-Object { $f -like "*\$_\*" })
+} |
+Select-Object FullName, CreationTime |
+Sort-Object CreationTime -Descending |
+ForEach-Object { "$($_.CreationTime.ToString('yyyy-MM-dd HH:mm'))  $($_.FullName)" }

@@ -1,19 +1,12 @@
-# Find all markdown files created in the last 7 days
-# Output: List of file paths and creation times
-
-$vaultPath = "D:\Obsidian\Main"
-$cutoffDate = (Get-Date).AddDays(-7)
-
-# Get all markdown files created in the last 7 days
-$recentFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse |
-    Where-Object { $_.CreationTime -gt $cutoffDate } |
-    Sort-Object CreationTime -Descending
-
-# Output file count
-Write-Host "Found $($recentFiles.Count) files created in the last 7 days`n"
-
-# Output each file with its creation time
-foreach ($file in $recentFiles) {
-    $relativePath = $file.FullName.Replace($vaultPath + "\", "")
-    Write-Host "$($file.CreationTime.ToString('yyyy-MM-dd HH:mm')) | $relativePath"
-}
+Get-ChildItem -Path 'D:\Obsidian\Main' -Recurse -File -Filter '*.md' | Where-Object {
+    $_.CreationTime -ge (Get-Date).AddDays(-2) -and
+    $_.FullName -notlike '*\01\*' -and
+    $_.FullName -notlike '*\People\*' -and
+    $_.FullName -notlike '*\Journals\*' -and
+    $_.FullName -notlike '*\00 - Journal\*' -and
+    $_.FullName -notlike '*.resources*' -and
+    $_.FullName -notlike '*\Attachments\*' -and
+    $_.FullName -notlike '*\00 - Images\*' -and
+    $_.FullName -notlike '*\00 - Home Dashboard\*' -and
+    $_.Name -ne 'Orphan Files.md'
+} | Select-Object FullName, CreationTime | Sort-Object CreationTime -Descending | Format-Table -AutoSize -Wrap

@@ -29,6 +29,7 @@
 #  22. Fixes YAML tag indentation (mixed indented/unindented list items)
 #  23. Fixes YAML tag malformations (duplicate keys, inline hashtags, mixed formats)
 #  24. Fixes filename title case (lowercase major words, MMS→Mms-type acronym errors)
+#  25. Alphabetizes wikilinks within each MOC subsection
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -78,6 +79,7 @@ $script:yamlTagIndentFixed = 0
 $script:yamlTagMalformFixed = 0
 $script:titleCaseRenamed = 0
 $script:titleCaseLinksUpdated = 0
+$script:mocLinksAlphabetized = 0
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -3747,6 +3749,68 @@ if ($obsidianProcess) {
 }
 Write-Log ""
 
+# =============================================================================
+# Phase 25: Alphabetize Links Within MOC Subsections
+# =============================================================================
+function Sort-MocSubsectionLinks {
+    Write-Log "=== Phase 25: Alphabetizing MOC subsection links ===" "Cyan"
+
+    $mocDir = Join-Path $vaultPath "00 - Home Dashboard"   # Folder containing all MOC files
+
+    Get-ChildItem $mocDir -Filter "MOC - *.md" | ForEach-Object {
+        $path    = $_.FullName                             # Full path to this MOC file
+        $bytes   = [System.IO.File]::ReadAllBytes($path)  # Raw bytes for BOM detection
+        $hasBom  = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF  # UTF-8 BOM flag
+        $enc     = [System.Text.Encoding]::UTF8            # Encoding to use for reading/writing
+        $text    = if ($hasBom) { $enc.GetString($bytes, 3, $bytes.Length - 3) } else { $enc.GetString($bytes) }  # Decoded text
+        $origText = $text                                  # Preserve original to detect changes
+
+        # Detect line ending style so we can preserve it when writing back
+        $eol     = if ($text -match "`r`n") { "`r`n" } else { "`n" }
+
+        # Split into individual lines (strip \r for uniform handling)
+        $lines   = $text -split "`r?`n"
+
+        $result  = [System.Collections.Generic.List[string]]::new()   # Output line accumulator
+        $linkBuf = [System.Collections.Generic.List[string]]::new()   # Buffer for consecutive link lines
+
+        foreach ($line in $lines) {
+            if ($line.TrimEnd() -match '^- \[\[') {
+                # This is a bullet wikilink — buffer it for sorting
+                $linkBuf.Add($line)
+            } else {
+                # Non-link line: flush the link buffer sorted, then add this line
+                if ($linkBuf.Count -gt 0) {
+                    # Sort case-insensitively by the wikilink text (strip leading "- [[")
+                    $sorted = $linkBuf | Sort-Object { $_ -replace '^- \[\[', '' } -CaseSensitive:$false
+                    foreach ($l in $sorted) { $result.Add($l) }
+                    $linkBuf.Clear()
+                }
+                $result.Add($line)
+            }
+        }
+        # Flush any link buffer remaining at end of file
+        if ($linkBuf.Count -gt 0) {
+            $sorted = $linkBuf | Sort-Object { $_ -replace '^- \[\[', '' } -CaseSensitive:$false
+            foreach ($l in $sorted) { $result.Add($l) }
+        }
+
+        # Reconstruct text with original line endings
+        $newText = $result -join $eol
+
+        if ($newText -ne $origText) {
+            if (-not $dryRun) {
+                $out = if ($hasBom) { $enc.GetPreamble() + $enc.GetBytes($newText) } else { $enc.GetBytes($newText) }
+                [System.IO.File]::WriteAllBytes($path, $out)
+            }
+            $script:mocLinksAlphabetized++
+            Write-Log "  Alphabetized links: $($_.Name)" "Yellow"
+        }
+    }
+
+    Write-Log "  MOC files with links re-sorted: $script:mocLinksAlphabetized" "White"
+}
+
 # Run maintenance phases
 Rename-NonStandardApostrophes
 Resolve-ApostropheDuplicates
@@ -3774,6 +3838,7 @@ Fix-YamlWikiLinks
 Fix-YamlTagIndentation
 Fix-YamlTagMalformations
 Fix-TitleCaseFilenames
+Sort-MocSubsectionLinks
 
 # Summary
 Write-Log "" "White"
@@ -3805,5 +3870,6 @@ Write-Log "  YAML wiki-links fixed: $script:yamlWikiLinksFixed" "White"
 Write-Log "  YAML tag indentation fixed: $script:yamlTagIndentFixed" "White"
 Write-Log "  YAML tag malformations fixed: $script:yamlTagMalformFixed" "White"
 Write-Log "  Title case files renamed: $script:titleCaseRenamed (links updated: $script:titleCaseLinksUpdated)" "White"
+Write-Log "  MOC subsection links alphabetized: $script:mocLinksAlphabetized" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"

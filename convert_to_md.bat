@@ -33,5 +33,11 @@ for %%F in ("%TARGET_DIR%\*.prn" "%TARGET_DIR%\*.txt") do (
 )
 
 echo.
-exit Done. Converted !count! file(s).
+echo Converted !count! file(s).
+
+echo.
+echo Converting PDFs in vault root to Markdown...
+python "C:\Users\awt\pdf_to_obsidian.py"
+
+exit /b 0
 

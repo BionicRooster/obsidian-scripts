@@ -29,6 +29,9 @@ import time
 import winreg
 from pathlib import Path
 
+import ctypes
+import ctypes.wintypes
+
 # pystray: cross-platform system tray library
 import pystray
 from PIL import Image, ImageDraw
@@ -104,16 +107,23 @@ def _ensure_single_instance():
             # old_pid: the PID written by the previous instance
             old_pid = int(PID_FILE.read_text().strip())
 
-            # os.kill with signal 0 checks existence without actually signalling
-            os.kill(old_pid, 0)
-
-            # Still alive — force-kill it and wait briefly for Windows cleanup
-            logging.info("Stopping previous instance (PID %d).", old_pid)
-            subprocess.run(
-                ["taskkill", "/F", "/PID", str(old_pid)],
-                capture_output=True,   # suppress taskkill's stdout/stderr
+            # Check if the process is alive using tasklist (os.kill(pid,0) is
+            # unreliable on Windows and raises SystemError in some Python builds)
+            result = subprocess.run(
+                ["tasklist", "/FI", f"PID eq {old_pid}", "/FO", "CSV", "/NH"],
+                capture_output=True, text=True,
             )
-            time.sleep(0.5)   # give Windows time to remove the process
+            # tasklist outputs the PID in the CSV row if the process exists
+            process_alive = str(old_pid) in result.stdout
+
+            if process_alive:
+                # Still alive — force-kill it and wait briefly for Windows cleanup
+                logging.info("Stopping previous instance (PID %d).", old_pid)
+                subprocess.run(
+                    ["taskkill", "/F", "/PID", str(old_pid)],
+                    capture_output=True,   # suppress taskkill's stdout/stderr
+                )
+                time.sleep(0.5)   # give Windows time to remove the process
 
         except (ValueError, OSError):
             # PID file is corrupt, or the old process is already gone — fine
@@ -283,6 +293,118 @@ def _do_export(icon: pystray.Icon, item):
 
 
 # ---------------------------------------------------------------------------
+# Global hotkey (Windows RegisterHotKey API — no admin required)
+# ---------------------------------------------------------------------------
+
+# Windows modifier flag constants for RegisterHotKey
+_MOD_ALT     = 0x0001
+_MOD_CONTROL = 0x0002
+_MOD_SHIFT   = 0x0004
+_MOD_WIN     = 0x0008
+
+# WM_HOTKEY: Windows message posted to the thread when the hotkey fires
+_WM_HOTKEY = 0x0312
+
+# _MOD_MAP: human-readable modifier names → Windows flag values
+_MOD_MAP = {
+    "ctrl":    _MOD_CONTROL,
+    "control": _MOD_CONTROL,
+    "alt":     _MOD_ALT,
+    "shift":   _MOD_SHIFT,
+    "win":     _MOD_WIN,
+}
+
+# _VK_MAP: named non-modifier keys → Windows virtual-key codes
+_VK_MAP = {
+    **{f"f{i}": 0x6F + i for i in range(1, 13)},   # F1–F12
+    "space": 0x20, "enter": 0x0D, "tab": 0x09,
+    "esc": 0x1B,   "escape": 0x1B,
+    "backspace": 0x08, "delete": 0x2E, "insert": 0x2D,
+    "home": 0x24,  "end": 0x23,
+    "pageup": 0x21, "pagedown": 0x22,
+    "up": 0x26, "down": 0x28, "left": 0x25, "right": 0x27,
+}
+
+
+def _parse_hotkey(combo: str):
+    """
+    Parse a hotkey string like 'ctrl+shift+o' into (mod_flags, vk_code).
+
+    combo    : plus-separated key names (case-insensitive)
+    Returns  : (modifier_flags: int, virtual_key_code: int)
+    Raises   : ValueError if the string is not parseable
+    """
+    parts    = [p.strip().lower() for p in combo.split("+")]
+    mod_flags = 0    # accumulated modifier bitflags
+    vk_code   = None # virtual-key code for the main (non-modifier) key
+
+    for part in parts:
+        if part in _MOD_MAP:
+            mod_flags |= _MOD_MAP[part]
+        elif part in _VK_MAP:
+            vk_code = _VK_MAP[part]
+        elif len(part) == 1 and part.isalnum():
+            # Single letter or digit — map to its uppercase ASCII code
+            vk_code = ord(part.upper())
+        else:
+            raise ValueError(f"Unknown key token: {part!r}")
+
+    if vk_code is None:
+        raise ValueError(f"No non-modifier key found in hotkey: {combo!r}")
+
+    return mod_flags, vk_code
+
+
+def _register_hotkey(icon: pystray.Icon) -> None:
+    """
+    Register a system-wide hotkey using the Windows RegisterHotKey API.
+
+    Runs a Windows message loop in this thread so WM_HOTKEY messages are
+    delivered.  Blocks forever (designed to run in a daemon thread).
+
+    icon : the live pystray Icon — passed to _do_export for tooltip updates
+    """
+    try:
+        # Read hotkey combo from config; fall back to ctrl+shift+o
+        config = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        combo  = config.get("hotkey", "ctrl+shift+o")  # combo: key string from config
+
+        mod_flags, vk_code = _parse_hotkey(combo)
+
+        # HOTKEY_ID: arbitrary integer identifier used to match WM_HOTKEY messages
+        HOTKEY_ID = 1
+
+        # RegisterHotKey(hwnd=None → thread msg, id, modifiers, vk)
+        # Returns nonzero on success, 0 on failure (e.g. combo already taken)
+        ok = ctypes.windll.user32.RegisterHotKey(None, HOTKEY_ID, mod_flags, vk_code)
+        if not ok:
+            err = ctypes.windll.kernel32.GetLastError()
+            logging.error(
+                "RegisterHotKey failed for %r (mod=0x%X vk=0x%X) error=%d",
+                combo, mod_flags, vk_code, err,
+            )
+            return
+
+        logging.info("Global hotkey registered: %s (mod=0x%X vk=0x%X)", combo, mod_flags, vk_code)
+
+        # Windows message loop — blocks until the thread is terminated
+        msg = ctypes.wintypes.MSG()
+        while ctypes.windll.user32.GetMessageW(ctypes.byref(msg), None, 0, 0) != 0:
+            if msg.message == _WM_HOTKEY and msg.wParam == HOTKEY_ID:
+                logging.info("Global hotkey (%s) fired — starting export.", combo)
+                threading.Thread(
+                    target=_do_export, args=(icon, None), daemon=True
+                ).start()
+            ctypes.windll.user32.TranslateMessage(ctypes.byref(msg))
+            ctypes.windll.user32.DispatchMessageW(ctypes.byref(msg))
+
+        ctypes.windll.user32.UnregisterHotKey(None, HOTKEY_ID)
+
+    except Exception as exc:
+        logging.error("Global hotkey thread error: %s", exc, exc_info=True)
+
+
+# ---------------------------------------------------------------------------
 # Startup registration helpers
 # ---------------------------------------------------------------------------
 
@@ -367,6 +489,11 @@ def run_tray():
 
     # Assign menu after icon is created so we can pass the icon reference
     icon.menu = _build_menu(icon)
+
+    # Start global hotkey listener in a background daemon thread.
+    # Daemon=True means it dies automatically when the main thread exits.
+    hotkey_thread = threading.Thread(target=_register_hotkey, args=(icon,), daemon=True)
+    hotkey_thread.start()
 
     # Print startup message only when stdout is available (python.exe, not pythonw.exe)
     if sys.stdout is not None:
