@@ -133,14 +133,19 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - Images folder (\\images\\, \\Attachments\\, \\00 - Images\\)
    - Home Dashboard folder (MOC files themselves)
    - System files (Orphan Files.md)
-3. Workflow:
+3. Moving rules:
+   - ONLY move files that are already in a subdirectory (e.g., 10 - Clippings, vault root subfolders)
+   - Do NOT move files that are in the vault root (D:\Obsidian\Main\*.md) — classify and link them but leave them in place
+   - Root-level files will be manually reviewed and moved to "20 Permanent Notes" by the user
+4. Workflow:
    - Run PowerShell script to find files by CreationTime within date range
    - Read all MOC files to understand available subsections
    - Read each recent file to analyze its content
    - Classify using AI based on topic, tags, and content keywords
    - Add wikilink to appropriate MOC subsection
    - Add nav property to file pointing back to MOC (bidirectional linking)
-4. Classification guidelines:
+   - Move file to appropriate 01/ subdirectory ONLY if it is not in the vault root
+5. Classification guidelines:
    - FOL/library content → MOC - Friends of the Georgetown Public Library
    - Bahá'í content → MOC - Bahá'í Faith (match subsection: Core Teachings, Administrative Guidance, etc.)
    - AI/tech content → MOC - Technology & Computers > AI & Machine Learning
@@ -150,8 +155,8 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - Science/nature → MOC - Science & Nature
    - xkcd/sketches → MOC - Home & Practical Life > Sketchplanations
    - Micrometeorites → MOC - Science & Nature > Micrometeorites
-5. Output: Summary table showing files classified, their assigned MOC, and subsection
-6. Preserve UTF-8 encoding when editing files
+6. Output: Summary table showing files classified, their assigned MOC, and subsection
+7. Preserve UTF-8 encoding when editing files
 
 ## Sort To-Do List Workflow
 When the user says "sort todo", "sort to-do list", or "resort todos":

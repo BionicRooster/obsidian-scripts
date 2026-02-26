@@ -1,121 +1,145 @@
-# Cleanup Misplaced Links from MOCs
-# Removes links that were incorrectly added by keyword matching
+﻿# cleanup_misplaced_links.ps1 - Remove Misplaced Links from MOCs
+# Uses the same keyword scoring as link_orphans.ps1 to determine correct placement,
+# so classify and clean always agree on where a note belongs.
+#
+# A link is removed from a MOC when the shared scoring gives a different MOC
+# a score at least $misplacedMargin points higher than the current MOC.
+#
+# Usage:
+#   powershell -File cleanup_misplaced_links.ps1 [-DryRun] [-Limit <n>]
+
+param(
+    [switch]$DryRun  = $false,  # When set, reports removals without writing files
+    [int]$Limit      = 0        # Cap links processed per MOC; 0 = no limit
+)
+
+# Load shared MOC definitions and scoring functions
+. "$PSScriptRoot\moc_keywords.ps1"
+
+# -- Configuration ------------------------------------------------------------
 
 $vaultPath = 'D:\Obsidian\Main'
+$mocFolder = '00 - Home Dashboard'
 
-# Define misplaced links to remove from each MOC
-$cleanupRules = @{
-    "MOC - Home & Practical Life" = @(
-        "Navajo sand painting",
-        "Windows|Windows]]",  # Both Windows entries (OS related)
-        "AlomWare Tool Box",
-        "Cool Tools - Scrivener",
-        "How to Make Windows",
-        "windows - vbscript",
-        "Windows XP Slipstrea",
-        "A Painting Georgia O'Keeffe",
-        "Ban Eyck painting"
-    )
-    "MOC - Music & Record" = @(
-        "NLP for Programmers",
-        "xkcd- Sandwich Helix",
-        "PersonalWeb - FOL help file",
-        "Soil Microbe Transplants",
-        "NatGeo Wallpaper",
-        "Wallpaper Roundup",
-        "xkcd Is It Worth",
-        "You Can Help Decode",
-        "The Great Sulphur Pyramids",
-        "How I help free innocent prisoners"
-    )
-    "MOC - Technology & Computers" = @(
-        "Navajo sand painting",
-        "7 Practices - Practices That Restored My Buddhist Faith",
-        "Archivists Finally Found the Wright Brothers",
-        "Charlie Chaplin's Statement Against Fascism",
-        "Earthquake Turned This New Zealand",
-        "My Neighbor's Faith",
-        "PersonalWeb - Edna Mae Fillingim",
-        "PersonalWeb - Einstein Diet",
-        "PersonalWeb - Loving poster",
-        "PersonalWeb - MAGAbert",
-        "Prairiedog Japanese",
-        "Pumping station station disguised",
-        "Rainn Wilson on Oprah",
-        "Sugar Free Apple Pie",
-        "This 400-mile Trail",
-        "Waitress Discovers",
-        "A Brief History of Children Sent Through the Mail",
-        "A Painting Georgia O'Keeffe",
-        "Ban Eyck painting",
-        "Ukraine's mammoth bone shelters",
-        "On the Trail of Stardust"
-    )
-    "MOC - Science & Nature" = @(
-        "Edna Mae Fillingim",
-        "PersonalWeb - Edna Mae Fillingim",
-        "Michael Moore's to do list",
-        "Star Trek - a critique"
-    )
-    "MOC - Recipes" = @(
-        "Fisher-The Canals of",
-        "This 'Fish Car' Lets",
-        "Price to Tangible Bo"
-    )
-    "MOC - Social Issues" = @(
-        "Community Tech Handout"
-    )
-    "MOC - Finance & Investment" = @(
-        "Turn an FM Transmitter"
-    )
-    "MOC - Soccer" = @(
-        "SMART Goals"
-    )
-    "MOC - Travel & Exploration" = @(
-        "PDF - AirPort Extreme Setup Guide"
-    )
-    "MOC - NLP & Psychology" = @(
-        "John Milton's Hand Annotated"
-    )
+# Number of score points the best alternative MOC must exceed the current MOC
+# before the link is flagged as misplaced and removed.
+# Higher = more conservative (removes fewer links).
+$misplacedMargin = 8
+
+
+# -- Helper: collect all MOC files --------------------------------------------
+function Get-MOCFiles {
+    $files = Get-ChildItem -Path (Join-Path $vaultPath $mocFolder) `
+                           -Filter "MOC - *.md" -ErrorAction SilentlyContinue
+    return $files | ForEach-Object {
+        $topic = [System.IO.Path]::GetFileNameWithoutExtension($_.Name) -replace '^MOC - ', ''
+        [PSCustomObject]@{
+            FileName = $_.Name
+            Topic    = $topic
+            FullPath = $_.FullName
+        }
+    } | Sort-Object Topic
 }
 
-$totalRemoved = 0
 
-foreach ($mocName in $cleanupRules.Keys) {
-    $mocPath = Join-Path $vaultPath "00 - Home Dashboard\$mocName.md"
+# -- Helper: remove a single wikilink line from a MOC file --------------------
+function Remove-LinkFromMOC {
+    param(
+        [string]$MOCPath,      # Absolute path to MOC file
+        [string]$LinkTarget    # The target text inside [[ ]]
+    )
 
-    if (-not (Test-Path $mocPath)) {
-        Write-Host "MOC not found: $mocPath" -ForegroundColor Red
-        continue
+    $content = Get-Content -Path $MOCPath -Raw -Encoding UTF8
+    $escaped = [regex]::Escape($LinkTarget)
+
+    # Match the full bullet line containing this link (with or without alias)
+    $pattern = "(?m)^- \[\[$escaped(?:\|[^\]]+)?\]\]\r?\n?"
+
+    if ($content -notmatch $pattern) { return $false }
+
+    $newContent = $content -replace $pattern, ''
+
+    # Collapse any triple+ blank lines left behind
+    $newContent = $newContent -replace "(`r?`n){3,}", "`n`n"
+
+    if (-not $DryRun) {
+        Set-Content -Path $MOCPath -Value $newContent -Encoding UTF8 -NoNewline
     }
 
-    Write-Host "`nCleaning $mocName..." -ForegroundColor Cyan
-    $content = Get-Content $mocPath -Raw -Encoding UTF8
-    $originalLength = $content.Length
-    $linksToRemove = $cleanupRules[$mocName]
-    $removedCount = 0
+    return $true
+}
 
-    foreach ($linkPattern in $linksToRemove) {
-        # Match the full line containing this link pattern
-        $pattern = "(?m)^- \[\[[^\]]*$([regex]::Escape($linkPattern))[^\]]*\]\]`r?`n?"
 
-        if ($content -match $pattern) {
-            $content = $content -replace $pattern, ""
-            Write-Host "  Removed: $linkPattern" -ForegroundColor Yellow
-            $removedCount++
-            $totalRemoved++
+# -- Main Processing ----------------------------------------------------------
+
+Write-Host "=== MOC Link Cleanup ===" -ForegroundColor Cyan
+if ($DryRun) {
+    Write-Host "DRY RUN - no files will be modified" -ForegroundColor Yellow
+}
+
+$mocs         = Get-MOCFiles
+$totalRemoved = 0     # Links removed across all MOCs
+$totalChecked = 0     # Links evaluated
+$totalSkipped = 0     # Links skipped (file not found or unresolvable)
+
+foreach ($moc in $mocs) {
+    Write-Host "`nChecking: $($moc.Topic)" -ForegroundColor Cyan
+
+    $links = Get-MOCLinks -MOCFilePath $moc.FullPath
+    if ($links.Count -eq 0) { Write-Host "  (no links)" -ForegroundColor DarkGray; continue }
+
+    # Apply per-MOC cap if requested
+    $linksToCheck = if ($Limit -gt 0) { $links | Select-Object -First $Limit } else { $links }
+
+    $removedInMOC = 0   # Links removed from this specific MOC
+
+    foreach ($link in $linksToCheck) {
+        $filePath = Resolve-WikiLink -LinkTarget $link.Target -VaultPath $vaultPath
+        if (-not $filePath) { $totalSkipped++; continue }
+
+        $meta = Get-FileMetadata -FilePath $filePath
+        if (-not $meta) { $totalSkipped++; continue }
+
+        $totalChecked++
+        $allScores = Find-BestMOCMatch -FileMetadata $meta
+
+        # Score of the MOC this link currently lives in
+        $currentScore = ($allScores | Where-Object { $_.MOCTopic -eq $moc.Topic }).Score
+        if ($null -eq $currentScore) { $currentScore = 0 }
+
+        $best = $allScores[0]   # Highest-scoring MOC
+
+        # Determine if this link is misplaced
+        $isMisplaced = ($best.MOCTopic -ne $moc.Topic) -and
+                       ($best.Score -ge ($currentScore + $misplacedMargin) -or
+                        ($currentScore -eq 0 -and $best.Score -gt 0))
+
+        if ($isMisplaced) {
+            $removed = Remove-LinkFromMOC -MOCPath $moc.FullPath -LinkTarget $link.Target
+
+            if ($removed) {
+                $removedInMOC++
+                $totalRemoved++
+                Write-Host ("  REMOVED: $($meta.FileName)" +
+                            "  (was in $($moc.Topic) score=$currentScore," +
+                            " better: $($best.MOCTopic) score=$($best.Score))") `
+                           -ForegroundColor Yellow
+            }
         }
     }
 
-    if ($removedCount -gt 0) {
-        # Clean up any double newlines that might result
-        $content = $content -replace "`r?`n`r?`n`r?`n", "`n`n"
-        Set-Content $mocPath -Value $content -Encoding UTF8 -NoNewline
-        Write-Host "  Removed $removedCount misplaced links" -ForegroundColor Green
+    if ($removedInMOC -eq 0) {
+        Write-Host "  No misplaced links found" -ForegroundColor DarkGray
     } else {
-        Write-Host "  No misplaced links found" -ForegroundColor Gray
+        Write-Host "  Removed $removedInMOC misplaced link(s)" -ForegroundColor Green
     }
 }
 
 Write-Host "`n=== Summary ===" -ForegroundColor Cyan
-Write-Host "Total misplaced links removed: $totalRemoved" -ForegroundColor Green
+Write-Host "MOCs checked:          $($mocs.Count)"  -ForegroundColor White
+Write-Host "Links evaluated:       $totalChecked"   -ForegroundColor White
+Write-Host "Links skipped (missing file): $totalSkipped" -ForegroundColor DarkGray
+Write-Host "Misplaced links removed: $totalRemoved" -ForegroundColor Green
+if ($DryRun) {
+    Write-Host "`n(Dry run - no files were changed)" -ForegroundColor Yellow
+}

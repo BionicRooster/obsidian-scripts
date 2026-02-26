@@ -1,42 +1,51 @@
-# Find markdown files outside of 01 subdirectories that might need classification
+# find_unclassified.ps1
+# Find recently created vault files that don't yet have a nav: property (unclassified)
+
 $vaultPath = 'D:\Obsidian\Main'
+$days      = 7
+$cutoff    = (Get-Date).AddDays(-$days)
 
-# Directories to skip entirely
-$excludePatterns = @(
-    '\\\.obsidian\\',
-    '\\\.smart-env\\',
-    '\\People\\',
-    '\\Journals\\',
-    '\\00 - Journal\\',
-    '\\Templates\\',
-    '\\\.resources',
-    '\\images\\',
-    '\\Attachments\\',
-    '\\00 - Images\\',
-    '\\00 - Home Dashboard\\',
-    '\\01\\',
-    '\\09 - Kindle Clippings\\'
-)
-
-# Find files in 10 - Clippings and 20 - Permanent Notes (common unclassified locations)
-$locations = @(
-    'D:\Obsidian\Main\10 - Clippings',
-    'D:\Obsidian\Main\20 - Permanent Notes'
-)
-
-$results = @()
-foreach ($loc in $locations) {
-    if (Test-Path $loc) {
-        $files = Get-ChildItem -Path $loc -Filter '*.md' -File
-        foreach ($f in $files) {
-            $relPath = $f.FullName.Replace($vaultPath + '\', '')
-            $results += "$relPath"
+$results = Get-ChildItem -Path $vaultPath -Filter '*.md' -Recurse |
+    Where-Object { $_.CreationTime -ge $cutoff } |
+    Where-Object {
+        $rel = $_.FullName.Replace($vaultPath + '\', '')
+        $rel -notmatch '\\People\\'              -and
+        $rel -notmatch '\\Journals?\\'           -and
+        $rel -notmatch '\\00 - Journal\\'        -and
+        $rel -notmatch '\\05 - Templates\\'      -and
+        $rel -notmatch '\\Attachments\\'         -and
+        $rel -notmatch '\.resources\\'             -and
+        $rel -notmatch '\\00 - Images\\'         -and
+        $rel -notmatch '\\00 - Home Dashboard\\' -and
+        $rel -notmatch '\\09 - Kindle Clippings\\' -and
+        $_.Name -notlike 'MOC - *.md'               -and
+        $_.Name -ne 'Orphan Files.md'               -and
+        $_.Name -ne 'Master MOC Index.md'           -and
+        $_.Name -ne 'To-Do List.md'
+    } |
+    Where-Object {
+        $content = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+        $content -notmatch '(?m)^nav:'
+    } |
+    ForEach-Object {
+        $rel    = $_.FullName.Replace($vaultPath + '\', '')
+        $inRoot = $rel -notmatch '\'
+        [PSCustomObject]@{
+            Name     = $_.BaseName
+            RelPath  = $rel
+            InRoot   = $inRoot
+            Created  = $_.CreationTime
+            FullPath = $_.FullName
         }
-    }
-}
+    } |
+    Sort-Object Created -Descending
 
-Write-Host "Found $($results.Count) files to potentially classify"
-Write-Host "---"
-foreach ($r in $results) {
-    Write-Host $r
+if ($results.Count -eq 0) {
+    Write-Host "No unclassified files found in the last $days days." -ForegroundColor Green
+} else {
+    Write-Host "Found $($results.Count) unclassified file(s) created in the last $days days:" -ForegroundColor Cyan
+    $results | ForEach-Object {
+        $rootTag = if ($_.InRoot) { ' [ROOT - no move]' } else { '' }
+        Write-Host "  $($_.Created.ToString('yyyy-MM-dd'))  $($_.RelPath)$rootTag"
+    }
 }
