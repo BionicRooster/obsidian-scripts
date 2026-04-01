@@ -30,6 +30,12 @@
 #  23. Fixes YAML tag malformations (duplicate keys, inline hashtags, mixed formats)
 #  24. Fixes filename title case (lowercase major words, MMS→Mms-type acronym errors)
 #  25. Alphabetizes wikilinks within each MOC subsection
+#  26. Scans new files for person names; updates People Index with links and
+#      bidirectional back-links; auto-creates stub notes when link threshold met
+#  27. Fixes unquoted colons in YAML string scalar fields (title, source,
+#      description, subtitle, summary, author, subject); fixes merged opening
+#      --- markers (--- body on one line); removes duplicate top-level keys;
+#      logs unclosed frontmatter for manual review.
 #
 # NOTE: Encoding fix phases have been moved to obsidian_encoding_fix.ps1
 #
@@ -77,9 +83,73 @@ $script:bulletPointsFixed = 0
 $script:yamlWikiLinksFixed = 0
 $script:yamlTagIndentFixed = 0
 $script:yamlTagMalformFixed = 0
+$script:yamlStringFieldsFixed = 0   # Phase 27: unquoted colons in scalar fields
+$script:yamlDuplicateKeysFixed = 0  # Phase 27: duplicate top-level keys removed
+$script:yamlMergedMarkersFixed = 0  # Phase 27: merged --- opening markers split
+$script:yamlUnclosedCount = 0       # Phase 27: unclosed frontmatter files (logged only)
 $script:titleCaseRenamed = 0
 $script:titleCaseLinksUpdated = 0
 $script:mocLinksAlphabetized = 0
+$script:peopleIndexEntries = 0   # New ### headings inserted in People Index
+$script:peopleLinksAdded   = 0   # "- [[file]]" lines added to existing headings
+$script:peopleFilesCreated = 0   # Stub person notes created in 15 - People
+
+# Path to state file recording the timestamp of the last successful maintenance run
+$script:stateFilePath = "C:\Users\awt\obsidian_maintenance_last_run.txt"
+
+# Unicode ★ character used to mark persons with dedicated notes in People Index
+$starChar = [char]0x2605
+
+# Given-name lookup loaded lazily by Update-PeopleIndex from tblNameGender.csv.
+# Used by Parse-PersonName to reject false-positive "names" that are really
+# common English words or NLP concept phrases appearing in bold text.
+$script:givenNameSet = $null
+
+# Hard blocklist of common English words that are never valid person names.
+# Checked against BOTH the first-name and last-name portions of a candidate.
+$script:nameBlocklist = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+'the','a','an','and','or','but','of','to','in','on','at','by','for','from','with','as',
+'this','these','that','those','when','what','why','how','which','where','who','whom',
+'its','our','their','your','his','her','all','any','some','none','each','every','both',
+'not','no','yes','more','most','just','also','so','yet','still','only','even','ever',
+'new','old','first','last','next','same','other','great','good','bad','big','small',
+'way','ways','world','life','time','work','word','words','thing','things','people',
+'is','was','has','have','had','are','were','be','been','did','do','does','can','could',
+'will','would','shall','should','may','might','must','let','get','got','make','made',
+'meta','anti','pre','post','sub','super','non','un','re','de','co','pro',
+'nlp','faq','moc','toc','via','per','aka',
+# NLP/self-help terms that appear as false last-names in procedure texts
+'acuity','activity','alliance','anchors','behavior','belief','beliefs',
+'calibrate','chart','check','choices','client','collapse','committee',
+'conditions','directory','ecology','effects','eliciting','fee',
+'flexibility','forum','framework','function','guide','history','index',
+'institute','model','models','number','outcomes','park','patterns',
+'rapport','reframe','reframing','report','resource','resources',
+'sensory','skills','society','state','states','subject','technology',
+'techniques','thinking','training','workshop',
+# Additional false-positive last-names
+'point','principle','principles','ranch','compound','concept','concepts',
+'context','criteria','criterion','dynamic','dynamics','element','elements',
+'factor','feature','features','format','insight','insights','journal',
+'layer','level','levels','loop','mechanism','message','meta',
+'option','options','parameter','parameters','phrase','phrases',
+'phase','piece','pieces','place','practice','practices',
+'premise','premises','process','processes','property','protocol',
+'quality','question','questions','result','results','routine','routines',
+'sequence','sequences','signal','signals','skill','step','steps',
+'structure','structures','style','styles','system','systems',
+# Jr./Sr. as standalone last-name candidates are invalid; II/III/IV etc. are
+# stripped by Parse-PersonName's genSuffix logic before blocklist is checked,
+# so only Jr/Sr need to remain here as a safety fallback.
+'jr','sr',
+# NLP/therapy concepts not caught by suffix rules
+'therapy','cure','cures','following','leaf','light','stove',
+'publishing','university','desk','dish','voice','instructables','lifewire',
+'planet','reclamation','review','scitech','sketchplanations','venice',
+# Common misparse patterns: "Keyword, Using the" / "Search, Brave"
+'keyword','searching','browsing','indexing','scanning',
+# Common prepositions/articles that can appear mid-name (for first-name blocklist)
+'as','of','the','di','da','du','des','del','der','den','dos','das' | ForEach-Object { [void]$script:nameBlocklist.Add($_) }
 
 # Dictionary configuration for truncated filename detection
 $script:wordListPath = "C:\Users\awt\english_words.txt"
@@ -863,7 +933,7 @@ function Generate-TruncatedFilenamesList {
             'pesto', 'crema', 'penne', 'halwa', 'korma', 'lassi', 'rellenos', 'ayam', 'banu',
             # Names/surnames
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
-            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma', 'bretz',
+            'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma', 'bretz', 'rowe', 'pryor', 'valle', 'haley',
             # Tech/common terms from truncated filenames
             'perl', 'wiki', 'blog', 'gmail',
             # Other common terms
@@ -872,7 +942,9 @@ function Generate-TruncatedFilenamesList {
             'covid', 'coronavirus', 'pandemic', 'vaccine', 'mrna',
             'lgbt', 'lgbtq', 'bipoc', 'dei', 'juneteenth', 'kwanzaa', 'hanukkah', 'diwali', 'ramadan', 'eid',
             # Short words
-            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok'
+            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok',
+            # Slang
+            'duh'
         )
         foreach ($word in $additionalWords) {
             [void]$script:dictionary.Add($word.ToLower())
@@ -1002,6 +1074,25 @@ function Generate-TruncatedFilenamesList {
     }
 
     $outputPath = Join-Path $vaultPath "Truncated Filenames.md"
+
+    # Only create/update the note when truncated filenames were actually found
+    if ($truncatedFiles.Count -eq 0) {
+        Write-Log "  No truncated filenames found  -  skipping note creation" "Green"
+        # Remove stale note from a previous run if it exists
+        if (Test-Path $outputPath) {
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would delete stale Truncated Filenames.md (no truncated files)" "Magenta"
+            } else {
+                try {
+                    Remove-Item -Path $outputPath -Force
+                    Write-Log "  Deleted stale Truncated Filenames.md (no truncated files remain)" "Green"
+                } catch {
+                    Write-Log "  ERROR: Failed to delete stale Truncated Filenames.md - $_" "Red"
+                }
+            }
+        }
+        return
+    }
 
     if ($dryRun) {
         Write-Log "  [DRY RUN] Would create Truncated Filenames.md with $($truncatedFiles.Count) entries" "Magenta"
@@ -1706,7 +1797,7 @@ function Fix-MojibakeEncoding {
     # Em dash: UTF-8 bytes E2 80 94 decoded as Windows-1252 become â€"
     # We extract the pattern from a known file to ensure byte-accurate matching
     $emDashPattern = [char]0x00E2 + [char]0x20AC + [char]0x201C  # â€"
-    $emDashReplacement = [char]0x2014  # — (em dash U+2014)
+    $emDashReplacement = [char]0x2014  #  -  (em dash U+2014)
 
     # Ellipsis: UTF-8 bytes E2 80 A6 decoded as Windows-1252 become â€¦
     $ellipsisPattern = [char]0x00E2 + [char]0x20AC + [char]0x00A6  # â€¦
@@ -3356,6 +3447,226 @@ function Fix-YamlTagMalformations {
 }
 
 # =============================================================================
+# PHASE 27: Fix YAML string field quoting and structural issues
+# =============================================================================
+# Covers gaps not addressed by earlier YAML phases:
+#
+#  1. Unquoted colon in scalar string fields — YAML parsers treat bare colons
+#     as key separators, silently breaking the field value.
+#     Affected fields: title, source, description, subtitle, summary,
+#                      author, subject
+#     Example:  title: Something: A Subtitle
+#           ->  title: "Something: A Subtitle"
+#
+#  2. Merged opening marker — the opening "---" appears on the same line as
+#     the first piece of body content (e.g., "--- ## Heading"), making the
+#     entire file unparseable as frontmatter.
+#     Example:  --- ## Technology MOC\ntags: ...
+#           ->  ---\n## Technology MOC\ntags: ...
+#
+#  3. Duplicate top-level keys (beyond tags:, which Phase 23 handles) —
+#     keeps the first occurrence and silently drops subsequent duplicates.
+#     Example:  source: url1\nsource: url2  ->  source: url1
+#
+#  4. Unclosed frontmatter — file begins with "---" but never has a second
+#     standalone "---" line.  Cannot be auto-fixed safely (no way to know
+#     where frontmatter ends), so these are logged as warnings for manual
+#     review.
+# =============================================================================
+function Fix-YamlStringFields {
+    Write-Log "=== Phase 27: Fixing YAML string field quoting and structural issues ===" "Cyan"
+
+    # String-type scalar fields that require quoting when they contain a colon.
+    # nav: is handled by Phase 18; tags: is handled by Phases 22-23.
+    $quoteableKeys = @('title', 'description', 'subtitle', 'summary', 'author', 'subject', 'source')
+
+    # Folders to skip (images, system, templates)
+    $skipFolders = @('00 - Images', 'Attachments', '.obsidian', 'Templates')
+
+    # UTF-8 without BOM writer (consistent with rest of maintenance script)
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+    # Per-run counters
+    $filesFixed       = 0   # Files that had at least one fix written
+    $stringColonFixed = 0   # Individual unquoted-colon fixes
+    $dupKeysFixed     = 0   # Individual duplicate-key removals
+    $mergedFixed      = 0   # Merged opening --- markers split
+    $unclosedFound    = 0   # Files with unclosed frontmatter (log only)
+
+    $mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
+
+    foreach ($file in $mdFiles) {
+        # Skip system/image/template folders
+        $shouldSkip = $false
+        foreach ($sf in $skipFolders) {
+            if ($file.FullName -like "*\$sf\*") { $shouldSkip = $true; break }
+        }
+        if ($shouldSkip) { continue }
+
+        # Read file as UTF-8
+        $content = $null
+        try {
+            $content = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
+        } catch { continue }
+
+        if ([string]::IsNullOrEmpty($content)) { continue }
+
+        # Only process files that start with frontmatter
+        if (-not $content.StartsWith('---')) { continue }
+
+        $relativePath = $file.FullName.Replace($vaultPath + '\', '')
+        $changed = $false
+
+        # Normalise to LF internally; remember original line-ending style
+        $hadCRLF = $content.Contains("`r`n")
+        $content  = $content.Replace("`r`n", "`n")
+
+        # ------------------------------------------------------------------
+        # Fix 1: Merged opening marker — "---body" or "--- body" on line 1
+        # Occurs when the opening --- is on the same line as subsequent text.
+        # ------------------------------------------------------------------
+        if ($content -match '^---([^-\n].+)\n') {
+            $merged  = $Matches[1].Trim()                              # the text that followed ---
+            $rest    = $content.Substring($content.IndexOf("`n") + 1) # everything after the first newline
+            $content = "---`n$merged`n$rest"
+            $changed = $true
+            $mergedFixed++
+            Write-Log "  Fixed merged opening marker: $relativePath" "Yellow"
+        }
+
+        # ------------------------------------------------------------------
+        # Detect unclosed frontmatter — fewer than 2 standalone --- lines.
+        # We can't safely auto-fix (can't determine where FM ends), so log
+        # for manual review.  Still write the merged-marker fix if applied.
+        # ------------------------------------------------------------------
+        $dashCount = ([regex]::Matches($content, '(?m)^---\s*$')).Count
+        if ($dashCount -lt 2) {
+            $unclosedFound++
+            Write-Log "  WARNING unclosed frontmatter (manual review needed): $relativePath" "Red"
+            if ($changed -and -not $dryRun) {
+                $out = if ($hadCRLF) { $content.Replace("`n", "`r`n") } else { $content }
+                [System.IO.File]::WriteAllText($file.FullName, $out, $utf8NoBom)
+                $filesFixed++
+            }
+            continue
+        }
+
+        # ------------------------------------------------------------------
+        # Extract the frontmatter block and body separately.
+        # Regex: opening ---, capture FM body lines, closing ---, then body.
+        # ------------------------------------------------------------------
+        $fmRegex = [regex]'^---\n([\s\S]*?)\n---(?:\n|$)'
+        $fmMatch  = $fmRegex.Match($content)
+        if (-not $fmMatch.Success) { continue }
+
+        $fmBody  = $fmMatch.Groups[1].Value                             # YAML content between --- lines
+        $afterFM = $content.Substring($fmMatch.Index + $fmMatch.Length) # Everything after closing ---
+
+        # ------------------------------------------------------------------
+        # Walk frontmatter lines:
+        #   Fix 3: remove duplicate top-level keys (keep first occurrence)
+        #   Fix 2: quote scalar string values that contain unquoted colons
+        # ------------------------------------------------------------------
+        $fmLines  = $fmBody -split "`n"
+        $newLines = [System.Collections.Generic.List[string]]::new()
+        $seenKeys = @{}    # Tracks top-level keys already encountered
+
+        $lineFixed = $false
+
+        for ($idx = 0; $idx -lt $fmLines.Count; $idx++) {
+            $line = $fmLines[$idx]
+
+            # Does this line define a top-level YAML key?
+            if ($line -match '^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$') {
+                $key      = $Matches[1]
+                $value    = $Matches[2]
+                $keyLower = $key.ToLower()
+
+                # Fix 3: Duplicate key — drop all but the first occurrence
+                if ($seenKeys.ContainsKey($keyLower)) {
+                    Write-Log "  Duplicate key '$key' removed: $relativePath" "Yellow"
+                    $lineFixed = $true
+                    $dupKeysFixed++
+                    continue   # Skip adding this line to output
+                }
+                $seenKeys[$keyLower] = $true
+
+                # Fix 2: Unquoted colon in a string scalar field
+                if ($quoteableKeys -contains $keyLower) {
+                    $v = $value.Trim()
+
+                    # Already double-quoted?
+                    $dq = ($v.Length -ge 2 -and $v.StartsWith('"') -and $v.EndsWith('"'))
+                    # Already single-quoted?
+                    $sq = ($v.Length -ge 2 -and $v.StartsWith("'") -and $v.EndsWith("'"))
+
+                    if (-not $dq -and -not $sq -and $v -match ':') {
+                        # Escape any embedded double quotes, then wrap in double quotes
+                        $quoted = '"' + $v.Replace('"', '\"') + '"'
+                        $newLines.Add("${key}: $quoted")
+                        $lineFixed    = $true
+                        $stringColonFixed++
+                        continue
+                    }
+                }
+
+                # No fix needed — pass through unchanged
+                $newLines.Add($line)
+
+            } else {
+                # List item, blank line, continuation line — preserve as-is
+                $newLines.Add($line)
+            }
+        }
+
+        if ($lineFixed) { $changed = $true }
+
+        # ------------------------------------------------------------------
+        # Write the file back if anything was modified
+        # ------------------------------------------------------------------
+        if ($changed) {
+            $newFmBody  = $newLines -join "`n"
+            $newContent = "---`n$newFmBody`n---`n$afterFM"
+            if ($hadCRLF) { $newContent = $newContent.Replace("`n", "`r`n") }
+
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would fix YAML string fields in: $relativePath" "Magenta"
+            } else {
+                [System.IO.File]::WriteAllText($file.FullName, $newContent, $utf8NoBom)
+                $filesFixed++
+                Write-Log "  Fixed YAML string fields in: $relativePath" "Green"
+            }
+        }
+    }
+
+    # Store results in script-level counters for the summary report
+    $script:yamlStringFieldsFixed = $stringColonFixed
+    $script:yamlDuplicateKeysFixed = $dupKeysFixed
+    $script:yamlMergedMarkersFixed = $mergedFixed
+    $script:yamlUnclosedCount      = $unclosedFound
+
+    $totalFixed = $stringColonFixed + $dupKeysFixed + $mergedFixed
+
+    if ($totalFixed -eq 0 -and $unclosedFound -eq 0) {
+        Write-Log "  No YAML string field issues found" "Green"
+    } else {
+        if ($stringColonFixed -gt 0) {
+            Write-Log "  Unquoted colons fixed: $stringColonFixed" "Green"
+        }
+        if ($dupKeysFixed -gt 0) {
+            Write-Log "  Duplicate keys removed: $dupKeysFixed" "Green"
+        }
+        if ($mergedFixed -gt 0) {
+            Write-Log "  Merged opening markers split: $mergedFixed" "Green"
+        }
+        Write-Log "  Total field fixes in $filesFixed files" "Green"
+        if ($unclosedFound -gt 0) {
+            Write-Log "  WARNING: $unclosedFound files have unclosed frontmatter (manual review needed)" "Red"
+        }
+    }
+}
+
+# =============================================================================
 # Phase 24: Fix Title Case in Filenames
 # =============================================================================
 function Fix-TitleCaseFilenames {
@@ -3811,6 +4122,676 @@ function Sort-MocSubsectionLinks {
     Write-Log "  MOC files with links re-sorted: $script:mocLinksAlphabetized" "White"
 }
 
+# =============================================================================
+# PHASE 26: Update People Index from new files
+# =============================================================================
+# Scans markdown files created since the last maintenance run for person names.
+# Name sources:
+#   - YAML frontmatter fields: author, authors, person, people, by
+#   - Wikilinks whose target resolves to an existing note in 15 - People
+# For each name found in a new file:
+#   - Inserts a "### Last, First" heading (alphabetically) in People Index if
+#     the name is not yet present, then adds "- [[filename]]" under it
+#   - Adds a source file's existing heading if the name is already present
+#   - Adds a [[People Index]] back-link in the source file's Related Notes
+# When a name's total link count reaches $peopleFileThreshold and no stub note
+# exists yet in 15 - People, one is created automatically and the heading in
+# People Index is marked with ★ and given a **Person note:** reference.
+# Source files also receive a [[Full Name]] back-link to the new stub.
+# =============================================================================
+
+# -------------------------------------------------------------------------
+# Phase 26 helper: rebuild People Index name lookup from the current line list.
+# Returns @{ Lookup = hashtable(normalized key -> line index of ### heading);
+#            LinkCount = hashtable(normalized key -> count of "- [[" lines) }
+# -------------------------------------------------------------------------
+function Rebuild-PeopleIndexLookup {
+    param([System.Collections.Generic.List[string]]$lines)   # Mutable line list
+
+    $lookup     = @{}   # Normalized "last, first" -> index of its ### heading line
+    $linkCount  = @{}   # Normalized "last, first" -> number of "- [[" link lines beneath it
+    $currentKey = $null # Key of the ### heading currently in scope
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^### (.+?)( \u2605)?$') {
+            # New person heading — strip optional ★ before normalizing key.
+            # Also strip trailing periods from initials (e.g. "E." -> "E") so that
+            # "Merlevede, Patrick E." and "Merlevede, Patrick E" share the same key.
+            $rawHeading = $Matches[1].Trim()
+            # Normalize: for each word, remove a trailing period (initial period)
+            $normParts  = $rawHeading.ToLower() -split '\s+'
+            $normParts  = $normParts | ForEach-Object { $_ -replace '\.$', '' }
+            $currentKey             = $normParts -join ' '
+            $lookup[$currentKey]    = $i
+            $linkCount[$currentKey] = 0
+        } elseif ($lines[$i] -match '^## [A-Z]$' -or $lines[$i] -eq '---') {
+            # Letter-section boundary — no active person heading
+            $currentKey = $null
+        } elseif ($null -ne $currentKey -and $lines[$i] -match '^- \[\[') {
+            # Link line belonging to the current person heading
+            $linkCount[$currentKey]++
+        }
+    }
+    return @{ Lookup = $lookup; LinkCount = $linkCount }
+}
+
+# -------------------------------------------------------------------------
+# Phase 26 helper: parse a raw name string into a structured person object.
+# Handles "First Last", "Last, First", "[[First Last]]", "Dr. First Last".
+# Returns $null if the string cannot be parsed as a valid two-part proper name.
+# -------------------------------------------------------------------------
+function Parse-PersonName {
+    param([string]$raw)   # Raw name string extracted from file content
+
+    # Strip wikilink brackets and pipe aliases, then trim
+    $name = ($raw -replace '^\[\[|\]\]$', '' -replace '\|.*$', '').Trim()
+    # Strip common honorific prefixes so they don't end up as the first name
+    $name = $name -replace '^(Dr|Mr|Mrs|Ms|Miss|Prof|Rev|Sir|Lt|Capt|Col|Gen|Sgt|Sen|Rep|Hon)\.?\s+', ''
+    if ([string]::IsNullOrWhiteSpace($name)) { return $null }
+
+    # Generational suffix pattern — matched against the last token of a name.
+    # These suffixes (Jr., Sr., II, III, IV, V, VI) are stripped before first/last
+    # splitting and re-attached to the display form: "Brossman, Martin W. III".
+    $genSuffixRx = '^(Jr\.?|Sr\.?|II|III|IV|V|VI|VII|2nd|3rd|4th|5th)$'
+    $genSuffix   = ''   # Will hold the stripped suffix if found
+
+    $last = ''; $first = ''
+    if ($name -match '^([^,]+),\s*(.+)$') {
+        # Already in "Last, First [Suffix]" index form
+        $last      = $Matches[1].Trim()
+        $firstRaw  = $Matches[2].Trim()
+        # Check whether the last word of the first part is a generational suffix
+        $fParts = $firstRaw -split '\s+'
+        if ($fParts.Count -ge 2 -and $fParts[-1] -match $genSuffixRx) {
+            $genSuffix = $fParts[-1]
+            $first     = ($fParts[0..($fParts.Count - 2)]) -join ' '
+        } else {
+            $first = $firstRaw
+        }
+    } else {
+        # "First [Middle] Last [Suffix]" — strip suffix then take last word as surname
+        $parts = $name -split '\s+'
+        if ($parts.Count -lt 2) { return $null }   # Single word  -  not a full name; skip
+        # If the final token is a generational suffix, peel it off before assigning last/first
+        if ($parts.Count -ge 3 -and $parts[-1] -match $genSuffixRx) {
+            $genSuffix = $parts[-1]
+            $parts     = $parts[0..($parts.Count - 2)]
+        }
+        $last  = $parts[-1]
+        $first = ($parts[0..($parts.Count - 2)]) -join ' '
+    }
+    # Strip trailing punctuation that can appear in raw extracted strings
+    # (e.g., "repair:" from "Page repair:" or "Smith." from sentence-end).
+    # Strategy:
+    #   Step 1 — strip all non-letter/digit/apostrophe/hyphen/period chars from the tail.
+    #            This removes colons, commas, semicolons, etc. while leaving periods intact.
+    #   Step 2 — strip a lone trailing period ONLY if it follows two or more consecutive
+    #            letters.  That removes sentence-end periods ("Smith.") but preserves
+    #            initial periods ("W." — single letter before the period stays intact).
+    # Step 1: strip trailing chars that are definitely not part of any name component.
+    # Period ('.') is intentionally kept so initials ("W.") survive to step 2.
+    $last  = $last  -replace '[^\p{L}\p{N}''`.\-]+$', ''
+    $first = $first -replace '[^\p{L}\p{N}''`.\-]+$', ''
+    # Step 2: remove a trailing period ONLY when the two chars immediately before it
+    # are both letters (i.e., a sentence-end period: "Smith." → "Smith").
+    # A single-letter initial like "W." will NOT match because only one letter precedes
+    # the period, so "W." remains intact.
+    if ($last  -match '^(.*\p{L}\p{L})\.$') { $last  = $Matches[1] }
+    if ($first -match '^(.*\p{L}\p{L})\.$') { $first = $Matches[1] }
+    if ([string]::IsNullOrWhiteSpace($last) -or [string]::IsNullOrWhiteSpace($first)) { return $null }
+    # Both parts must begin with an uppercase letter (including accented characters).
+    # Use -cnotmatch (case-sensitive) because -notmatch is case-insensitive in PowerShell,
+    # which would incorrectly allow lowercase 'b' to match \p{Lu}.
+    if ($last  -cnotmatch '^[\p{Lu}]') { return $null }
+    if ($first -cnotmatch '^[\p{Lu}]') { return $null }
+
+    # Reject if either part is a common English word (articles, prepositions, etc.)
+    $firstWord = ($first -split '\s+')[0]   # First word of the given name (handles "Mary Jo")
+    $lastWord  = $last                      # Surname is always a single token here
+    if ($script:nameBlocklist.Contains($firstWord) -or $script:nameBlocklist.Contains($lastWord)) {
+        return $null
+    }
+    # Also reject if ANY word in the first name is in the blocklist (catches "Peter as Paul")
+    $firstWords = $first -split '\s+'
+    foreach ($fw in $firstWords) {
+        $fwClean = $fw -replace '[^\p{L}]', ''
+        if ($fwClean.Length -gt 1 -and $script:nameBlocklist.Contains($fwClean)) { return $null }
+    }
+
+    # Reject if the surname is all-uppercase and 4+ characters (park signs, labels, acronyms)
+    if ($lastWord -cmatch '^[A-Z]{4,}$') { return $null }
+
+    # Reject surnames that look like common English verbs or nouns by their suffix.
+    # Real surnames virtually never end in -ing, -tion, -ness, -ment, -ized, -izing,
+    # -ified, -ifying, -ated, -ating, -ly (adverbs), -ology (science terms), or bare -ed forms.
+    if ($lastWord -match '(?i)(ing|tion|ness|ment|ized|izing|ified|ifying|ated|ating|\Bly|ology)$') {
+        return $null
+    }
+
+    # Validate the given name against the known first-name list (if loaded).
+    # Strip a trailing period so initials like "C." are treated as the letter "C".
+    # Single-letter initials are always allowed regardless of the list.
+    if ($null -ne $script:givenNameSet) {
+        $firstWordClean = $firstWord -replace '\.$', ''   # Remove trailing period from initial
+        if ($firstWordClean.Length -gt 1 -and -not $script:givenNameSet.Contains($firstWordClean)) {
+            return $null   # First name not found in given-name list — likely a false positive
+        }
+    }
+
+    # Reconstruct display forms, appending generational suffix if present.
+    # Key omits the suffix so "Smith, John Jr." and "Smith, John" de-duplicate correctly.
+    $displayFirst = if ($genSuffix) { "$first $genSuffix" } else { $first }
+    $fullName     = if ($genSuffix) { "$first $last $genSuffix" } else { "$first $last" }
+
+    # Normalize the key: strip trailing periods from initials (e.g., "W." → "W") so that
+    # "Patrick E." and "Patrick E" map to the same key and don't create duplicate index entries.
+    $keyFirst = ($first -split '\s+' | ForEach-Object { $_ -replace '\.$', '' }) -join ' '
+    $keyLast  = $last -replace '\.$', ''
+
+    return @{
+        Key     = "$($keyLast.ToLower()), $($keyFirst.ToLower())"  # Normalized key (no suffix, no initial periods)
+        Display = "$last, $displayFirst"                            # "Last, First [Suffix]" for index headings
+        First   = $first                                            # Given name(s) without suffix
+        Last    = $last                                             # Surname
+        Full    = $fullName                                         # "First Last [Suffix]" for stub filenames
+    }
+}
+
+# -------------------------------------------------------------------------
+# Phase 26 helper: extract person names from markdown file content.
+# Checks YAML frontmatter author/authors/person/people/by fields and any
+# wikilinks whose target resolves to an existing note in 15 - People.
+# Returns a (possibly empty) array of raw name strings.
+# -------------------------------------------------------------------------
+function Extract-PeopleNames {
+    param(
+        [string]$content,          # Full text of the markdown file
+        [string]$peopleFolderPath  # Absolute path to the "15 - People" folder
+    )
+    $found = [System.Collections.Generic.List[string]]::new()   # Collected raw name strings
+
+    # ---- Locate YAML frontmatter boundaries ----
+    # Frontmatter is a --- ... --- block at the very start of the file.
+    $contentLines = $content -split '\r?\n'
+    $fmStart = -1; $fmEnd = -1
+    for ($i = 0; $i -lt $contentLines.Count; $i++) {
+        if ($contentLines[$i] -eq '---') {
+            if ($fmStart -eq -1) { $fmStart = $i }
+            else { $fmEnd = $i; break }
+        } elseif ($fmStart -eq -1 -and $contentLines[$i].Trim() -ne '') {
+            break   # Non-blank line before first --- means no frontmatter
+        }
+    }
+
+    # ---- SOURCE 1: YAML frontmatter person fields ----
+    # Fields checked: author, authors, person, people, by (single-value and list forms)
+    if ($fmStart -ge 0 -and $fmEnd -gt $fmStart) {
+        $yamlLines   = $contentLines[($fmStart + 1)..($fmEnd - 1)]
+        $inListField = $false   # True while iterating items of an authors/people list
+
+        foreach ($yl in $yamlLines) {
+            if ($yl -match '^(author|person|by)\s*:\s*(.+)$') {
+                # Single-value person field: author: Name
+                $val = $Matches[2].Trim().Trim('"').Trim("'")
+                if ($val -and $val -ne 'null') { [void]$found.Add($val) }
+                $inListField = $false
+            } elseif ($yl -match '^(authors|people)\s*:') {
+                # Multi-value field — block list follows, or inline [Name1, Name2]
+                $inListField = $true
+                if ($yl -match '\[(.+)\]') {
+                    $Matches[1] -split ',' | ForEach-Object {
+                        $val = $_.Trim().Trim('"').Trim("'")
+                        if ($val) { [void]$found.Add($val) }
+                    }
+                    $inListField = $false
+                }
+            } elseif ($inListField -and $yl -match '^\s+-\s+(.+)$') {
+                # Block list item under an authors/people field
+                $val = $Matches[1].Trim().Trim('"').Trim("'")
+                if ($val) { [void]$found.Add($val) }
+            } elseif ($yl -match '^\S') {
+                $inListField = $false   # New top-level key  -  exit list context
+            }
+        }
+    }
+
+    # Isolate body text (everything after the closing --- of frontmatter, or whole
+    # file if there is no frontmatter) for body-only pattern scans below.
+    $bodyStart   = if ($fmEnd -ge 0) { $fmEnd + 1 } else { 0 }
+    $bodyLines   = if ($bodyStart -lt $contentLines.Count) {
+                       $contentLines[$bodyStart..($contentLines.Count - 1)]
+                   } else { @() }
+    $bodyContent = $bodyLines -join "`n"
+
+    # ---- SOURCE 2: Wikilinks resolving to existing 15 - People notes ----
+    # If [[Name]] already points to a known person file it is unambiguously a person.
+    [regex]::Matches($content, '\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]') | ForEach-Object {
+        $target = $_.Groups[1].Value.Trim()
+        if (Test-Path (Join-Path $peopleFolderPath "$target.md")) {
+            [void]$found.Add($target)
+        }
+    }
+
+    # ---- SOURCE 4: Bold text introductions — **First Last** ----
+    # Pattern: **Name** where Name is 2–4 title-case words, optionally with
+    # initials (e.g. **C. Prudence Arceneaux**).  This is the standard way
+    # people are introduced in clippings and event notes in this vault.
+    [regex]::Matches($bodyContent, '\*\*([^\*\n]+?)\*\*') | ForEach-Object {
+        $candidate = $_.Groups[1].Value.Trim()
+        $words = $candidate -split '\s+'
+        if ($words.Count -ge 2 -and $words.Count -le 4) {
+            $allTitle = $true
+            foreach ($w in $words) {
+                # Each word must start uppercase; allow trailing period (initial: "C.")
+                if ($w -notmatch '^[A-Z\u00C0-\u024F]') { $allTitle = $false; break }
+            }
+            if ($allTitle) { [void]$found.Add($candidate) }
+        }
+    }
+
+    # ---- SOURCE 5: "by First Last" attribution in body text ----
+    # Matches: "by John Smith", "by John M. Smith", "written by Jane Doe", etc.
+    [regex]::Matches($bodyContent, '(?i)\bby\s+([A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F''.]+(?:\s+[A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F''.]+)+)') | ForEach-Object {
+        $candidate = $_.Groups[1].Value.Trim()
+        $words = $candidate -split '\s+'
+        if ($words.Count -ge 2 -and $words.Count -le 4) { [void]$found.Add($candidate) }
+    }
+
+    # ---- SOURCE 6: Em-dash / tilde quote attributions — "— First Last" ----
+    # Common at end of quoted lines: "— Maya Angelou" or "~ Ralph Waldo Emerson"
+    # Build pattern with char codes to avoid encoding issues with non-ASCII literals.
+    $src6EmDash = [char]0x2014   # em dash U+2014
+    $src6EnDash = [char]0x2013   # en dash U+2013
+    $src6Pattern = "(?:[$src6EmDash$src6EnDash~])\s*([A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F''.]+(?:\s+[A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F''.]+)+)\s*`$"
+    [regex]::Matches($bodyContent, $src6Pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ForEach-Object {
+        $candidate = $_.Groups[1].Value.Trim()
+        $words = $candidate -split '\s+'
+        if ($words.Count -ge 2 -and $words.Count -le 4) { [void]$found.Add($candidate) }
+    }
+
+    # ---- SOURCE 7: "Author:" label in body text (outside YAML) ----
+    # Handles notes where authorship is written as prose rather than frontmatter.
+    [regex]::Matches($bodyContent, '(?i)\bauthor\s*:\s*([A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F''.]+(?:\s+[A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F''.]+)+)') | ForEach-Object {
+        $candidate = $_.Groups[1].Value.Trim()
+        $words = $candidate -split '\s+'
+        if ($words.Count -ge 2 -and $words.Count -le 4) { [void]$found.Add($candidate) }
+    }
+
+    return ,($found | Select-Object -Unique)   # Force array return even for single item
+}
+
+# -------------------------------------------------------------------------
+# Phase 26 helper: insert "- [[linkTarget]]" into a file's Related Notes
+# section.  If no Related Notes section exists, one is created at the end.
+# Returns $true if the file was modified, $false if the link already exists.
+# -------------------------------------------------------------------------
+function Add-PeopleBackLink {
+    param(
+        [string]$filePath,                    # Absolute path to the markdown file
+        [string]$linkTarget,                  # Wikilink target (without brackets)
+        [System.Text.UTF8Encoding]$enc        # UTF-8 encoder (no BOM) for byte writes
+    )
+    $bytes  = [System.IO.File]::ReadAllBytes($filePath)
+    $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+    $text   = if ($hasBom) { $enc.GetString($bytes[3..($bytes.Length - 1)]) } else { $enc.GetString($bytes) }
+
+    # Do not add a duplicate link
+    if ($text -match [regex]::Escape("[[$linkTarget]]")) { return $false }
+
+    $eol    = if ($text -match '\r\n') { "`r`n" } else { "`n" }   # Preserve existing line endings
+    $flines = [System.Collections.Generic.List[string]]::new($text -split '\r?\n')
+
+    # Locate existing ## Related Notes section
+    $relIdx = -1
+    for ($i = 0; $i -lt $flines.Count; $i++) {
+        if ($flines[$i] -match '^## Related Notes') { $relIdx = $i; break }
+    }
+    if ($relIdx -ge 0) {
+        # Find the end of the section (next ## heading, or end of file)
+        $endIdx = $flines.Count
+        for ($i = $relIdx + 1; $i -lt $flines.Count; $i++) {
+            if ($flines[$i] -match '^## ') { $endIdx = $i; break }
+        }
+        # Insert before any trailing blank lines inside the section
+        $insertAt = $endIdx
+        while ($insertAt -gt $relIdx + 1 -and [string]::IsNullOrWhiteSpace($flines[$insertAt - 1])) {
+            $insertAt--
+        }
+        $flines.Insert($insertAt, "- [[$linkTarget]]")
+    } else {
+        # Append a new Related Notes section at end of file
+        while ($flines.Count -gt 0 -and [string]::IsNullOrWhiteSpace($flines[$flines.Count - 1])) {
+            $flines.RemoveAt($flines.Count - 1)
+        }
+        $flines.Add('')
+        $flines.Add('## Related Notes')
+        $flines.Add('')
+        $flines.Add("- [[$linkTarget]]")
+    }
+
+    $newText  = $flines -join $eol
+    $outBytes = if ($hasBom) {
+        (New-Object System.Text.UTF8Encoding($true)).GetPreamble() + $enc.GetBytes($newText)
+    } else { $enc.GetBytes($newText) }
+    [System.IO.File]::WriteAllBytes($filePath, $outBytes)
+    return $true
+}
+
+# -------------------------------------------------------------------------
+# Phase 26 helper: create a minimal stub person note in 15 - People.
+# Returns $true if the note was created, $false if it already existed.
+# -------------------------------------------------------------------------
+function New-PersonStub {
+    param(
+        [hashtable]$person,            # Parsed person object from Parse-PersonName
+        [string]$peopleFolderPath,     # Absolute path to "15 - People" folder
+        [string[]]$sourceFiles,        # Base names of source notes linking to this person
+        [System.Text.UTF8Encoding]$enc # UTF-8 encoder for byte writes
+    )
+    $stubPath = Join-Path $peopleFolderPath "$($person.Full).md"
+    if (Test-Path $stubPath) { return $false }   # Already exists  -  nothing to do
+
+    $today    = Get-Date -Format "yyyy-MM-dd"
+    $relLinks = ($sourceFiles | ForEach-Object { "- [[$_]]" }) -join "`n"
+
+    # Minimal stub frontmatter and body — user is expected to expand this
+    $stub = "---`ntags:`n  - person`ncreated: $today`nmodified: $today`n---`n`n# $($person.Full)`n`n[[15 - People]]`n`n## Biography`n`n*(Stub created automatically by maintenance script - please expand.)*`n`n## Related Notes`n`n$relLinks`n"
+    [System.IO.File]::WriteAllBytes($stubPath, $enc.GetBytes($stub))
+    return $true
+}
+
+# =============================================================================
+# PHASE 26 main function
+# =============================================================================
+function Update-PeopleIndex {
+    Write-Log "=== Phase 26: Updating People Index from new files ===" "Cyan"
+
+    # ---- Configuration ----
+    $stateFile           = $script:stateFilePath           # Records timestamp of last run
+    $peopleIndexPath     = Join-Path $vaultPath "People Index.md"
+    $peopleFolderPath    = Join-Path $vaultPath "15 - People"
+    $peopleFileThreshold = 2    # Links under a name before a stub person note is created
+
+    # Subdirectory names to skip when scanning for new files
+    $excludedFolders = @(
+        '15 - People', '00 - Home Dashboard', 'Templates',
+        '.resources', '00 - Images', 'Attachments', '00 - Journal', 'Journals'
+    )
+
+    # ---- Determine scan cutoff from state file ----
+    $thisRunTime = Get-Date   # Snapshot start time; written to state file at end
+    if (Test-Path $stateFile) {
+        $cutoffTime = [datetime](Get-Content $stateFile -Raw -Encoding UTF8).Trim()
+        Write-Log "  Scanning files created since: $cutoffTime" "Gray"
+    } else {
+        $cutoffTime = $thisRunTime.AddDays(-7)
+        Write-Log "  No state file  -  scanning last 7 days (since $($cutoffTime.ToString('yyyy-MM-dd')))" "Yellow"
+    }
+
+    # ---- Find new markdown files (excluding system/meta folders and the index itself) ----
+    $newFiles = Get-ChildItem -Path $vaultPath -Recurse -Filter "*.md" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CreationTime -gt $cutoffTime } |
+        Where-Object { $_.Name -ne 'People Index.md' } |   # Never scan the index itself
+        Where-Object {
+            $p    = $_.FullName
+            $skip = $false
+            foreach ($folder in $excludedFolders) {
+                if ($p -like "*\$folder\*" -or $p -like "*\$folder") { $skip = $true; break }
+            }
+            -not $skip
+        }
+    if ($newFiles.Count -eq 0) {
+        Write-Log "  No new files since last run" "Green"
+        $thisRunTime.ToString("yyyy-MM-dd HH:mm:ss") | Set-Content -Path $stateFile -Encoding UTF8
+        return
+    }
+    Write-Log "  Scanning $($newFiles.Count) new files for person names" "Yellow"
+
+    # ---- Load given-name list for first-name validation (once per session) ----
+    if ($null -eq $script:givenNameSet) {
+        $nameCsvPath = 'C:\Users\awt\tblNameGender.csv'
+        if (Test-Path $nameCsvPath) {
+            $script:givenNameSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+            Get-Content $nameCsvPath -Encoding UTF8 | ForEach-Object {
+                # Each row: "Name","Gender",probability  — extract first quoted field
+                if ($_ -match '^"([^"]+)"') { [void]$script:givenNameSet.Add($Matches[1]) }
+            }
+            Write-Log "  Loaded $($script:givenNameSet.Count) given names for validation" "Gray"
+        } else {
+            Write-Log "  WARNING: tblNameGender.csv not found; name validation disabled" "Yellow"
+        }
+    }
+
+    # ---- Load People Index into a mutable line list ----
+    $enc       = New-Object System.Text.UTF8Encoding($false)   # UTF-8 without BOM for byte writes
+    $idxBytes  = [System.IO.File]::ReadAllBytes($peopleIndexPath)
+    $hasBom    = ($idxBytes.Length -ge 3 -and $idxBytes[0] -eq 0xEF -and $idxBytes[1] -eq 0xBB -and $idxBytes[2] -eq 0xBF)
+    $rawIdx    = if ($hasBom) { $enc.GetString($idxBytes[3..($idxBytes.Length - 1)]) } else { $enc.GetString($idxBytes) }
+    $eol       = if ($rawIdx -match '\r\n') { "`r`n" } else { "`n" }   # Preserve original line endings
+    $idxLines  = [System.Collections.Generic.List[string]]::new($rawIdx -split '\r?\n')
+    $idxModified = $false   # Flag: set when any line is added/changed
+
+    # ---- Collect all (name -> source files) pairs from new files ----
+    $pending   = @{}   # Normalized key -> List[string] of source file base names
+    $personObj = @{}   # Normalized key -> parsed person hashtable (first encounter)
+
+    foreach ($file in $newFiles) {
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+        $content  = [System.IO.File]::ReadAllText($file.FullName, $enc)
+        $rawNames = Extract-PeopleNames -content $content -peopleFolderPath $peopleFolderPath
+
+        foreach ($rawName in $rawNames) {
+            $person = Parse-PersonName -raw $rawName
+            if ($null -eq $person) { continue }
+            if (-not $pending.ContainsKey($person.Key)) {
+                $pending[$person.Key]   = [System.Collections.Generic.List[string]]::new()
+                $personObj[$person.Key] = $person   # Store parsed object on first encounter
+            }
+            if ($baseName -notin $pending[$person.Key]) {
+                [void]$pending[$person.Key].Add($baseName)
+            }
+        }
+    }
+
+    $nameKeys = @($pending.Keys | Sort-Object)
+    if ($nameKeys.Count -eq 0) {
+        Write-Log "  No new person names found in new files" "Green"
+        $thisRunTime.ToString("yyyy-MM-dd HH:mm:ss") | Set-Content -Path $stateFile -Encoding UTF8
+        return
+    }
+    Write-Log "  Person names identified: $($nameKeys.Count)" "Yellow"
+
+    # ---- Apply changes to People Index ----
+    foreach ($key in $nameKeys) {
+        $person    = $personObj[$key]   # Parsed person object for this name
+        $fileNames = $pending[$key]     # Source file base names containing this person
+
+        foreach ($baseName in $fileNames) {
+            # Rebuild lookup before each operation — indices shift after every insertion
+            $state = Rebuild-PeopleIndexLookup -lines $idxLines
+
+            if ($state.Lookup.ContainsKey($key)) {
+                # ------ Entry exists: add link if this file is not already listed ------
+                $headIdx       = $state.Lookup[$key]   # Line index of the ### heading
+                $alreadyLinked = $false
+                $j = $headIdx + 1
+                while ($j -lt $idxLines.Count -and $idxLines[$j] -notmatch '^### |^## |^---') {
+                    if ($idxLines[$j].Contains("[[$baseName]]")) { $alreadyLinked = $true; break }
+                    $j++
+                }
+                if (-not $alreadyLinked) {
+                    # Find the last link/metadata line under this heading for insertion point
+                    $insertAfter = $headIdx
+                    $j = $headIdx + 1
+                    while ($j -lt $idxLines.Count -and $idxLines[$j] -notmatch '^### |^## |^---') {
+                        if ($idxLines[$j] -match '^[-*] \[\[' -or $idxLines[$j] -match '^\*\*Person') {
+                            $insertAfter = $j
+                        }
+                        $j++
+                    }
+                    if (-not $dryRun) {
+                        $idxLines.Insert($insertAfter + 1, "- [[$baseName]]")
+                    } else {
+                        Write-Log "  [DRY RUN] Would add link: $($person.Display) <- [[$baseName]]" "Magenta"
+                    }
+                    $script:peopleLinksAdded++
+                    $idxModified = $true
+                    Write-Log "  Link added: $($person.Display) <- [[$baseName]]" "Yellow"
+                }
+            } else {
+                # ------ New name: insert ### heading + first link alphabetically ------
+                $letterKey  = $person.Last[0].ToString().ToUpper()   # e.g. "C" for "Cordes"
+                $sectionIdx = -1   # Line index of the "## X" heading for this letter
+                for ($i = 0; $i -lt $idxLines.Count; $i++) {
+                    if ($idxLines[$i] -eq "## $letterKey") { $sectionIdx = $i; break }
+                }
+
+                if ($sectionIdx -eq -1) {
+                    # Letter section does not exist — insert a new one
+                    # Find the --- that precedes the alphabetically-next ## section
+                    $insertBeforeIdx = $idxLines.Count   # Default: append at end
+                    for ($i = 0; $i -lt $idxLines.Count; $i++) {
+                        if ($idxLines[$i] -match '^## ([A-Z])$' -and [string]::Compare($Matches[1], $letterKey) -gt 0) {
+                            # Back up through blank lines to find the --- separator
+                            $j = $i - 1
+                            while ($j -ge 0 -and [string]::IsNullOrWhiteSpace($idxLines[$j])) { $j-- }
+                            $insertBeforeIdx = if ($j -ge 0 -and $idxLines[$j] -eq '---') { $j } else { $i }
+                            break
+                        }
+                    }
+                    if (-not $dryRun) {
+                        # Block: blank, ---, blank, ## X, ### Name, - [[link]]
+                        $toInsert = @('', '---', '', "## $letterKey", "### $($person.Display)", "- [[$baseName]]")
+                        for ($ins = $toInsert.Length - 1; $ins -ge 0; $ins--) {
+                            $idxLines.Insert($insertBeforeIdx, $toInsert[$ins])
+                        }
+                    } else {
+                        Write-Log "  [DRY RUN] Would create section ## $letterKey / $($person.Display)" "Magenta"
+                    }
+                    $script:peopleIndexEntries++
+                    $idxModified = $true
+                    Write-Log "  New section+entry: ## $letterKey / $($person.Display) <- [[$baseName]]" "Yellow"
+                } else {
+                    # Letter section exists — find alphabetical insert position within it
+                    $insertAfter = $sectionIdx   # Default: right after ## heading
+                    $j = $sectionIdx + 1
+                    while ($j -lt $idxLines.Count -and $idxLines[$j] -notmatch '^## [A-Z]$' -and $idxLines[$j] -ne '---') {
+                        if ($idxLines[$j] -match '^### (.+?)( \u2605)?$') {
+                            $entryName = $Matches[1].Trim()
+                            if ([string]::Compare($person.Display, $entryName, $true) -gt 0) {
+                                # Our name sorts after this entry — advance past its link lines
+                                $insertAfter = $j
+                                $k = $j + 1
+                                while ($k -lt $idxLines.Count -and
+                                       ($idxLines[$k] -match '^[-*] \[\[' -or $idxLines[$k] -match '^\*\*Person')) {
+                                    $insertAfter = $k; $k++
+                                }
+                            } else {
+                                break   # Our name sorts before this entry  -  stop here
+                            }
+                        }
+                        $j++
+                    }
+                    if (-not $dryRun) {
+                        $idxLines.Insert($insertAfter + 1, "- [[$baseName]]")
+                        $idxLines.Insert($insertAfter + 1, "### $($person.Display)")
+                    } else {
+                        Write-Log "  [DRY RUN] Would add entry: $($person.Display) <- [[$baseName]]" "Magenta"
+                    }
+                    $script:peopleIndexEntries++
+                    $idxModified = $true
+                    Write-Log "  New entry: $($person.Display) <- [[$baseName]]" "Yellow"
+                }
+            }
+
+            # ------ Add [[People Index]] back-link in source file ------
+            $sourceFile = $newFiles |
+                Where-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) -eq $baseName } |
+                Select-Object -First 1
+            if ($sourceFile -and -not $dryRun) {
+                if (Add-PeopleBackLink -filePath $sourceFile.FullName -linkTarget "People Index" -enc $enc) {
+                    Write-Log "    Back-link added in source: $($sourceFile.Name)" "Gray"
+                }
+            }
+        }   # end foreach baseName
+
+        # ------ Check threshold: create stub person note if needed ------
+        $state      = Rebuild-PeopleIndexLookup -lines $idxLines
+        $totalLinks = if ($state.LinkCount.ContainsKey($key)) { $state.LinkCount[$key] } else { 0 }
+        $stubPath   = Join-Path $peopleFolderPath "$($person.Full).md"
+
+        if ($totalLinks -ge $peopleFileThreshold -and -not (Test-Path $stubPath)) {
+            if ($dryRun) {
+                Write-Log "  [DRY RUN] Would create stub: $($person.Full).md ($totalLinks links)" "Magenta"
+            } else {
+                $sourceNames = @($fileNames)
+                if (New-PersonStub -person $person -peopleFolderPath $peopleFolderPath -sourceFiles $sourceNames -enc $enc) {
+                    $script:peopleFilesCreated++
+                    Write-Log "  Stub created: $($person.Full).md" "Green"
+
+                    # Mark ★ in People Index heading and add **Person note:** line
+                    $state2 = Rebuild-PeopleIndexLookup -lines $idxLines
+                    if ($state2.Lookup.ContainsKey($key)) {
+                        $hIdx = $state2.Lookup[$key]
+                        if ($idxLines[$hIdx] -notmatch " $([regex]::Escape($starChar))`$") {
+                            $idxLines[$hIdx] = $idxLines[$hIdx] + " $starChar"
+                            $idxModified = $true
+                        }
+                        $personNoteLine = "**Person note:** [[$($person.Full)]]"
+                        if ($hIdx + 1 -ge $idxLines.Count -or $idxLines[$hIdx + 1] -notmatch '^\*\*Person note') {
+                            $idxLines.Insert($hIdx + 1, $personNoteLine)
+                            $idxModified = $true
+                        }
+                    }
+
+                    # Add [[Full Name]] back-link in every source file for this person
+                    foreach ($baseName in $fileNames) {
+                        $sf = $newFiles |
+                            Where-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) -eq $baseName } |
+                            Select-Object -First 1
+                        if ($sf) {
+                            if (Add-PeopleBackLink -filePath $sf.FullName -linkTarget $person.Full -enc $enc) {
+                                Write-Log "    Person back-link added: $($sf.Name) -> [[$($person.Full)]]" "Gray"
+                            }
+                        }
+                    }
+                }
+            }
+        } elseif ((Test-Path $stubPath) -and $state.Lookup.ContainsKey($key)) {
+            # Stub already exists — ensure the index heading is marked correctly
+            $hIdx = $state.Lookup[$key]
+            if ($idxLines[$hIdx] -notmatch " $([regex]::Escape($starChar))`$") {
+                $idxLines[$hIdx] = $idxLines[$hIdx] + " $starChar"
+                $idxModified = $true
+            }
+            $personNoteLine = "**Person note:** [[$($person.Full)]]"
+            if ($hIdx + 1 -ge $idxLines.Count -or $idxLines[$hIdx + 1] -notmatch '^\*\*Person note') {
+                $idxLines.Insert($hIdx + 1, $personNoteLine)
+                $idxModified = $true
+            }
+        }
+    }   # end foreach key
+
+    # ---- Save updated People Index ----
+    if ($idxModified -and -not $dryRun) {
+        $newText  = $idxLines -join $eol
+        $outBytes = if ($hasBom) {
+            (New-Object System.Text.UTF8Encoding($true)).GetPreamble() + $enc.GetBytes($newText)
+        } else { $enc.GetBytes($newText) }
+        [System.IO.File]::WriteAllBytes($peopleIndexPath, $outBytes)
+        Write-Log "  People Index saved" "Green"
+    } elseif ($dryRun -and $idxModified) {
+        Write-Log "  [DRY RUN] People Index would be updated" "Magenta"
+    }
+
+    # ---- Record this run's start time as the new cutoff ----
+    $thisRunTime.ToString("yyyy-MM-dd HH:mm:ss") | Set-Content -Path $stateFile -Encoding UTF8
+
+    Write-Log "  New index entries: $script:peopleIndexEntries" "White"
+    Write-Log "  Links added to existing entries: $script:peopleLinksAdded" "White"
+    Write-Log "  Person stub notes created: $script:peopleFilesCreated" "White"
+}
+
 # Run maintenance phases
 Rename-NonStandardApostrophes
 Resolve-ApostropheDuplicates
@@ -3837,8 +4818,10 @@ Fix-MocBulletPoints
 Fix-YamlWikiLinks
 Fix-YamlTagIndentation
 Fix-YamlTagMalformations
+Fix-YamlStringFields
 Fix-TitleCaseFilenames
 Sort-MocSubsectionLinks
+Update-PeopleIndex
 
 # Summary
 Write-Log "" "White"
@@ -3869,7 +4852,16 @@ Write-Log "  MOC bullet points fixed: $script:bulletPointsFixed" "White"
 Write-Log "  YAML wiki-links fixed: $script:yamlWikiLinksFixed" "White"
 Write-Log "  YAML tag indentation fixed: $script:yamlTagIndentFixed" "White"
 Write-Log "  YAML tag malformations fixed: $script:yamlTagMalformFixed" "White"
+Write-Log "  YAML unquoted colons fixed: $script:yamlStringFieldsFixed" "White"
+Write-Log "  YAML duplicate keys removed: $script:yamlDuplicateKeysFixed" "White"
+Write-Log "  YAML merged markers split: $script:yamlMergedMarkersFixed" "White"
+if ($script:yamlUnclosedCount -gt 0) {
+    Write-Log "  YAML unclosed frontmatter (manual review): $script:yamlUnclosedCount" "Red"
+}
 Write-Log "  Title case files renamed: $script:titleCaseRenamed (links updated: $script:titleCaseLinksUpdated)" "White"
 Write-Log "  MOC subsection links alphabetized: $script:mocLinksAlphabetized" "White"
+Write-Log "  People Index entries added: $script:peopleIndexEntries" "White"
+Write-Log "  People Index links added: $script:peopleLinksAdded" "White"
+Write-Log "  Person stub notes created: $script:peopleFilesCreated" "White"
 Write-Log "  Log saved to: $logPath" "White"
 Write-Log "============================================" "Green"
