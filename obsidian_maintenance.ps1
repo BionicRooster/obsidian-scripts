@@ -105,6 +105,20 @@ $starChar = [char]0x2605
 # common English words or NLP concept phrases appearing in bold text.
 $script:givenNameSet = $null
 
+# Known mononyms — historical/religious figures who are universally known by a
+# single name (or a name that does not split into Western first+last form).
+# Each entry maps one or more normalized lookup keys (lowercase, letters only)
+# to the canonical display name used in the People Index and stub filenames.
+# Parse-PersonName checks this table BEFORE applying the "requires two words" rule.
+$script:knownMononyms = @{
+    # Bahá'í central figures
+    'bahaullah'     = "Bahá'u'lláh"   # Founder of the Bahá'í Faith
+    'bahuallah'     = "Bahá'u'lláh"   # Common misspelling variant
+    'abdulbaha'     = "'Abdu'l-Bahá"  # Son of Bahá'u'lláh, Centre of the Covenant
+    'thebab'        = 'The Báb'       # Herald of the Bahá'í Faith
+    'bab'           = 'The Báb'       # Short form
+}
+
 # Hard blocklist of common English words that are never valid person names.
 # Checked against BOTH the first-name and last-name portions of a candidate.
 $script:nameBlocklist = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -924,6 +938,7 @@ function Generate-TruncatedFilenamesList {
             'postgresql', 'mongodb', 'nodejs', 'javascript', 'typescript', 'kubernetes', 'dockerfile',
             'wifi', 'bluetooth', 'hdmi', 'usb', 'html', 'css', 'json', 'xml', 'sql', 'api', 'url',
             'iphone', 'ipad', 'macos', 'ios', 'linux', 'ubuntu', 'debian', 'nvidia', 'amd', 'intel',
+            'pinout', 'pinouts',   # Hardware pin layout diagrams (e.g. "GPIO Pinout")
             # Common proper nouns
             'bahai', 'quran', 'torah', 'buddhist', 'hindu', 'sikh', 'zoroastrian',
             # Food terms
@@ -4188,6 +4203,22 @@ function Parse-PersonName {
     # Strip common honorific prefixes so they don't end up as the first name
     $name = $name -replace '^(Dr|Mr|Mrs|Ms|Miss|Prof|Rev|Sir|Lt|Capt|Col|Gen|Sgt|Sen|Rep|Hon)\.?\s+', ''
     if ([string]::IsNullOrWhiteSpace($name)) { return $null }
+
+    # --- Known mononyms check ---
+    # Figures universally known by a single name bypass the first+last requirement.
+    # Normalize the input: lowercase, strip everything except letters, then look up.
+    $monoKey = ($name.ToLower() -replace '[^a-z]', '')   # e.g. "Bahá'u'lláh" -> "bahaullah"
+    if ($script:knownMononyms.ContainsKey($monoKey)) {
+        $canonical = $script:knownMononyms[$monoKey]     # e.g. "Bahá'u'lláh"
+        $keyNorm   = $canonical.ToLower() -replace '[^a-z]', ''
+        return @{
+            Key     = $keyNorm                # Normalized sort key for People Index
+            Display = $canonical              # Displayed as-is in the index (no comma form)
+            First   = $canonical              # No separate first name for mononyms
+            Last    = $canonical              # Use full name as surname for stub creation
+            Full    = $canonical              # Stub filename will be canonical form
+        }
+    }
 
     # Generational suffix pattern — matched against the last token of a name.
     # These suffixes (Jr., Sr., II, III, IV, V, VI) are stripped before first/last
