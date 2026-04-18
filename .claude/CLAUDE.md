@@ -24,6 +24,9 @@ This ensures subagents can operate on the vault without re-prompting for permiss
 
 ## File Naming Conventions
 - Whenever encountering a folder name or file name that contains curly/smart apostrophes ('), automatically convert them to standard apostrophes (').
+- **This must run FIRST before any file operation** (move, copy, rename, link). Curly apostrophes in filenames cause silent failures during Move-Item and Copy operations.
+- Scan all files to be operated on before starting a workflow. Use PowerShell: `$name -replace [char]0x2019, "'"` to normalize.
+- If a source file has a curly apostrophe in its name, rename it in-place BEFORE moving or copying it.
 
 ## MOC Orphan Linker Workflow
 When the user asks to "link orphans" or find relevant orphans for a MOC:
@@ -49,6 +52,13 @@ When the user says "Fix broken image links":
    - After fixing, run fix_backslash_paths.ps1 to ensure all paths use forward slashes
 3. The script finds ![[image.jpg]] embeds pointing to wrong paths, locates the actual image file in the vault, and updates the link
 4. Example: powershell -ExecutionPolicy Bypass -File "C:\Users\awt\find_broken_images.ps1" -Limit 100 -Fix
+
+## 2024 Columbia River Trip — Standing MOC Rule
+- Project folder: `D:\Obsidian\Main\02 - Working Projects\2024 Columbia River Trip\`
+- MOC section: `MOC - Travel & Exploration.md` → `## Specific Locations` → `### 2024 Columbia River Trip`
+- Any note tagged `#2024-WashingtonTrip` (or tagged with both `Travel` and `Megaflood`/`Washington`) belongs in this project folder and must be linked in the `### 2024 Columbia River Trip` subsection.
+- When classifying recent notes or cleaning MOCs, check for these tags and update the subsection accordingly.
+- Sub-groupings within the subsection: **Trip Journal**, **Columbia River Gorge**, **Eastern Washington / Grand Coulee**
 
 ## Cleanup MOCs Workflow
 When the user says "cleanup MOCs" or "clean up MOCs":
@@ -137,7 +147,9 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - ONLY move files that are already in a subdirectory (e.g., 10 - Clippings, vault root subfolders)
    - Do NOT move files that are in the vault root (D:\Obsidian\Main\*.md) — classify and link them but leave them in place
    - Root-level files will be manually reviewed and moved to "20 Permanent Notes" by the user
+   - **Elias White Talbot exception**: If a note contains the name "Elias White Talbot" or the tag "EliasWhiteTalbot", move it to `D:\Obsidian\Main\02 - Working Projects\Elias White Talbot - Project\` instead of any `01/` subdirectory. Also ensure the `EliasWhiteTalbot` tag is present in the frontmatter. This overrides all other moving rules (including the vault root rule — even vault root files with this content get moved to the project folder).
 4. Workflow:
+   - **Step 0 (always first): Rename any files with curly/smart apostrophes** (U+2019 `'`) in their names to use standard apostrophes (`'`) before any other operation. Curly apostrophes cause Move-Item to fail silently or delete the source without copying.
    - Run PowerShell script to find files by CreationTime within date range
    - Read all MOC files to understand available subsections
    - Read each recent file to analyze its content
@@ -145,6 +157,11 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - Add wikilink to appropriate MOC subsection
    - Add nav property to file pointing back to MOC (bidirectional linking)
    - Move file to appropriate 01/ subdirectory ONLY if it is not in the vault root
+   - **People Index check**: After classifying each file, scan its content for named individuals (authors, subjects, people mentioned). For each name found:
+     - Check if a file exists in `D:\Obsidian\Main\15 - People\<Name>.md`
+     - Check if the name appears in `D:\Obsidian\Main\People Index.md`
+     - If the name is absent from both, add it to a "New Names" list for the session
+   - At the end of the workflow, report the New Names list and offer to create stub entries in `15 - People\` and/or add them to the People Index
 5. Classification guidelines:
    - FOL/library content → MOC - Friends of the Georgetown Public Library
    - Bahá'í content → MOC - Bahá'í Faith (match subsection: Core Teachings, Administrative Guidance, etc.)
