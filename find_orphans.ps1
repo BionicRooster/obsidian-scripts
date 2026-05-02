@@ -1,95 +1,34 @@
-# Find orphan files in Obsidian vault
-# Orphans = files with no incoming links from other files
+# find_orphans.ps1
+# Locate orphan files listed in Orphan Files.md
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultRoot = 'D:\Obsidian\Main'
 
-Write-Host "=== Finding Orphan Files ===" -ForegroundColor Cyan
-Write-Host "Scanning vault: $vaultPath" -ForegroundColor Gray
+$targets = @(
+    '2010 Personal Calendar Summary.md',
+    '2011 Personal Calendar Summary.md',
+    '2012 Personal Calendar Summary.md',
+    '2013 Personal Calendar Summary.md',
+    '2014 Personal Calendar Summary.md',
+    '2015 Personal Calendar Summary.md',
+    '2016 Personal Calendar Summary.md',
+    '2017 Personal Calendar Summary.md',
+    '2018 Personal Calendar Summary.md',
+    '2019 Personal Calendar Summary.md',
+    '2020 Personal Calendar Summary.md',
+    '2021 Personal Calendar Summary.md',
+    '2022 Personal Calendar Summary.md',
+    '2023 Personal Calendar Summary.md',
+    '2024 Personal Calendar Summary.md',
+    '2025 Personal Calendar Summary.md',
+    '2026-04-14.md',
+    'HCAS Mark Updegrove 2026 Schedule.md'
+)
 
-# Get all markdown files
-$mdFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
-Write-Host "Found $($mdFiles.Count) markdown files" -ForegroundColor Gray
-
-# Build a map of all file names (without extension) for link resolution
-$fileMap = @{}
-foreach ($file in $mdFiles) {
-    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
-    $fileMap[$baseName.ToLower()] = $file.FullName
-}
-
-# Track which files are linked to (have incoming links)
-$linkedFiles = @{}
-
-# Scan all files for outgoing links
-Write-Host "Scanning for links..." -ForegroundColor Gray
-foreach ($file in $mdFiles) {
-    $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-    if (-not $content) { continue }
-
-    # Find all wiki-style links [[link]] or [[link|alias]]
-    $linkMatches = [regex]::Matches($content, '\[\[([^\]|]+)(?:\|[^\]]+)?\]\]')
-
-    foreach ($match in $linkMatches) {
-        $linkTarget = $match.Groups[1].Value.Trim()
-        # Remove any heading anchors
-        if ($linkTarget -match '^([^#]+)#') {
-            $linkTarget = $matches[1]
-        }
-        $linkTargetLower = $linkTarget.ToLower()
-
-        # Mark this file as linked
-        if ($fileMap.ContainsKey($linkTargetLower)) {
-            $linkedFiles[$linkTargetLower] = $true
-        }
+foreach ($t in $targets) {
+    $found = Get-ChildItem -Path $vaultRoot -Recurse -Filter $t -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($found) {
+        Write-Output "FOUND: $($found.FullName)"
+    } else {
+        Write-Output "MISSING: $t"
     }
 }
-
-# Folders to exclude from orphan identification (journal files should never be considered orphans)
-$skipFolders = @('00 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
-
-# Find orphans (files not linked by any other file)
-$orphans = @()
-foreach ($file in $mdFiles) {
-    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
-    $relativePath = $file.FullName.Replace($vaultPath + "\", "")
-
-    # Skip files in excluded folders
-    $skip = $false
-    foreach ($folder in $skipFolders) {
-        if ($relativePath -match "^$([regex]::Escape($folder))") {
-            $skip = $true
-            break
-        }
-    }
-    if ($skip) { continue }
-
-    if (-not $linkedFiles.ContainsKey($baseName.ToLower())) {
-        $orphans += $file
-    }
-}
-
-Write-Host "`n=== Results ===" -ForegroundColor Cyan
-Write-Host "Total files: $($mdFiles.Count)" -ForegroundColor White
-Write-Host "Linked files: $($linkedFiles.Count)" -ForegroundColor Green
-Write-Host "Orphan files: $($orphans.Count)" -ForegroundColor Yellow
-
-# Output orphans grouped by folder
-Write-Host "`n=== Orphan Files by Folder ===" -ForegroundColor Cyan
-
-$orphansByFolder = $orphans | Group-Object { Split-Path $_.DirectoryName -Leaf } | Sort-Object Count -Descending
-
-foreach ($group in $orphansByFolder) {
-    Write-Host "`n[$($group.Name)] - $($group.Count) orphans" -ForegroundColor Yellow
-    foreach ($file in ($group.Group | Select-Object -First 10)) {
-        $relativePath = $file.FullName.Replace($vaultPath + "\", "")
-        Write-Host "  $relativePath" -ForegroundColor Gray
-    }
-    if ($group.Count -gt 10) {
-        Write-Host "  ... and $($group.Count - 10) more" -ForegroundColor DarkGray
-    }
-}
-
-# Save full list to file
-$outputPath = "C:\Users\awt\orphan_files.txt"
-$orphans | ForEach-Object { $_.FullName.Replace($vaultPath + "\", "") } | Set-Content -Path $outputPath
-Write-Host "`nFull list saved to: $outputPath" -ForegroundColor Cyan

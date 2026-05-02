@@ -24,6 +24,9 @@ This ensures subagents can operate on the vault without re-prompting for permiss
 
 ## File Naming Conventions
 - Whenever encountering a folder name or file name that contains curly/smart apostrophes ('), automatically convert them to standard apostrophes (').
+- **This must run FIRST before any file operation** (move, copy, rename, link). Curly apostrophes in filenames cause silent failures during Move-Item and Copy operations.
+- Scan all files to be operated on before starting a workflow. Use PowerShell: `$name -replace [char]0x2019, "'"` to normalize.
+- If a source file has a curly apostrophe in its name, rename it in-place BEFORE moving or copying it.
 
 ## MOC Orphan Linker Workflow
 When the user asks to "link orphans" or find relevant orphans for a MOC:
@@ -49,6 +52,13 @@ When the user says "Fix broken image links":
    - After fixing, run fix_backslash_paths.ps1 to ensure all paths use forward slashes
 3. The script finds ![[image.jpg]] embeds pointing to wrong paths, locates the actual image file in the vault, and updates the link
 4. Example: powershell -ExecutionPolicy Bypass -File "C:\Users\awt\find_broken_images.ps1" -Limit 100 -Fix
+
+## 2024 Columbia River Trip — Standing MOC Rule
+- Project folder: `D:\Obsidian\Main\02 - Working Projects\2024 Columbia River Trip\`
+- MOC section: `MOC - Travel & Exploration.md` → `## Specific Locations` → `### 2024 Columbia River Trip`
+- Any note tagged `#2024-WashingtonTrip` (or tagged with both `Travel` and `Megaflood`/`Washington`) belongs in this project folder and must be linked in the `### 2024 Columbia River Trip` subsection.
+- When classifying recent notes or cleaning MOCs, check for these tags and update the subsection accordingly.
+- Sub-groupings within the subsection: **Trip Journal**, **Columbia River Gorge**, **Eastern Washington / Grand Coulee**
 
 ## Cleanup MOCs Workflow
 When the user says "cleanup MOCs" or "clean up MOCs":
@@ -137,7 +147,9 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - ONLY move files that are already in a subdirectory (e.g., 10 - Clippings, vault root subfolders)
    - Do NOT move files that are in the vault root (D:\Obsidian\Main\*.md) — classify and link them but leave them in place
    - Root-level files will be manually reviewed and moved to "20 Permanent Notes" by the user
+   - **Elias White Talbot exception**: If a note contains the name "Elias White Talbot" or the tag "EliasWhiteTalbot", move it to `D:\Obsidian\Main\02 - Working Projects\Elias White Talbot - Project\` instead of any `01/` subdirectory. Also ensure the `EliasWhiteTalbot` tag is present in the frontmatter. This overrides all other moving rules (including the vault root rule — even vault root files with this content get moved to the project folder).
 4. Workflow:
+   - **Step 0 (always first): Rename any files with curly/smart apostrophes** (U+2019 `'`) in their names to use standard apostrophes (`'`) before any other operation. Curly apostrophes cause Move-Item to fail silently or delete the source without copying.
    - Run PowerShell script to find files by CreationTime within date range
    - Read all MOC files to understand available subsections
    - Read each recent file to analyze its content
@@ -145,6 +157,12 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - Add wikilink to appropriate MOC subsection
    - Add nav property to file pointing back to MOC (bidirectional linking)
    - Move file to appropriate 01/ subdirectory ONLY if it is not in the vault root
+   - **People Index check**: After classifying each file, scan its content for named individuals (authors, subjects, players, coaches, officials, and any other people mentioned — including all roster members in sports box scores or team files). For each name found:
+     - Check if a file exists in `D:\Obsidian\Main\15 - People\<Name>.md`
+     - Check if the name appears in `D:\Obsidian\Main\People Index.md`
+     - If the name is absent from both, add it to a "New Names" list for the session
+   - At the end of the workflow, report the New Names list and offer to create stub entries in `15 - People\` and/or add them to the People Index
+   - **Synthesis check**: After classifying each file, check `30 - Synthesis/index.md`. If the file's topic matches an existing synthesis page, read that page and update it to reflect any new evidence, revised claims, or contradictions from the newly classified source. Increment `source_count` in the synthesis page frontmatter.
 5. Classification guidelines:
    - FOL/library content → MOC - Friends of the Georgetown Public Library
    - Bahá'í content → MOC - Bahá'í Faith (match subsection: Core Teachings, Administrative Guidance, etc.)
@@ -157,6 +175,40 @@ When the user says "classify recent notes" or "link recent notes to MOCs":
    - Micrometeorites → MOC - Science & Nature > Micrometeorites
 6. Output: Summary table showing files classified, their assigned MOC, and subsection
 7. Preserve UTF-8 encoding when editing files
+
+## Soccer Box Score Workflow
+When the user says "write a box score for [Team A] vs [Team B] on [date]" or "soccer box score [Team A] vs [Team B] [date]":
+1. Output file: `D:\Obsidian\Main\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md` (vault root)
+2. Template: `D:\Obsidian\Main\05 - Templates\Soccer Template.md`
+3. Workflow:
+   - Search for the match using WebSearch to locate primary sources
+   - Fetch the following in parallel using WebFetch:
+     - ESPN or MLS match page (goals, score, cards, stats)
+     - Official club match report (one or both teams)
+     - FotMob match page (lineups, substitutions with exact times)
+     - Pre-match lineup article (e.g., Sportsgambler) for starting XI confirmation
+     - Official player availability reports (Austin FC publishes these; check both clubs)
+     - Official club roster pages for both teams (squad numbers and positions)
+   - Reddit MLS match thread is useful for cards and substitutions; fetch if accessible
+4. Content rules (strictly enforced):
+   - **Never guess.** It is three times worse to assert an incorrect fact than to write "Unknown"
+   - Only mark a player Available in roster tables if they appeared in the match; otherwise Unknown (unless an official availability report confirms it)
+   - Note source discrepancies inline in plain English in the detail column — do not silently pick one
+   - Cite sources only at the section level (intro sentence), never inside table cells
+   - The footnote reference list stays at the bottom; inline [^n] markers go only in section intros
+5. Key data to cross-verify across sources:
+   - Goal times (FotMob sometimes differs from official match reports — note discrepancy if >2 min)
+   - Goal assists (FotMob vs. club match report often disagree — flag disputed assists)
+   - Substitutions (FotMob is most complete; Reddit match thread confirms many; cross-check both)
+   - Yellow/red cards: ESPN/Fox Sports stats totals often reveal cards not captured in play-by-play
+   - Jersey numbers for roster: use official squad numbers page; flag players in match data who are absent from it
+6. Box score event format:
+   - Columns: section | row_type | time | period | team | player | action | detail
+   - Substitution player format: `+{No} – {Name In} / −{No} – {Name Out}`
+   - Goal assist format in detail column: `Assisted by {No} – {Name}`
+   - section values: meta | goal | sub | card | note
+   - row_type values: kickoff | goal | substitution | caution | dismissal | state
+7. Output: the completed vault file; summarize key source discrepancies found
 
 ## Sort To-Do List Workflow
 When the user says "sort todo", "sort to-do list", or "resort todos":
@@ -173,3 +225,101 @@ When the user says "sort todo", "sort to-do list", or "resort todos":
    - Write back with UTF-8 encoding
 4. Output: Count of uncompleted and completed tasks
 5. Preserve original mojibake characters (°¸", ³, «, etc.) - do not attempt to fix encoding issues in task text
+
+## Synthesis Layer (30 - Synthesis/)
+
+A persistent, LLM-maintained synthesis layer sits between raw clippings and the MOC navigation index.
+
+**Location:** `D:\Obsidian\Main\30 - Synthesis\`
+**Index:** `D:\Obsidian\Main\30 - Synthesis\index.md` — catalog of all synthesis pages with one-line summaries and source counts
+
+**Purpose:** Synthesis pages compile what the vault currently knows about a topic into a single document, integrating evidence from multiple source notes. They get richer with every source ingested and every question answered. The MOC tells you *where* content lives; synthesis pages tell you *what the vault thinks* about a topic.
+
+**When to check:**
+- Before answering a vault question on a topic that has a synthesis page — read the synthesis page first
+- During the classify workflow: after classifying a new note, check `30 - Synthesis/index.md` and update any relevant page
+
+**When to update a synthesis page:**
+1. A new source is classified that adds evidence, revises a claim, or introduces a contradiction
+2. A good query answer reveals a connection not yet reflected in the page
+3. Increment `source_count` in frontmatter when adding a source to the synthesis
+4. Note contradictions explicitly rather than silently resolving them
+
+**Elias White Talbot project wiki:** Synthesis pages for this project live inside the project folder at `02 - Working Projects/Elias White Talbot - Project/` with `wiki-index.md` as the project wiki index.
+
+**Current synthesis pages (Bahá'í):** Progressive Revelation, The Covenant, Bahai Administrative Order, Oneness of Humanity
+**Current synthesis pages (EWT):** Talbot Brothers in Texas, Underground Railroad Station - 209 Church Street, Talbot Family Origins - Ireland to Vermont
+
+## Query-to-File Rule
+
+When a substantive vault query produces a useful answer — a comparison, an analysis, a synthesis of evidence across sources, a cross-topic connection — offer to file the answer as a new synthesis page.
+
+**Filing a query answer:**
+1. Create the page in `30 - Synthesis/` with frontmatter: `tags: [synthesis]`, `nav` pointing to relevant MOC, `source_count: N`, `created: YYYY-MM-DD`
+2. Add an entry in `30 - Synthesis/index.md` under the appropriate section
+3. Ask at the end of any exploratory vault conversation: "Should I file this answer as a synthesis page?"
+
+**Do not file:**
+- Simple factual lookups ("when did X happen?")
+- Workflow outputs (box scores, classifications, People Index updates)
+- Administrative operations (MOC cleanup, orphan linking, file moves)
+
+## Vault Lint Workflow
+
+When the user says "lint vault", "lint synthesis", or "run a lint":
+
+1. **Purpose:** Health-check the synthesis layer for staleness, gaps, and contradictions
+2. **Scope:** All pages in `30 - Synthesis/` plus the EWT project wiki at `02 - Working Projects/Elias White Talbot - Project/wiki-index.md`
+3. **Checks to run:**
+   - **Contradictions** — claims on one synthesis page that conflict with claims on another or with recent source notes; note them explicitly rather than silently resolving
+   - **Thin pages** — synthesis pages with `source_count` ≤ 2; flag for enrichment and identify which vault notes could be added as sources
+   - **Topic gaps** — concepts mentioned in 5+ vault notes that lack their own synthesis page; search clippings and MOC subsections for recurring themes; suggest creating a page
+   - **Stale claims** — EWT pages where newer evidence (Find a Grave, Yale catalog) supersedes an older claim; flag and resolve in the page
+   - **Orphaned synthesis pages** — synthesis pages not linked from any MOC subsection or the synthesis index
+4. **Output:** A report with four sections — Contradictions · Thin Pages · Topic Gaps · Stale Claims — with specific file references and recommended actions
+5. After lint: Offer to create synthesis pages for any high-priority topic gaps identified
+
+## Vault Activity Log Format
+
+When recording vault actions in the daily journal `## My Notes` section, use these parseable prefixes so the log can be searched with grep/PowerShell:
+
+| Prefix | Meaning | Example |
+|--------|---------|---------|
+| `[INGEST]` | New source classified | `[INGEST] llm-wiki.md → PKM / Obsidian Integration` |
+| `[SYNTHESIS]` | Synthesis page updated | `[SYNTHESIS] Georgetown LSA updated — added Churchill Farms gatherings` |
+| `[QUERY→FILE]` | Query answer filed as synthesis page | `[QUERY→FILE] Progressive Revelation created` |
+| `[LINT]` | Lint pass completed | `[LINT] 2 thin pages, 1 topic gap (Economic Justice)` |
+| `[PEOPLE]` | New People Index entry | `[PEOPLE] Karpathy, Andrej added` |
+
+Search example: `Select-String "\[INGEST\]" "D:\Obsidian\Main\00 - Journal\*.md"` reconstructs the full ingest history.
+
+## Memory Management
+- Global memory lives at `C:\Users\awt\.claude\memory\`
+- Project memory lives at `C:\Users\awt\.claude\projects\{project}\memory\`
+- Index files: `memory.md` (global) and `MEMORY.md` (project)
+- Domain knowledge files go in `memory/domain/<topic>.md`
+- Tool-specific knowledge goes in `memory/tools/<toolname>.md`
+
+## Global Memory
+- Project MEMORY.md and the global index are auto-injected before each tool call via PreToolUse hook
+  (`~/.claude/hooks/pre-tool-memory.sh`). Load specific topic files only when relevant.
+- Global memory supersedes project memory when they conflict
+- Write to global memory when a rule or preference applies across all projects
+
+## Global Memory Reference Rule
+- When answering a question or beginning a task, check both layers:
+  1. `C:\Users\awt\.claude\memory\memory.md` (global index)
+  2. `C:\Users\awt\.claude\projects\{current-project}\memory\MEMORY.md` (project index)
+- Load the specific memory files referenced by each index entry that is relevant to the task
+- Do not load all memory files on every turn — only those whose index descriptions match the task
+
+## Repo Memory Auto-Init
+- When entering a project directory that has no `memory\MEMORY.md`, create one automatically
+- Stub content: a `# Memory` heading and a `## Global Memory` section pointing to `C:\Users\awt\.claude\memory\memory.md`
+- Do NOT auto-create project memory files that would overwrite existing ones
+
+## Domain Knowledge Lifecycle
+- Capture domain terminology, constraints, and standards as they arise during work
+- After 3+ related facts accumulate, group them into `memory/domain/<topic>.md`
+- At session start on a known domain (Bahá'í, Obsidian, PowerShell, soccer), read its domain file
+- Retire stale or superseded entries — update or remove rather than letting them accumulate

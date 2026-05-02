@@ -941,14 +941,19 @@ function Generate-TruncatedFilenamesList {
             'pinout', 'pinouts',   # Hardware pin layout diagrams (e.g. "GPIO Pinout")
             # Common proper nouns
             'bahai', 'quran', 'torah', 'buddhist', 'hindu', 'sikh', 'zoroastrian',
+            # Arabic/Persian name suffixes — NFD-normalized forms of diacritical words
+            # e.g. "lláh" (in Bahá'u'lláh, Bahá-u-lláh) normalizes to "llah"; "Bahá" → "baha"
+            'llah', 'baha', 'ullah', 'allah',
             # Food terms
             'kimchi', 'tofu', 'tempeh', 'hummus', 'falafel', 'tahini', 'miso', 'ramen', 'udon',
             'chutney', 'naan', 'chapati', 'samosa', 'biryani', 'teriyaki', 'wasabi', 'edamame',
             'quinoa', 'acai', 'kombucha', 'matcha', 'chai', 'boba', 'pho', 'banh',
             'pesto', 'crema', 'penne', 'halwa', 'korma', 'lassi', 'rellenos', 'ayam', 'banu',
-            # Names/surnames
+            # Names/surnames and place names
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
             'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma', 'bretz', 'rowe', 'pryor', 'valle', 'haley',
+            'bauer', 'fargo', 'donath', 'davidson',
+            'hormouz',   # Strait of Hormouz (alternate spelling of Hormuz)
             # Tech/common terms from truncated filenames
             'perl', 'wiki', 'blog', 'gmail',
             # Other common terms
@@ -994,7 +999,16 @@ function Generate-TruncatedFilenamesList {
     $testTruncated = {
         param([string]$word)
 
-        $cleanWord = $word -replace '[^a-zA-Z]', ''
+        # Normalize diacritics to base ASCII (e.g. á→a, é→e) via NFD decomposition,
+        # then keep only base letters (strip combining marks and punctuation).
+        # This prevents diacritical chars from being silently dropped, which would
+        # shorten words like "lláh" (4 letters) to "llh" (3 letters) and cause
+        # false-positive truncation flags on Bahá'í and Arabic proper names.
+        $nfd = $word.Normalize([System.Text.NormalizationForm]::FormD)
+        $cleanWord = -join ($nfd.ToCharArray() | Where-Object {
+            [char]::IsLetter($_) -and
+            [System.Char]::GetUnicodeCategory($_) -ne [System.Globalization.UnicodeCategory]::NonSpacingMark
+        })
         if ($cleanWord.Length -lt 3) { return $false }
         if ($script:dictionary.Contains($cleanWord.ToLower())) { return $false }
 
@@ -1053,7 +1067,13 @@ function Generate-TruncatedFilenamesList {
 
         if (-not $lastWord) { continue }
 
-        $cleanLastWord = $lastWord -replace '[^a-zA-Z]', ''
+        # Same NFD normalization as in $testTruncated: preserve base letters from
+        # diacritical characters rather than stripping them entirely.
+        $nfd = $lastWord.Normalize([System.Text.NormalizationForm]::FormD)
+        $cleanLastWord = -join ($nfd.ToCharArray() | Where-Object {
+            [char]::IsLetter($_) -and
+            [System.Char]::GetUnicodeCategory($_) -ne [System.Globalization.UnicodeCategory]::NonSpacingMark
+        })
         if ($cleanLastWord.Length -lt 2) { continue }
 
         # Skip acronyms and camelCase
@@ -1775,10 +1795,24 @@ function Generate-OrphanFilesList {
         $mdContent += "`n"
     }
 
-    # Write to file
+    # Write to file (or delete it if there are no orphans)
     $outputPath = Join-Path $vaultPath "Orphan Files.md"
 
-    if ($dryRun) {
+    if ($orphans.Count -eq 0) {
+        # No orphans found — remove the file if it exists so it doesn't clutter the vault
+        if ($dryRun) {
+            Write-Log "  [DRY RUN] No orphans found; would delete Orphan Files.md if present" "Magenta"
+        } elseif (Test-Path $outputPath) {
+            try {
+                Remove-Item -Path $outputPath -Force
+                Write-Log "  No orphans found; deleted existing Orphan Files.md" "Green"
+            } catch {
+                Write-Log "  ERROR: Failed to delete Orphan Files.md - $_" "Red"
+            }
+        } else {
+            Write-Log "  No orphans found; Orphan Files.md not created" "Green"
+        }
+    } elseif ($dryRun) {
         Write-Log "  [DRY RUN] Would create Orphan Files.md with $($orphans.Count) entries" "Magenta"
     } else {
         try {
