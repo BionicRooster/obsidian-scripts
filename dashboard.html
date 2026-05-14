@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Georgetown TX Dashboard</title>
+  <style>
+    /* ── CSS custom properties (theme tokens) ─────────────────────────── */
+    :root {
+      --bg:           #0d0d1a;   /* page background — deep navy-black      */
+      --card-bg:      #1c1c36;   /* card surface — lifted for contrast      */
+      --card-border:  #3c3c6a;   /* card border — visible purple-grey       */
+      --text-primary: #eceffe;   /* primary text — bright off-white         */
+      --text-sec:     #b0b8d8;   /* secondary text — light blue-grey        */
+      --accent:       #6aa3ff;   /* accent blue — links, highlights          */
+      --green:        #4ee08a;   /* positive / gain color                   */
+      --red:          #ff5070;   /* negative / loss color                   */
+      --amber:        #ffd84a;   /* warning / upcoming dates                */
+      --daytime:      #f4ede0;   /* timezone bar: daytime band — warm cream */
+      --nighttime:    #0a0a10;   /* timezone bar: nighttime band — near-black*/
+      --needle:       #ff3355;   /* timezone bar: current-time needle       */
+    }
+
+	/* ── Reset ────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      padding: 18px 22px;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Page header ───────────────────────────────────────────────────── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+    .page-clock {
+      font-size: 1rem;
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+    .page-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-sec);
+      margin-top: 4px;
+    }
+
+    /* ── File-protocol warning banner ─────────────────────────────────── */
+    .file-warning {
+      background: #2a1a00;
+      border: 1px solid #aa6600;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
+      color: #ffbb55;
+      display: none;   /* shown via JS when protocol === file:  */
+    }
+    .file-warning code {
+      background: rgba(255,255,255,0.1);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    /* ── Layout helpers ────────────────────────────────────────────────── */
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .full { margin-bottom: 14px; }
+
+    /* ── Card shell ────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .card-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    .loading-msg { color: var(--text-sec); font-size: 0.83rem; }
+    .error-msg   { color: var(--red);      font-size: 0.83rem; }
+
+    /* ── Air quality ────────────────────────────────────────────────────── */
+    .aq-wrap      { display: flex; gap: 18px; align-items: flex-start; }
+    .aq-number    { font-size: 3.8rem; font-weight: 700; line-height: 1; }
+    .aq-cat       { font-size: 1rem; margin-top: 3px; }
+    .aq-param     { font-size: 0.72rem; color: var(--text-sec); margin-top: 3px; }
+    .aq-right     { flex: 1; }
+    .aq-spectrum  {
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right,
+        #00e400 0%, #ffff00 20%, #ff7e00 40%,
+        #ff0000 60%, #99004c 80%, #7e0023 100%);
+      position: relative;
+      margin-bottom: 4px;
+    }
+    .aq-spectrum-tick {
+      position: absolute;
+      top: -6px;
+      font-size: 0.75rem;
+      color: white;
+      transform: translateX(-50%);
+    }
+    .aq-scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.58rem;
+      color: var(--text-sec);
+    }
+    .aq-pollutants { display: flex; gap: 20px; margin-top: 10px; }
+    .aq-poll-item  { font-size: 0.77rem; color: var(--text-sec); }
+    .aq-poll-item b{ color: var(--text-primary); }
+    .aq-meta { font-size: 0.68rem; color: var(--text-sec); margin-top: 8px; }
+
+    /* ── Allergy / pollen forecast ──────────────────────────────────────── */
+    .allergy-grid  { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pollen-item   { flex: 1; min-width: 110px; background: rgba(255,255,255,0.05);
+                     border-radius: 8px; padding: 10px 12px; text-align: center; }
+    .pollen-name   { font-size: 0.68rem; color: var(--text-sec); text-transform: uppercase;
+                     letter-spacing: 0.08em; margin-bottom: 5px; }
+    .pollen-val    { font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: 5px; }
+    .pollen-cat    { font-size: 0.72rem; font-weight: 600; padding: 2px 9px;
+                     border-radius: 20px; display: inline-block; }
+    .allergy-meta  { font-size: 0.65rem; color: var(--text-sec); margin-top: 8px; }
+    .allergy-meta a{ color: var(--accent); }
+
+    /* ── Current weather ────────────────────────────────────────────────── */
+    .wx-top   { display: flex; align-items: center; gap: 14px; }
+    .wx-icon  { font-size: 3.2rem; line-height: 1; }
+    .wx-temp  { font-size: 3rem; font-weight: 700; }
+    .wx-desc  { font-size: 0.95rem; margin-top: 2px; }
+    .wx-details { margin-top: 12px; font-size: 0.82rem;
+                  color: var(--text-sec); line-height: 2; }
+    .wx-details span { color: var(--text-primary); }
+
+    /* ── Forecast strip ─────────────────────────────────────────────────── */
+    .fx-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .fx-strip::-webkit-scrollbar { height: 4px; }
+    .fx-strip::-webkit-scrollbar-thumb {
+      background: var(--card-border); border-radius: 2px;
+    }
+    .fx-item {
+      flex: 0 0 82px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 9px 5px;
+      text-align: center;
+    }
+    .fx-name    { font-size: 0.66rem; color: var(--text-sec); }
+    .fx-emoji   { font-size: 1.45rem; display: block; margin: 3px 0; }
+    .fx-temp    { font-size: 0.88rem; font-weight: 700; }
+    .fx-precip  { font-size: 0.65rem; color: #5599ff; }
+    .fx-short   {
+      font-size: 0.62rem;
+      color: var(--text-sec);
+      margin-top: 2px;
+      line-height: 1.25;
+    }
+
+    /* ── Timezone display ────────────────────────────────────────────────── */
+    .tz-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .tz-row:last-child { margin-bottom: 0; }
+    .tz-label {
+      width: 170px;
+      flex-shrink: 0;
+    }
+    .tz-abbr {
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+    .tz-city  { font-size: 0.7rem; color: var(--text-sec); }
+    .tz-time  { font-size: 1rem; color: var(--amber); margin-top: 1px; }
+    .tz-bar-wrap {
+      flex: 1;
+    }
+    .tz-bar {
+      height: 28px;
+      width: 100%;
+      display: flex;
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Night/day segments are inline divs sized by percentage */
+    .seg-night { height: 100%; background: var(--nighttime); }
+    .seg-day   { height: 100%; background: var(--daytime); }
+
+    /* Single needle spans the full height of the timezone section */
+    #tz-body { position: relative; }
+    .tz-needle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--needle);
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .tz-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--amber);
+      margin-top: 2px;
+      padding: 0 1px;
+    }
+    /* Highlight the Georgetown / CT row with a left accent bar */
+    .tz-home .tz-label {
+      border-left: 3px solid var(--accent);
+      padding-left: 6px;
+    }
+
+    /* ── Stock table ────────────────────────────────────────────────────── */
+    .stock-tbl {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .stock-tbl th {
+      text-align: left;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-sec);
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .stock-tbl td {
+      padding: 9px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .stock-tbl tr:last-child td { border-bottom: none; }
+    .stock-ticker { font-weight: 700; font-size: 1rem; }
+    .stock-name   { font-size: 0.68rem; color: var(--text-sec); margin-top: 1px; }
+    .stock-price  { font-size: 1rem; font-weight: 700; }
+    .stock-mktstate { font-size: 0.63rem; color: var(--text-sec); }
+    .gain { color: var(--green); }
+    .loss { color: var(--red);   }
+    .stock-footer { font-size: 0.68rem; color: var(--text-sec); margin-top: 9px; }
+
+    /* ── Soccer cards ────────────────────────────────────────────────────── */
+    .soccer-card { text-align: center; }
+    .soccer-team-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .soccer-comp {
+      font-size: 0.68rem;
+      color: var(--text-sec);
+      margin-bottom: 5px;
+    }
+    .soccer-matchup {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+    .soccer-date {
+      font-size: 0.82rem;
+      color: var(--amber);
+      margin-bottom: 4px;
+    }
+    .soccer-venue { font-size: 0.7rem; color: var(--text-sec); }
+    .soccer-status{
+      font-size: 0.7rem;
+      color: var(--amber);
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Page header ─────────────────────────────────────────────────────── -->
+<div class="page-header">
+  <div class="page-title">Georgetown TX Dashboard</div>
+  <div class="page-clock" id="clock">—</div>
+  <div class="page-subtitle">
+    All data refreshes on page reload &nbsp;·&nbsp;
+    <a href="javascript:location.reload()">↺ Refresh now</a>
+  </div>
+</div>
+
+<!-- ── Banner shown only when page is opened via file:// ─────────────── -->
+<div class="file-warning" id="file-warning">
+  <strong>Tip:</strong> Some data (stocks) loads more reliably from a local web server.
+  Open a terminal in the folder containing this file and run:
+  <code>python -m http.server 8080</code>
+  then open <code>http://localhost:8080/dashboard.html</code>
+</div>
+
+<!-- ── Row 1: Air quality + current weather ──────────────────────────── -->
+<div class="row-2">
+  <div class="card" id="aq-card">
+    <div class="card-label">Air Quality — Georgetown, TX</div>
+    <div class="loading-msg" id="aq-body">Loading air quality…</div>
+  </div>
+  <div class="card" id="wx-card">
+    <div class="card-label">Current Weather — Georgetown, TX</div>
+    <div class="loading-msg" id="wx-body">Loading weather…</div>
+  </div>
+</div>
+
+<!-- ── Row 1b: Allergy / pollen forecast ─────────────────────────────── -->
+<div class="card full" id="allergy-card">
+  <div class="card-label">Allergy Forecast — Georgetown, TX
+    <a href="https://www.kvue.com/allergy" target="_blank"
+       style="font-size:0.7rem; font-weight:400; margin-left:10px; color:var(--accent);">KVUE ↗</a>
+  </div>
+  <div class="loading-msg" id="allergy-body">Loading allergy forecast…</div>
+</div>
+
+<!-- ── Row 2: 7-day forecast strip ───────────────────────────────────── -->
+<div class="card full" id="fx-card">
+  <div class="card-label">7-Day Forecast — Georgetown, TX</div>
+  <div class="loading-msg" id="fx-body">Loading forecast…</div>
+</div>
+
+<!-- ── Row 3: Timezone bars ───────────────────────────────────────────── -->
+<div class="card full" id="tz-card">
+  <div class="card-label">Current Time — All Zones</div>
+  <div id="tz-body">Loading…</div>
+</div>
+
+<!-- ── Row 4: Stock prices ────────────────────────────────────────────── -->
+<div class="card full" id="stocks-card">
+  <div class="card-label">Portfolio Tracker</div>
+  <div class="loading-msg" id="stocks-body">Loading stock prices…</div>
+</div>
+
+<!-- ── Row 5: Soccer next games ──────────────────────────────────────── -->
+<div class="row-3">
+  <div class="card soccer-card" id="sc-austin">
+    <div class="card-label">Next Game</div>
+    <div class="soccer-team-name">Austin FC</div>
+    <div class="loading-msg">Loading…</div>
+  </div>
+  <div class="card soccer-card" id="sc-usmnt">
+    <div class="card-label">Next Game</div>
+    <div class="soccer-team-name">USMNT</div>
+    <div class="loading-msg">Loading…</div>
+  </div>
+  <div class="card soccer-card" id="sc-uswnt">
+    <div class="card-label">Next Game</div>
+    <div class="soccer-team-name">USWNT</div>
+    <div class="loading-msg">Loading…</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════
+   CONSTANTS — values that never change during page lifetime
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const AIRNOW_KEY  = "59635AAB-C7A4-41D5-9AC4-0C4EB61BC991"; /* AirNow API key */
+const GTXN_ZIP    = "78626";       /* Georgetown TX primary zip code            */
+const GTXN_LAT    = 30.6327;       /* Georgetown TX latitude (decimal degrees)  */
+const GTXN_LNG    = -97.6772;      /* Georgetown TX longitude (decimal degrees) */
+const TZ_CT       = "America/Chicago"; /* IANA tz for Georgetown                */
+
+/* Stock positions: symbol, display name, and user's cost basis per share */
+const STOCKS = [
+  { symbol: "CALM",  name: "Cal-Maine Foods",    basis: 93.87 },
+  { symbol: "DPMLF", name: "Diploma PLC (OTC)",  basis: 41.59 },
+  { symbol: "KQQQ",  name: "ETF",                basis: 27.55 },
+];
+
+/* Timezone rows: IANA name, display abbreviation, city label,
+   latitude and longitude for solar calculation, home=highlight flag */
+const ZONES = [
+  { iana: "America/New_York",   abbr: "ET",  city: "New York",        lat: 40.71, lng: -74.01,  home: false },
+  { iana: "America/Chicago",    abbr: "CT",  city: "Georgetown, TX",  lat: 30.63, lng: -97.68,  home: true  },
+  { iana: "America/Denver",     abbr: "MT",  city: "Denver",          lat: 39.74, lng: -104.98, home: false },
+  { iana: "America/Los_Angeles",abbr: "PT",  city: "Los Angeles",     lat: 34.05, lng: -118.24, home: false },
+  { iana: "Asia/Tokyo",         abbr: "JST", city: "Shizuoka, Japan", lat: 34.97, lng: 138.38,  home: false },
+];
+
+/* AQI category definitions: upper bound, label, hex color */
+const AQI_CATS = [
+  { max:  50, label: "Good",                         color: "#00e400" },
+  { max: 100, label: "Moderate",                     color: "#e8e800" },
+  { max: 150, label: "Unhealthy for Sensitive Groups",color: "#ff7e00" },
+  { max: 200, label: "Unhealthy",                    color: "#ff0000" },
+  { max: 300, label: "Very Unhealthy",               color: "#99004c" },
+  { max: 500, label: "Hazardous",                    color: "#7e0023" },
+];
+
+/* ESPN soccer league slugs to search for USMNT (tries in order) */
+const USMNT_LEAGUES = [
+  "concacaf.nations.league",
+  "fifa.world",
+  "concacaf.gold.cup",
+  "international.friendlies.men",
+];
+
+/* ESPN soccer league slugs to search for USWNT */
+const USWNT_LEAGUES = [
+  "concacaf.womens.championship",
+  "fifa.womens.world",
+  "international.friendlies.women",
+  "usa.womens_national",
+];
+
+/* Base URL for all ESPN public API calls */
+const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 1 — LIVE CLOCK
+   Updates the page-header clock once per second.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * updateClock — formats current moment in Central Time and writes it
+ * to the #clock element.
+ */
+function updateClock() {
+  const now = new Date();                /* current moment in UTC              */
+  const opts = {                         /* Intl.DateTimeFormat options        */
+    timeZone:   TZ_CT,
+    weekday:    "long",
+    year:       "numeric",
+    month:      "long",
+    day:        "numeric",
+    hour:       "2-digit",
+    minute:     "2-digit",
+    second:     "2-digit",
+    hour12:     true,
+  };
+  document.getElementById("clock").textContent =
+    now.toLocaleString("en-US", opts) + " CT";
+}
+
+updateClock();
+setInterval(updateClock, 1000); /* refresh every 1 000 ms */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FILE-PROTOCOL BANNER
+   Shown when the page is loaded via file:// (no HTTP server running)
+   ═══════════════════════════════════════════════════════════════════════ */
+if (window.location.protocol === "file:") {
+  /* flag is visible so user knows stock data may be limited */
+  document.getElementById("file-warning").style.display = "block";
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 2 — SOLAR / TIMEZONE UTILITIES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * getUTCOffsetHours — returns the UTC offset in decimal hours for an IANA
+ * timezone at the current moment (accounts for DST automatically).
+ *
+ * Technique: format the same instant in UTC and in the target zone,
+ * reconstruct both as UTC Date objects, subtract.
+ *
+ * @param  {string} ianaName  e.g. "America/Chicago"
+ * @returns {number}          e.g. -5 for CDT, +9 for JST
+ */
+function getUTCOffsetHours(ianaName) {
+  const now = new Date();                              /* current UTC instant     */
+  /* Parse this instant as if it were local time in the target zone */
+  const tzLocal = new Date(now.toLocaleString("en-US", { timeZone: ianaName }));
+  /* Parse it as UTC for comparison */
+  const tzUTC   = new Date(now.toLocaleString("en-US", { timeZone: "UTC"     }));
+  /* Difference in hours: positive = east of UTC, negative = west            */
+  return Math.round((tzLocal - tzUTC) / 36e5 * 2) / 2; /* round to 0.5 h      */
+}
+
+/**
+ * calcSunriseSunset — NOAA algorithm for civil sunrise and sunset.
+ * Returns sunrise and sunset as decimal UTC hours (may exceed 24 if
+ * sunset is after midnight UTC).
+ *
+ * Based on: https://gml.noaa.gov/grad/solcalc/solareqns.PDF
+ *
+ * @param  {number} lat   latitude in decimal degrees (positive = north)
+ * @param  {number} lng   longitude in decimal degrees (negative = west)
+ * @param  {Date}   date  the date/time for which to calculate
+ * @returns {{ sunrise: number, sunset: number } | null}
+ *          UTC decimal hours, or null for polar day/night
+ */
+function calcSunriseSunset(lat, lng, date) {
+  const toRad = d => d * Math.PI / 180;  /* degrees → radians helper */
+  const toDeg = r => r * 180 / Math.PI;  /* radians → degrees helper */
+
+  /* Julian date of the given moment */
+  const JD = date.getTime() / 86_400_000 + 2_440_587.5;
+
+  /* Julian centuries from J2000.0 */
+  const T  = (JD - 2_451_545.0) / 36_525;
+
+  /* Geometric mean longitude of the sun (degrees) */
+  const L0 = (280.46646 + T * (36000.76983 + T * 0.0003032)) % 360;
+
+  /* Mean anomaly of the sun (degrees) */
+  const M  = (357.52911 + T * (35999.05029 - T * 0.0001537)) % 360;
+
+  /* Eccentricity of Earth's orbit (dimensionless) */
+  const ecc = 0.016708634 - T * (0.000042037 + T * 0.0000001267);
+
+  /* Equation of center (degrees) — accounts for elliptical orbit */
+  const C  = Math.sin(toRad(M))   * (1.914602 - T * (0.004817 + T * 0.000014))
+           + Math.sin(toRad(2*M)) * (0.019993 - T * 0.000101)
+           + Math.sin(toRad(3*M)) * 0.000289;
+
+  /* Sun's true longitude (degrees) */
+  const sunLon = L0 + C;
+
+  /* Longitude of the ascending node of the moon (degrees, for aberration) */
+  const omega  = 125.04 - 1934.136 * T;
+
+  /* Sun's apparent longitude (degrees) — corrected for nutation */
+  const lambda = sunLon - 0.00569 - 0.00478 * Math.sin(toRad(omega));
+
+  /* Mean obliquity of the ecliptic (degrees) */
+  const eps0 = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
+
+  /* Corrected obliquity (degrees) */
+  const eps  = eps0 + 0.00256 * Math.cos(toRad(omega));
+
+  /* Solar declination (degrees) — how far north/south of equator sun is */
+  const decl = toDeg(Math.asin(Math.sin(toRad(eps)) * Math.sin(toRad(lambda))));
+
+  /* Intermediate value y used in Equation of Time */
+  const y = Math.tan(toRad(eps / 2)) ** 2;
+
+  /* Equation of Time (minutes) — difference between apparent and mean solar time */
+  const EqT = 4 * toDeg(
+    y   * Math.sin(2 * toRad(L0))
+    - 2 * ecc * Math.sin(toRad(M))
+    + 4 * ecc * y * Math.sin(toRad(M)) * Math.cos(2 * toRad(L0))
+    - 0.5 * y * y * Math.sin(4 * toRad(L0))
+    - 1.25 * ecc * ecc * Math.sin(2 * toRad(M))
+  );
+
+  /* Hour angle for civil sunrise/sunset (solar zenith = 90.833 degrees,
+     accounting for atmospheric refraction and sun's disc diameter) */
+  const cosHA = (Math.cos(toRad(90.833)) - Math.sin(toRad(lat)) * Math.sin(toRad(decl)))
+              / (Math.cos(toRad(lat)) * Math.cos(toRad(decl)));
+
+  if (cosHA >  1) return null; /* polar night — sun never rises */
+  if (cosHA < -1) return null; /* midnight sun — sun never sets */
+
+  /* Hour angle (degrees) — angular distance from solar noon to sunrise/sunset */
+  const HA = toDeg(Math.acos(cosHA));
+
+  /* Solar noon in UTC minutes from midnight (point where sun is highest) */
+  const solarNoonMin = 720 - 4 * lng - EqT;
+
+  /* Sunrise and sunset in UTC minutes from midnight */
+  const sunriseMin = solarNoonMin - HA * 4; /* 4 min per degree of hour angle */
+  const sunsetMin  = solarNoonMin + HA * 4;
+
+  return {
+    sunrise: sunriseMin / 60, /* convert minutes to decimal hours (UTC)    */
+    sunset:  sunsetMin  / 60, /* may exceed 24 if sunset is after midnight */
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 3 — TIMEZONE BARS
+   Renders and periodically refreshes the timezone comparison display.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** fmtHour — formats a decimal hour (0–47) as a short 12-hour label, e.g. "6a", "12p" */
+function fmtHour(h) {
+  h = Math.round(((h % 24) + 24) % 24);   /* normalize to integer 0–23 */
+  if (h === 0)  return "12a";
+  if (h === 12) return "12p";
+  return h < 12 ? h + "a" : (h - 12) + "p";
+}
+
+/** buildTimezones — CT is the reference zone. Every bar's left edge is "what
+ *  time is it in that zone when CT is at midnight (12a)". The needle percentage
+ *  is computed once from the current CT hour and applied identically to all
+ *  bars, so the red line passes through every row at the same x position. */
+function buildTimezones() {
+  const now     = new Date();
+  const utcHour = now.getUTCHours()
+                + now.getUTCMinutes() / 60
+                + now.getUTCSeconds() / 3600;
+
+  /* CT offset drives the single shared needle position */
+  const ctOffset  = getUTCOffsetHours("America/Chicago");
+  const ctHour    = ((utcHour + ctOffset) % 24 + 24) % 24;
+  const needlePct = (ctHour / 24 * 100).toFixed(2);       /* identical for every bar */
+
+  const body = document.getElementById("tz-body");
+  let   html = "";
+
+  ZONES.forEach(zone => {
+    const offset = getUTCOffsetHours(zone.iana);           /* this zone's UTC offset */
+
+    /* Current local date + time shown beside the bar (en-CA gives YYYY-MM-DD) */
+    const datePart = now.toLocaleDateString("en-CA", { timeZone: zone.iana });
+    const timePart = now.toLocaleTimeString("en-US", {
+      timeZone: zone.iana, hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+    const timeStr = datePart + " " + timePart;
+
+    /* Left edge of bar = local time in this zone when CT is at midnight.
+       diffFromCT > 0: zone is east of CT (bar starts later in its day).
+       diffFromCT < 0: zone is west of CT (bar starts earlier / previous day). */
+    const diffFromCT    = offset - ctOffset;
+    const barStartLocal = ((diffFromCT % 24) + 24) % 24;  /* local hours, 0–23 */
+
+    /* Sunrise/sunset in local hours for this zone's city */
+    const solar     = calcSunriseSunset(zone.lat, zone.lng, now);
+    const riseLocal = solar ? ((solar.sunrise + offset) % 24 + 24) % 24 : 6.0;
+    const setLocal  = solar ? ((solar.sunset  + offset) % 24 + 24) % 24 : 20.0;
+
+    /* Hours into the bar (0–24) where sunrise and sunset fall */
+    let riseInBar = riseLocal - barStartLocal;
+    if (riseInBar < 0) riseInBar += 24;
+    let setInBar  = setLocal  - barStartLocal;
+    if (setInBar  < 0) setInBar  += 24;
+    if (setInBar <= riseInBar) setInBar += 24;  /* safety: ensure sunset after sunrise */
+
+    const risePct     = riseInBar / 24 * 100;
+    const dayWidthPct = Math.min(100 - risePct, (setInBar - riseInBar) / 24 * 100);
+    const nightWidth  = Math.max(0, 100 - risePct - dayWidthPct);
+
+    /* Tick labels every 3 hours from bar start — 9 ticks spanning the full bar */
+    const tickLabels = [0, 3, 6, 9, 12, 15, 18, 21, 24]
+      .map(h => fmtHour(barStartLocal + h));
+
+    const rowClass = zone.home ? "tz-row tz-home" : "tz-row";
+
+    html += `
+    <div class="${rowClass}">
+      <div class="tz-label">
+        <div class="tz-abbr">${zone.abbr}</div>
+        <div class="tz-city">${zone.city}</div>
+        <div class="tz-time">${timeStr}${zone.home ? " &#11088;" : ""}</div>
+      </div>
+      <div class="tz-bar-wrap">
+        <div class="tz-bar">
+          <div class="seg-night" style="width:${risePct.toFixed(2)}%"></div>
+          <div class="seg-day"   style="width:${dayWidthPct.toFixed(2)}%"></div>
+          <div class="seg-night" style="width:${nightWidth.toFixed(2)}%"></div>
+          <div class="tz-needle" style="left:${needlePct}%"></div>
+        </div>
+        <div class="tz-ticks">
+          ${tickLabels.map(t => `<span>${t}</span>`).join("")}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  body.innerHTML = html;
+}
+
+buildTimezones();
+setInterval(buildTimezones, 60_000); /* update every 60 seconds */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 4 — AIR QUALITY (OpenAQ — free, no API key required)
+   OpenAQ aggregates EPA monitoring station data. AirNow (user's key
+   59635AAB…) returns 504 for this region; OpenAQ is used instead.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* EPA AQI breakpoints for PM2.5 (µg/m³, 24-hr equivalent).
+   Each row: [concLow, concHigh, aqiLow, aqiHigh]                        */
+const PM25_BP = [
+  [  0.0,  12.0,   0,  50],
+  [ 12.1,  35.4,  51, 100],
+  [ 35.5,  55.4, 101, 150],
+  [ 55.5, 150.4, 151, 200],
+  [150.5, 250.4, 201, 300],
+  [250.5, 350.4, 301, 400],
+  [350.5, 500.4, 401, 500],
+];
+
+/* EPA AQI breakpoints for Ozone (ppm, 8-hour average) */
+const O3_BP = [
+  [0.000, 0.054,   0,  50],
+  [0.055, 0.070,  51, 100],
+  [0.071, 0.085, 101, 150],
+  [0.086, 0.105, 151, 200],
+  [0.106, 0.200, 201, 300],
+];
+
+/**
+ * calcAQI — converts a raw pollutant concentration to an AQI integer
+ * using the EPA linear interpolation formula.
+ * @param  {number}     c   concentration (units must match the breakpoint table)
+ * @param  {number[][]} bp  breakpoint table rows: [cLo, cHi, aqiLo, aqiHi]
+ * @returns {number}  AQI integer 0–500
+ */
+function calcAQI(c, bp) {
+  for (const [cLo, cHi, aqiLo, aqiHi] of bp) {  /* find matching concentration bracket */
+    if (c >= cLo && c <= cHi) {
+      /* EPA linear interpolation: I = ((I_Hi - I_Lo)/(C_Hi - C_Lo)) * (C - C_Lo) + I_Lo */
+      return Math.round(((aqiHi - aqiLo) / (cHi - cLo)) * (c - cLo) + aqiLo);
+    }
+  }
+  return c > bp[bp.length - 1][1] ? 500 : 0; /* above or below the scale */
+}
+
+/**
+ * getAQICategory — looks up the AQI category record for a given AQI value.
+ * @param  {number} aqi  raw AQI integer
+ * @returns {object}     category record with max, label, color
+ */
+function getAQICategory(aqi) {
+  /* find first category whose max >= the given aqi */
+  return AQI_CATS.find(c => aqi <= c.max) ?? AQI_CATS[AQI_CATS.length - 1];
+}
+
+async function loadAirQuality() {
+  const body = document.getElementById("aq-body");
+
+  /* AirNow API — EPA-operated, returns pre-computed AQI values directly.
+     50-mile radius from Georgetown captures the Austin monitoring network (~30 mi away).
+     Routed through corsproxy.io because AirNow does not send CORS headers. */
+  const anBase = `https://www.airnowapi.org/aq/observation/latLong/current/`
+               + `?format=application/json`
+               + `&latitude=${GTXN_LAT}`
+               + `&longitude=${GTXN_LNG}`
+               + `&distance=50`           /* miles */
+               + `&API_KEY=${AIRNOW_KEY}`;
+  const anUrl  = `https://corsproxy.io/?${encodeURIComponent(anBase)}`;
+
+  try {
+    const res  = await fetch(anUrl, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error(`AirNow HTTP ${res.status}`);
+    const data = await res.json();   /* array of AQI observation objects */
+
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error("No AQI reports within 50 miles");
+    }
+
+    /* Primary = whichever pollutant has the highest AQI right now */
+    const sorted     = [...data].sort((a, b) => b.AQI - a.AQI);
+    const primary    = sorted[0];
+    const primaryAQI = primary.AQI;
+    const primaryCat = getAQICategory(primaryAQI);
+    const aqiPct     = Math.min(100, (primaryAQI / 500) * 100).toFixed(1);
+
+    /* Build individual pollutant rows for PM2.5 and Ozone if reported */
+    const pm25 = data.find(d => d.ParameterName === "PM2.5");
+    const o3   = data.find(d => d.ParameterName === "O3" || d.ParameterName === "Ozone");
+    let pollRows = "";
+    if (pm25) {
+      const c = getAQICategory(pm25.AQI);
+      pollRows += `<div class="aq-poll-item">PM2.5: <b style="color:${c.color}">${pm25.AQI}</b></div>`;
+    }
+    if (o3) {
+      const c = getAQICategory(o3.AQI);
+      pollRows += `<div class="aq-poll-item">O₃: <b style="color:${c.color}">${o3.AQI}</b></div>`;
+    }
+
+    body.innerHTML = `
+      <div class="aq-wrap">
+        <div>
+          <div class="aq-number" style="color:${primaryCat.color}">${primaryAQI}</div>
+          <div class="aq-cat"    style="color:${primaryCat.color}">${primaryCat.label}</div>
+          <div class="aq-param">Primary: ${primary.ParameterName}</div>
+        </div>
+        <div class="aq-right">
+          <div class="aq-spectrum">
+            <div class="aq-spectrum-tick" style="left:${aqiPct}%">▼</div>
+          </div>
+          <div class="aq-scale-labels">
+            <span>Good</span><span>Moderate</span><span>USG</span>
+            <span>Unhealthy</span><span>V.Unhealthy</span><span>Hazardous</span>
+          </div>
+          <div class="aq-pollutants">${pollRows}</div>
+          <div class="aq-meta">
+            ${primary.ReportingArea}, ${primary.StateCode}
+            &nbsp;·&nbsp; AirNow / EPA
+          </div>
+        </div>
+      </div>`;
+
+  } catch (err) {
+    body.innerHTML = `<span class="error-msg">Air quality unavailable: ${err.message}</span>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 5 — WEATHER (National Weather Service — no API key required)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * wxEmoji — maps an NWS shortForecast text to a representative emoji.
+ * @param  {string} shortForecast  NWS condition phrase
+ * @returns {string}               emoji character
+ */
+function wxEmoji(shortForecast) {
+  const f = shortForecast.toLowerCase(); /* lowercase for case-insensitive matching */
+  if (f.includes("thunder"))                        return "⛈️";
+  if (f.includes("snow") || f.includes("blizzard")) return "❄️";
+  if (f.includes("freezing"))                       return "🌨️";
+  if (f.includes("shower") || f.includes("rain"))   return "🌧️";
+  if (f.includes("drizzle"))                        return "🌦️";
+  if (f.includes("fog")  || f.includes("mist"))     return "🌫️";
+  if (f.includes("partly sunny") || f.includes("partly cloudy")) return "⛅";
+  if (f.includes("mostly cloudy") || f.includes("overcast"))     return "☁️";
+  if (f.includes("mostly sunny") || f.includes("mostly clear"))  return "🌤️";
+  if (f.includes("sunny") || f.includes("clear"))  return "☀️";
+  if (f.includes("wind"))                           return "💨";
+  return "🌡️"; /* fallback for anything unrecognised */
+}
+
+async function loadWeather() {
+  const wxBody = document.getElementById("wx-body"); /* current conditions target */
+  const fxBody = document.getElementById("fx-body"); /* forecast strip target     */
+
+  try {
+    /* Step 1 — resolve Georgetown TX coordinates to an NWS grid cell */
+    const ptRes  = await fetch(
+      `https://api.weather.gov/points/${GTXN_LAT},${GTXN_LNG}`,
+      { headers: { Accept: "application/geo+json" } }
+    );
+    if (!ptRes.ok) throw new Error(`Grid lookup HTTP ${ptRes.status}`);
+    const ptData  = await ptRes.json();
+    const props   = ptData.properties; /* NWS grid properties object          */
+
+    /* URLs provided by the grid lookup for forecast and hourly data */
+    const fxUrl      = props.forecast;       /* daily forecast endpoint        */
+    const hourlyUrl  = props.forecastHourly; /* hourly forecast endpoint       */
+    /* Nearby city from the grid response */
+    const cityLabel  = props.relativeLocation.properties.city + ", "
+                     + props.relativeLocation.properties.state;
+
+    /* Step 2 — fetch both endpoints in parallel to save time */
+    const [fxRes, hourRes] = await Promise.all([
+      fetch(fxUrl,     { headers: { Accept: "application/geo+json" } }),
+      fetch(hourlyUrl, { headers: { Accept: "application/geo+json" } }),
+    ]);
+
+    const fxData   = await fxRes.json();
+    const hourData = await hourRes.json();
+
+    /* First hourly period = current conditions right now */
+    const cur      = hourData.properties.periods[0];
+    /* All daily periods (day / night pairs) */
+    const periods  = fxData.properties.periods;
+
+    /* ── Current conditions card ───────────────────────────── */
+    const humidity  = cur.relativeHumidity?.value ?? "—"; /* % RH if available  */
+    const feelsLike = cur.apparentTemperature?.value;      /* feels-like temp    */
+
+    wxBody.innerHTML = `
+      <div class="wx-top">
+        <div class="wx-icon">${wxEmoji(cur.shortForecast)}</div>
+        <div>
+          <div class="wx-temp">${cur.temperature}°${cur.temperatureUnit}</div>
+          <div class="wx-desc">${cur.shortForecast}</div>
+        </div>
+      </div>
+      <div class="wx-details">
+        <div>💨 Wind: <span>${cur.windSpeed} ${cur.windDirection}</span></div>
+        <div>💧 Humidity: <span>${humidity}%</span></div>
+        ${feelsLike != null ? `<div>🌡️ Feels like: <span>${Math.round(feelsLike)}°${cur.temperatureUnit}</span></div>` : ""}
+        <div style="font-size:0.68rem; color:var(--text-sec); margin-top:3px;">${cityLabel}</div>
+      </div>`;
+
+    /* ── 7-day forecast strip ─────────────────────────────── */
+    const fxItems = periods.slice(0, 14).map(p => {
+      /* Precipitation probability (0–100 or null if unavailable) */
+      const precip = p.probabilityOfPrecipitation?.value ?? 0;
+      /* Truncate long condition strings to keep the card compact */
+      const shortD = p.shortForecast.length > 18
+        ? p.shortForecast.substring(0, 17) + "…"
+        : p.shortForecast;
+      return `
+        <div class="fx-item">
+          <div class="fx-name">${p.name}</div>
+          <span class="fx-emoji">${wxEmoji(p.shortForecast)}</span>
+          <div class="fx-temp">${p.temperature}°${p.temperatureUnit}</div>
+          <div class="fx-precip">${precip}%</div>
+          <div class="fx-short">${shortD}</div>
+        </div>`;
+    }).join("");
+
+    fxBody.innerHTML = `<div class="fx-strip">${fxItems}</div>`;
+
+  } catch (err) {
+    wxBody.innerHTML = `<span class="error-msg">Weather error: ${err.message}</span>`;
+    fxBody.innerHTML = `<span class="error-msg">Forecast unavailable.</span>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 6 — STOCK PRICES
+   Strategy: Yahoo Finance v8 chart endpoint via corsproxy.io (primary);
+   Stooq.com CSV (fallback when Yahoo blocks or returns 401/429).
+   Both sources work from file:// because requests go through a proxy.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * fetchOneQuote — fetches a normalized price quote for a single ticker.
+ *
+ * Primary:  Yahoo Finance v8 chart API routed through corsproxy.io.
+ *           Returns intraday price + day change.
+ * Fallback: Stooq.com CSV — free, no auth, returns previous-close EOD data.
+ *           Used when Yahoo returns any non-200 status (401, 429, etc.).
+ *
+ * @param  {string} symbol  ticker symbol, e.g. "CALM"
+ * @returns {object}  normalized quote object (see fields below)
+ */
+async function fetchOneQuote(symbol) {
+  /* Yahoo Finance v8 chart — less rate-limited than v7/quote batch endpoint */
+  const yahooBase = `https://query1.finance.yahoo.com/v8/finance/chart/`
+                  + `${encodeURIComponent(symbol)}`
+                  + `?range=1d&interval=1d&includePrePost=false`;
+  /* corsproxy.io forwards the request server-side, adding CORS headers and
+     full browser-like request headers that satisfy Yahoo's auth check */
+  const proxied   = `https://corsproxy.io/?${encodeURIComponent(yahooBase)}`;
+
+  try {
+    const res  = await fetch(proxied, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
+    const json   = await res.json();
+    const result = json?.chart?.result?.[0];    /* first (only) result element */
+    if (!result) throw new Error("Empty chart result");
+
+    const meta      = result.meta;              /* metadata object from Yahoo v8 */
+    const price     = meta.regularMarketPrice ?? 0;              /* live/delayed price     */
+    /* chartPreviousClose is more accurate for intraday; previousClose as fallback */
+    const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
+    const dayChg    = price - prevClose;                         /* $ change today         */
+    const dayChgPct = prevClose !== 0 ? (dayChg / prevClose) * 100 : 0; /* % change today */
+
+    return {
+      symbol:      meta.symbol      || symbol,  /* confirmed ticker from Yahoo */
+      name:        meta.shortName   || meta.longName || symbol, /* display name */
+      price,
+      prevClose,
+      dayChg,
+      dayChgPct,
+      marketState: meta.marketState || "CLOSED", /* REGULAR | PRE | POST | CLOSED */
+      source:      "Yahoo Finance",
+      isEOD:       false,  /* false = intraday price available */
+    };
+
+  } catch (yahooErr) {
+    /* ── Stooq fallback ──────────────────────────────────────────────────
+       Stooq returns a CSV with the most recent session's OHLCV data.
+       Format: Date,Time,Open,High,Low,Close,Volume  (header + data rows)
+       Append ".us" for US-listed securities; works for OTC and ETFs.    */
+    const stooqUrl = `https://stooq.com/q/l/`
+                   + `?s=${encodeURIComponent(symbol.toLowerCase())}.us`
+                   + `&f=sd2t2ohlcv&h&e=csv`;
+    const sRes = await fetch(stooqUrl);
+    if (!sRes.ok) {
+      throw new Error(
+        `Yahoo: ${yahooErr.message} | Stooq HTTP ${sRes.status}`
+      );
+    }
+
+    const csv       = await sRes.text();         /* raw CSV text from Stooq       */
+    const lines     = csv.trim().split("\n");     /* split into header + data rows */
+    const dataRow   = lines[lines.length - 1];   /* last row = most recent session */
+    const cols      = dataRow.split(",");         /* columns: Date,Time,O,H,L,Close,Volume */
+    const price     = parseFloat(cols[5]);        /* Close price is column index 5  */
+
+    if (isNaN(price)) {
+      throw new Error(
+        `No usable price from Stooq for ${symbol} (Yahoo: ${yahooErr.message})`
+      );
+    }
+
+    return {
+      symbol,
+      name:        symbol,        /* Stooq doesn't return a display name */
+      price,
+      prevClose:   price,         /* only one price per session from Stooq */
+      dayChg:      0,             /* no intraday change available          */
+      dayChgPct:   0,
+      marketState: "CLOSED",
+      source:      "Stooq (EOD)", /* end-of-day — previous session's close */
+      isEOD:       true,          /* flag so UI can label columns correctly */
+    };
+  }
+}
+
+async function loadStocks() {
+  const body = document.getElementById("stocks-body");
+
+  /* Kick off all three quote fetches in parallel to reduce total wait time */
+  const results = await Promise.allSettled(
+    STOCKS.map(s => fetchOneQuote(s.symbol))
+  );
+
+  /* Build one table row for each position in STOCKS */
+  const rows = STOCKS.map((s, i) => {
+    const outcome = results[i];  /* the Promise.allSettled result for this symbol */
+
+    if (outcome.status === "rejected") {
+      /* Both Yahoo and Stooq failed — show error inline in the row */
+      return `
+        <tr>
+          <td><div class="stock-ticker">${s.symbol}</div></td>
+          <td colspan="5" class="error-msg" style="font-size:0.75rem;">
+            ${outcome.reason?.message ?? "Data unavailable"}
+          </td>
+        </tr>`;
+    }
+
+    const q         = outcome.value;         /* normalized quote object */
+    const price     = q.price;               /* current or EOD price     */
+    const prevClose = q.prevClose;           /* previous close           */
+    const dayChg    = q.dayChg;              /* absolute $ day change    */
+    const dayChgPct = q.dayChgPct;           /* % day change             */
+    const dollarGL  = price - s.basis;       /* total $ gain/loss vs user's cost basis */
+    const pctGL     = ((price - s.basis) / s.basis) * 100; /* % gain/loss vs basis   */
+    const glClass   = dollarGL >= 0 ? "gain" : "loss";     /* CSS class for color    */
+    const dayClass  = dayChg   >= 0 ? "gain" : "loss";
+
+    /* Show market state only when outside regular hours */
+    const mktTag  = q.marketState !== "REGULAR"
+      ? `<span class="stock-mktstate"> ${q.marketState.toLowerCase()}</span>`
+      : "";
+    /* Show "(eod)" tag when using Stooq end-of-day fallback data */
+    const eodTag  = q.isEOD
+      ? `<span class="stock-mktstate"> eod</span>`
+      : "";
+
+    const displayName = (q.name || s.name).substring(0, 26); /* truncate for layout */
+    const fmt2 = n => n.toFixed(2);   /* 2-decimal formatter for prices */
+    const fmt1 = n => n.toFixed(1);   /* 1-decimal formatter for % */
+
+    /* Day change cells show "—" / "EOD" when Stooq data is used, since
+       Stooq only returns one price per session and has no intraday change */
+    const dayChgCell = q.isEOD
+      ? `—<br><small style="color:var(--text-sec);">EOD</small>`
+      : `${dayChg >= 0 ? "+" : ""}$${fmt2(dayChg)}<br>
+         <small>${dayChgPct >= 0 ? "+" : ""}${dayChgPct.toFixed(2)}%</small>`;
+
+    return `
+      <tr>
+        <td>
+          <div class="stock-ticker">${s.symbol}${mktTag}${eodTag}</div>
+          <div class="stock-name">${displayName}</div>
+        </td>
+        <td><span class="stock-price">$${fmt2(price)}</span></td>
+        <td style="color:var(--text-sec);">$${fmt2(s.basis)}</td>
+        <td class="${glClass}">
+          ${dollarGL >= 0 ? "+" : ""}$${fmt2(dollarGL)}<br>
+          <small>${pctGL >= 0 ? "+" : ""}${fmt1(pctGL)}%</small>
+        </td>
+        <td class="${dayClass}">${dayChgCell}</td>
+        <td style="color:var(--text-sec);">$${fmt2(prevClose)}</td>
+      </tr>`;
+  }).join("");
+
+  /* Collect unique source names for the footer attribution line */
+  const sources = [...new Set(
+    results
+      .filter(r => r.status === "fulfilled")
+      .map(r => r.value.source)
+  )].join(" · ");
+
+  body.innerHTML = `
+    <table class="stock-tbl">
+      <thead>
+        <tr>
+          <th>Symbol</th><th>Price</th><th>Basis</th>
+          <th>Gain/Loss (vs basis)</th><th>Day Change</th><th>Prev Close</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="stock-footer">
+      ${sources || "No sources available"} · prices may be delayed 15 min
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION 7 — SOCCER NEXT GAMES (ESPN public API)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * formatGameDate — converts an ISO-8601 UTC date string to a readable
+ * Central Time string for display.
+ * @param  {string} iso  e.g. "2026-05-17T19:30:00Z"
+ * @returns {string}     e.g. "Sat, May 17 · 2:30 PM CT"
+ */
+function formatGameDate(iso) {
+  const d = new Date(iso); /* parse the UTC timestamp */
+  return d.toLocaleString("en-US", {
+    timeZone: TZ_CT,
+    weekday:  "short",
+    month:    "short",
+    day:      "numeric",
+    hour:     "2-digit",
+    minute:   "2-digit",
+    hour12:   true,
+  }) + " CT";
+}
+
+/**
+ * extractNextGame — scans an ESPN events array for the next upcoming event.
+ * Filters for events that start in the future, sorts ascending, returns first.
+ *
+ * @param  {Array}   events  ESPN event objects
+ * @returns {object | null}  structured game data or null if none found
+ */
+function extractNextGame(events) {
+  const now = new Date(); /* current UTC moment for comparison */
+
+  /* Keep only events that haven't started yet */
+  const upcoming = (events || [])
+    .filter(e => e.date && new Date(e.date) > now)
+    .sort((a, b) => new Date(a.date) - new Date(b.date)); /* ascending date order */
+
+  if (upcoming.length === 0) return null;
+
+  const event      = upcoming[0];                          /* nearest future event   */
+  const comp       = event.competitions?.[0];              /* competition object     */
+  if (!comp) return null;
+
+  const competitors = comp.competitors ?? [];              /* home and away teams    */
+  const home = competitors.find(c => c.homeAway === "home");
+  const away = competitors.find(c => c.homeAway === "away");
+
+  return {
+    date:       event.date,
+    competition: event.season?.year
+                  ? `${event.season.year} ${event.name ?? ""}`.trim()
+                  : (event.name ?? "Match"),
+    homeTeam:   home?.team?.displayName ?? "Home",
+    awayTeam:   away?.team?.displayName ?? "Away",
+    venue:      comp.venue?.fullName    ?? "",
+    statusName: comp.status?.type?.name   ?? "STATUS_SCHEDULED",
+    statusText: comp.status?.type?.detail ?? "",
+  };
+}
+
+/**
+ * renderSoccerCard — writes match data (or an error) into a soccer card element.
+ * @param {string}       elementId  ID of the card div
+ * @param {string}       teamName   display name of the team
+ * @param {object|null}  game       structured game data from extractNextGame, or null
+ * @param {string|null}  errMsg     error message to show instead if data failed
+ */
+function renderSoccerCard(elementId, teamName, game, errMsg) {
+  const card = document.getElementById(elementId);
+
+  if (errMsg) {
+    card.innerHTML = `
+      <div class="card-label">Next Game</div>
+      <div class="soccer-team-name">${teamName}</div>
+      <div class="error-msg" style="font-size:0.78rem;">${errMsg}</div>`;
+    return;
+  }
+
+  if (!game) {
+    card.innerHTML = `
+      <div class="card-label">Next Game</div>
+      <div class="soccer-team-name">${teamName}</div>
+      <div style="color:var(--text-sec); font-size:0.8rem;">
+        No upcoming games found in the next 180 days.
+      </div>`;
+    return;
+  }
+
+  /* Show status line only if not a clean scheduled state */
+  const statusLine = (game.statusName !== "STATUS_SCHEDULED" && game.statusText)
+    ? `<div class="soccer-status">${game.statusText}</div>`
+    : "";
+
+  card.innerHTML = `
+    <div class="card-label">Next Game</div>
+    <div class="soccer-team-name">${teamName}</div>
+    <div class="soccer-comp">${game.competition}</div>
+    <div class="soccer-matchup">${game.homeTeam}<br>vs<br>${game.awayTeam}</div>
+    <div class="soccer-date">${formatGameDate(game.date)}</div>
+    ${game.venue ? `<div class="soccer-venue">${game.venue}</div>` : ""}
+    ${statusLine}`;
+}
+
+/* ── Austin FC ──────────────────────────────────────────────────────── */
+async function loadAustinFC() {
+  /* Build a date range covering the next 180 days for schedule queries */
+  const today      = new Date();
+  const future     = new Date(today.getTime() + 180 * 86_400_000); /* 180 days out */
+  const startStr   = today.toISOString().slice(0, 10).replace(/-/g, "");
+  const endStr     = future.toISOString().slice(0, 10).replace(/-/g, "");
+
+  try {
+    /* Step 1 — get all MLS teams to find Austin FC's ESPN team ID */
+    const teamsRes  = await fetch(`${ESPN_BASE}/usa.1/teams?limit=100`);
+    if (!teamsRes.ok) throw new Error(`Teams list HTTP ${teamsRes.status}`);
+    const teamsData = await teamsRes.json();
+    const allTeams  = teamsData?.sports?.[0]?.leagues?.[0]?.teams ?? []; /* array of team wrapper objects */
+    const austinTeam = allTeams.find(t =>
+      t.team.displayName.toLowerCase().includes("austin")
+    );
+
+    if (!austinTeam) throw new Error("Austin FC not found in MLS teams list");
+
+    const teamId   = austinTeam.team.id; /* ESPN numeric team ID for Austin FC */
+
+    /* Step 2 — fetch their schedule for 2026 season */
+    const schedRes = await fetch(
+      `${ESPN_BASE}/usa.1/teams/${teamId}/schedule?season=2026`
+    );
+    if (!schedRes.ok) throw new Error(`Schedule HTTP ${schedRes.status}`);
+    const schedData = await schedRes.json();
+    const events    = schedData?.events ?? []; /* array of ESPN event objects   */
+
+    renderSoccerCard("sc-austin", "Austin FC", extractNextGame(events), null);
+
+  } catch (primaryErr) {
+    /* Fallback — scan MLS scoreboard for events mentioning "Austin" */
+    try {
+      const fbRes  = await fetch(
+        `${ESPN_BASE}/usa.1/scoreboard?dates=${startStr}-${endStr}&limit=100`
+      );
+      const fbData = await fbRes.json();
+      /* Filter for events that involve Austin FC */
+      const events = (fbData?.events ?? []).filter(e =>
+        JSON.stringify(e.competitions?.[0]?.competitors ?? [])
+          .toLowerCase().includes("austin")
+      );
+      renderSoccerCard("sc-austin", "Austin FC", extractNextGame(events), null);
+    } catch (fbErr) {
+      renderSoccerCard("sc-austin", "Austin FC", null,
+        `Could not load Austin FC schedule (${primaryErr.message})`);
+    }
+  }
+}
+
+/* ── USMNT ──────────────────────────────────────────────────────────── */
+async function loadUSMNT() {
+  const today    = new Date();
+  const future   = new Date(today.getTime() + 180 * 86_400_000);
+  const startStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+  const endStr   = future.toISOString().slice(0, 10).replace(/-/g, "");
+
+  /* Try each league in priority order; stop when we find an upcoming game */
+  for (const league of USMNT_LEAGUES) {
+    try {
+      const res  = await fetch(
+        `${ESPN_BASE}/${league}/scoreboard?dates=${startStr}-${endStr}&limit=100`
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      /* Filter for events where one of the competitors is the USA */
+      const events = (data?.events ?? []).filter(e => {
+        const compsStr = JSON.stringify(e.competitions?.[0]?.competitors ?? []).toLowerCase();
+        return compsStr.includes("united states") || compsStr.includes('"usa"');
+      });
+      if (events.length > 0) {
+        renderSoccerCard("sc-usmnt", "USMNT", extractNextGame(events), null);
+        return; /* found — stop searching */
+      }
+    } catch (_) { continue; }
+  }
+
+  /* If no league returned results, show informative message */
+  renderSoccerCard("sc-usmnt", "USMNT", null,
+    "No upcoming USMNT games found in tracked competitions "
+    + "(CONCACAF, FIFA World Cup, Friendlies). May be between windows.");
+}
+
+/* ── USWNT ──────────────────────────────────────────────────────────── */
+async function loadUSWNT() {
+  const today    = new Date();
+  const future   = new Date(today.getTime() + 180 * 86_400_000);
+  const startStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+  const endStr   = future.toISOString().slice(0, 10).replace(/-/g, "");
+
+  for (const league of USWNT_LEAGUES) {
+    try {
+      const res  = await fetch(
+        `${ESPN_BASE}/${league}/scoreboard?dates=${startStr}-${endStr}&limit=100`
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const events = (data?.events ?? []).filter(e => {
+        const compsStr = JSON.stringify(e.competitions?.[0]?.competitors ?? []).toLowerCase();
+        return compsStr.includes("united states") || compsStr.includes('"usa"');
+      });
+      if (events.length > 0) {
+        renderSoccerCard("sc-uswnt", "USWNT", extractNextGame(events), null);
+        return;
+      }
+    } catch (_) { continue; }
+  }
+
+  renderSoccerCard("sc-uswnt", "USWNT", null,
+    "No upcoming USWNT games found in tracked competitions. May be between windows.");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SECTION — ALLERGY / POLLEN FORECAST
+   Uses Ambee's pollen API (free tier, 100 calls/day) to fetch species-
+   level counts for Georgetown TX. Returns Cedar, Juniper, Alternaria,
+   and all other non-zero species. No CORS proxy needed — Ambee allows
+   cross-origin requests with an API key header.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const AMBEE_KEY      = "07093b9f371a3f9acf006386b143c31dd22c859ae893870bc71faf8f521204c4";
+const GEORGETOWN_LAT = 30.6330;    /* Georgetown TX latitude  */
+const GEORGETOWN_LNG = -97.6779;   /* Georgetown TX longitude */
+
+/* NAB standard thresholds for coloring Ambee species counts (grains/m³).
+   Each array: [low_max, moderate_max, high_max] — above high_max = Very High */
+const SPECIES_THRESHOLDS = {
+  tree:  [   14,    89,  1499],   /* tree pollen grains/m³  */
+  grass: [    4,    19,   199],   /* grass pollen grains/m³ */
+  weed:  [    9,    49,   499],   /* weed pollen grains/m³  */
+  mold:  [ 6499, 12999, 49999],   /* mold spores/m³         */
+};
+
+/** nabCategory — returns a display category for a species count using NAB thresholds */
+function nabCategory(count, type) {
+  const t = SPECIES_THRESHOLDS[type] || SPECIES_THRESHOLDS.weed;   /* default to weed scale */
+  if (!count || count === 0)
+    return { label: "None",      color: "#888888", bg: "rgba(136,136,136,0.15)" };
+  if (count <= t[0])
+    return { label: "Low",       color: "#4ee08a", bg: "rgba(78,224,138,0.15)"  };
+  if (count <= t[1])
+    return { label: "Moderate",  color: "#ffd84a", bg: "rgba(255,216,74,0.15)"  };
+  if (count <= t[2])
+    return { label: "High",      color: "#ff9a3c", bg: "rgba(255,154,60,0.15)"  };
+  return   { label: "Very High", color: "#ff5070", bg: "rgba(255,80,112,0.15)"  };
+}
+
+/** fetchAmbeeEndpoint — fetches one Ambee API path via corsproxy.io.
+ *  Returns the first data record, or null on any failure (soft fail so
+ *  pollen still renders even if the mold endpoint is unavailable). */
+async function fetchAmbeeEndpoint(path) {
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 7000);   /* 7 s hard timeout per request */
+  try {
+    const ambeeUrl = `https://api.ambeedata.com${path}`
+                   + `?lat=${GEORGETOWN_LAT}&lng=${GEORGETOWN_LNG}&x-api-key=${AMBEE_KEY}`;
+    const r = await fetch(
+      "https://corsproxy.io/?" + encodeURIComponent(ambeeUrl),
+      { signal: ctrl.signal }
+    );
+    clearTimeout(timer);
+    if (!r.ok) return null;                            /* non-2xx — skip silently */
+    const json = await r.json();
+    if (json.message !== "success") return null;       /* Ambee error — skip silently */
+    return json?.data?.[0] || null;                    /* return first record or null */
+  } catch (e) {
+    clearTimeout(timer);
+    return null;   /* timeout or network error — soft fail */
+  }
+}
+
+/** loadAllergy — fetches Ambee pollen + mold data in parallel, renders tiles */
+async function loadAllergy() {
+  const body = document.getElementById("allergy-body");   /* allergy card body element */
+  try {
+    /* Mold endpoint not available on Ambee free tier — pollen only */
+    const pollenRec = await fetchAmbeeEndpoint("/latest/pollen/by-lat-lng");
+    const moldRec   = null;   /* reserved for paid tier */
+
+    if (!pollenRec) throw new Error("No data from Ambee");
+
+    const items = [];           /* tiles to render */
+    const shown = new Set();    /* prevents duplicate species entries */
+
+    /* ── POLLEN: priority species always shown, then all other non-zero ── */
+    if (pollenRec) {
+      const sp = pollenRec.Species || {};
+
+      /* Always show these species even at 0 — key Austin allergens */
+      const PRIORITY = [
+        { name: "Cedar",      group: "Tree", type: "tree" },
+        { name: "Juniper",    group: "Tree", type: "tree" },
+        { name: "Alternaria", group: "Weed", type: "mold" },   /* mold spore, in Weed group */
+        { name: "Cladosporium", group: "Weed", type: "mold" }, /* mold spore, in Weed group */
+      ];
+      PRIORITY.forEach(({ name, group, type }) => {
+        const val = sp[group]?.[name];
+        if (val === undefined) return;   /* Ambee doesn't carry this species */
+        items.push({ label: name, val, cat: nabCategory(val, type) });
+        shown.add(group + ":" + name);
+      });
+
+      /* All other non-zero tree / grass / weed species */
+      [["Tree","tree"], ["Grass","grass"], ["Weed","weed"]].forEach(([group, type]) => {
+        Object.entries(sp[group] || {}).forEach(([name, val]) => {
+          if (shown.has(group + ":" + name)) return;
+          if (!val || val === 0) return;
+          items.push({ label: name, val, cat: nabCategory(val, type) });
+          shown.add(group + ":" + name);
+        });
+      });
+
+      /* Others bucket — some Ambee versions put mold totals here */
+      Object.entries(sp.Others || {}).forEach(([name, val]) => {
+        if (!shown.has("Others:" + name) && val > 0) {
+          items.push({ label: name, val, cat: nabCategory(val, "mold") });
+          shown.add("Others:" + name);
+        }
+      });
+    }
+
+    /* ── MOLD endpoint (separate, may not exist on free tier) ── */
+    if (moldRec) {
+      const moldSp = moldRec.Species?.Mold || moldRec.Species || {};
+      Object.entries(moldSp).forEach(([name, val]) => {
+        if (typeof val !== "number") return;
+        if (shown.has("Mold:" + name)) return;
+        items.push({ label: name, val, cat: nabCategory(val, "mold") });
+        shown.add("Mold:" + name);
+      });
+    }
+
+
+    if (!items.length) throw new Error("No species data in Ambee response");
+
+    /* ── Build tile grid ── */
+    let html = '<div class="allergy-grid">';
+    items.forEach(({ label, val, cat }) => {
+      html += `
+        <div class="pollen-item">
+          <div class="pollen-name">${label}</div>
+          <div class="pollen-val" style="color:${cat.color}">${val.toLocaleString()}</div>
+          <div class="pollen-cat" style="color:${cat.color};background:${cat.bg}">${cat.label}</div>
+        </div>`;
+    });
+    html += "</div>";
+
+    /* Attribution: use pollen record timestamp if available */
+    const updatedAt = (pollenRec || moldRec)?.updatedAt
+      ? new Date((pollenRec || moldRec).updatedAt).toLocaleString("en-US",
+          { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })
+      : null;
+    const tsNote = updatedAt ? `Updated ${updatedAt} &middot; ` : "";
+    html += `<div class="allergy-meta">${tsNote}Georgetown, TX (grains/m\xB3) &middot; `
+          + `Source: <a href="https://www.ambeedata.com" target="_blank">Ambee &#8599;</a>`
+          + ` &middot; <a href="https://www.kvue.com/allergy" target="_blank">KVUE &#8599;</a>`
+          + ` &middot; <span style="opacity:0.6">Mold/fungus not available on free tier</span></div>`;
+
+    body.innerHTML = html;
+  } catch (err) {
+    /* Ambee failed — show quick-access links so the card is still useful */
+    body.innerHTML = `
+      <div style="font-size:0.85rem; color:var(--text-sec); margin-bottom:8px;">
+        Live pollen data unavailable (${err.message}) — open a source directly:
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="https://www.kvue.com/allergy" target="_blank"
+           style="padding:7px 14px; background:rgba(106,163,255,0.15); border:1px solid var(--accent);
+                  border-radius:6px; color:var(--accent); font-size:0.85rem;">
+          KVUE Allergy Forecast &#8599;
+        </a>
+        <a href="https://www.pollen.com/forecast/current/pollen/78628" target="_blank"
+           style="padding:7px 14px; background:rgba(106,163,255,0.15); border:1px solid var(--accent);
+                  border-radius:6px; color:var(--accent); font-size:0.85rem;">
+          Pollen.com — Georgetown &#8599;
+        </a>
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INIT — kick off all data fetches in parallel at page load
+   ═══════════════════════════════════════════════════════════════════════ */
+Promise.all([
+  loadAirQuality(), /* AirNow API — Georgetown AQI          */
+  loadAllergy(),    /* Ambee API — pollen/allergy forecast   */
+  loadWeather(),    /* NWS API — current + 7-day forecast   */
+  loadStocks(),     /* Yahoo Finance — 3 stock quotes       */
+  loadAustinFC(),   /* ESPN — Austin FC next game           */
+  loadUSMNT(),      /* ESPN — USMNT next game               */
+  loadUSWNT(),      /* ESPN — USWNT next game               */
+]).then(() => {
+  console.log("Dashboard loaded:", new Date().toLocaleString("en-US", { timeZone: TZ_CT }));
+});
+</script>
+
+</body>
+</html>

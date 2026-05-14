@@ -7,6 +7,9 @@
 # Track batch files
 !*.bat
 
+# Track dashboard
+!dashboard.html
+
 # Don't track log files
 *.log
 *.txt
