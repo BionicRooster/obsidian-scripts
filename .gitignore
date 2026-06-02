@@ -19,3 +19,8 @@
 
 # Track gitignore itself
 !.gitignore
+
+# Track Claude config and skill commands
+!.claude/
+!.claude/commands/
+!.claude/commands/*.md
