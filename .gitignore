@@ -24,3 +24,9 @@
 !.claude/
 !.claude/commands/
 !.claude/commands/*.md
+
+# Track Claude memory files
+!.claude/projects/
+!.claude/projects/C--Users-awt/
+!.claude/projects/C--Users-awt/memory/
+!.claude/projects/C--Users-awt/memory/*.md
