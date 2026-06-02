@@ -301,6 +301,7 @@ def build_note(month_key, entries):
     lines.append("---")
     lines.append("tags:")
     lines.append("  - Bahai")
+    lines.append("  - BahaiScripture")
     lines.append(f"created: {TODAY}")
     lines.append("---")
     lines.append("")
