@@ -4,6 +4,9 @@
 # Track PowerShell scripts
 !*.ps1
 
+# Track Python scripts
+!*.py
+
 # Track batch files
 !*.bat
 
