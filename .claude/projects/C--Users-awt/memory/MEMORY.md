@@ -27,18 +27,19 @@
 - [feedback_transcript_format.md](feedback_transcript_format.md) — Keep first timestamp per paragraph; group by topic shift; preserve footnotes
 - [feedback_recipe_processing.md](feedback_recipe_processing.md) — Always retain narrative; place in ## Story after recipe, before Related Notes
 - [feedback_people_index_format.md](feedback_people_index_format.md) — No blank lines between ### Name entries within a section
-- [feedback_people_index_stubs.md](feedback_people_index_stubs.md) — Add every name to People Index immediately with source note link; create full biography in 15-People only at 5+ vault links
+- [feedback_people_index_stubs.md](feedback_people_index_stubs.md) — Add every name to People Index immediately with source note link; create full biography in 15-People only at 5+ vault links; insert alphabetically, never append
+- [feedback_vault_permissions.md](feedback_vault_permissions.md) — Do not pause for confirmation on vault read/write/move ops — permission is permanently pre-granted in CLAUDE.md
 - [feedback_kindle_clippings_readonly.md](feedback_kindle_clippings_readonly.md) — Kindle Clippings are read-only; link INTO them from MOCs/notes only, never modify the clipping files
 - [feedback_tag_regex.md](feedback_tag_regex.md) — Tags: "Bahai" only (no diacriticals); everywhere else always "Bahá'í"; regex must be line-anchored `(?m)^(\s*-\s+)TAG\s*$`
 - [feedback_bahai_scripture_tag.md](feedback_bahai_scripture_tag.md) — Add BahaiScripture tag to any note attributed to a Central Figure (Bahá'u'lláh, The Báb, 'Abdu'l-Bahá); not for Shoghi Effendi or UHJ
 - [feedback_daily_note_whats_new.md](feedback_daily_note_whats_new.md) — "What's New" dataview in daily notes uses dur(2 days), not dur(10 days)
 
 ## Feedback — Security
-- [feedback_no_secrets_in_code.md](feedback_no_secrets_in_code.md) — Never hardcode credentials/keys/passwords; always read from a file on the OS at runtime
+- `feedback_no_secrets_in_code` — moved to global memory (`~/.claude/memory/feedback_no_secrets_in_code.md`)
 
 ## References & Scripts
 - [fix_broken_related_notes.md](fix_broken_related_notes.md) — Scripts to repair vault-wide broken Related Notes (path/alias and bare MOC ref patterns)
-- [domain/scripts.md](domain/scripts.md) — 554-script catalog (PS1 + PY); Grep this before writing new code; refresh with update-script-catalog.ps1
+- [domain/scripts.md](domain/scripts.md) — 549-script catalog (PS1 + PY); Grep this before writing new code; refresh with update-script-catalog.ps1
 
 ## Elias White Talbot Project
 - [domain/elias_talbot.md](domain/elias_talbot.md) — EWT = Elias William Talbot (1820–1876); project folder; Johnson family is Wayne's family line
@@ -54,6 +55,7 @@
 - [workflow_resolve_unknowns.md](workflow_resolve_unknowns.md) — Parameters (age filter, scope, sources), 6-step procedure, 3× rule, re-check convention
 - [workflow_cleanup_mocs.md](workflow_cleanup_mocs.md) — Remove misplaced MOC links, reassign to correct subsections, 9 key MOCs, common patterns
 - [workflow_crosslink_files.md](workflow_crosslink_files.md) — Find cross-topic related notes, add wikilinks, connection patterns, example links
+- `/improve-system` skill — 5 modes: Audit (stale/conflict/duplicate), Skill Review, Experience (capture win/lesson), Historical Review (mine .jsonl sessions), Foundation; full procedure in `~/.claude/commands/improve-system.md`
 
 ## Dashboard
 - [domain/dashboard_iis.md](domain/dashboard_iis.md) — Weather/air quality dashboard; URL http://192.168.68.65:8080; IIS on port 8080; 500.19 fix via icacls

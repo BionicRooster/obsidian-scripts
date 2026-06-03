@@ -9,7 +9,7 @@ metadata:
 
 Use this to decide whether to spawn a Haiku subagent, suggest `/model haiku` for a session, or stay on Sonnet.
 
-**Why:** Haiku is ~20× cheaper per token. Mechanical, rule-based tasks don't benefit from Sonnet's reasoning. Sonnet/Opus should be reserved for judgment, synthesis, and cross-domain work.
+**Why:** Haiku is significantly cheaper per token (as of 2026-05-28; verify if pricing has changed). Mechanical, rule-based tasks don't benefit from Sonnet's reasoning. Sonnet/Opus should be reserved for judgment, synthesis, and cross-domain work.
 
 **How to apply:** At session start, assess the task list. If all tasks are Haiku-safe, suggest `/model haiku`. If mixed, stay on Sonnet and spawn Haiku subagents for the mechanical portions.
 

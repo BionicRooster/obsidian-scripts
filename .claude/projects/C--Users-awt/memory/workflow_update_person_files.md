@@ -1,7 +1,10 @@
 ---
-name: Update Person Files Workflow
+name: update-person-files-workflow
 description: How to scan and expand incomplete people files in 15 - People to the gold standard biography format
-type: project
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: c8443fac-3c94-467b-b4a8-ac7a29d060bf
 ---
 
 When the user says "update person files", "expand person files", "complete people stubs", or similar, follow this exact workflow:
@@ -46,7 +49,7 @@ The gold standard biography format is exemplified by `Helen Cordes.md` and `Davi
 
 **Step 6 — Show verbose progress** as you go: state which file you're working on, what sources you tried, what succeeded
 
-## Already-Processed Files (as of 2026-03-21)
+## Already-Processed Files (as of 2026-03-21; new files added since — see below)
 
 These were expanded in the session on 2026-03-21 and should NOT be re-expanded unless the user requests it:
 - Moshe Feldenkrais — physicist, judo pioneer, Feldenkrais Method
@@ -63,6 +66,27 @@ These were expanded in the session on 2026-03-21 and should NOT be re-expanded u
 - Carolyn Maiers — DHE article author, CompuServe NLP
 - Shelle Rose Charvet — expanded (LAB Profile, career history added)
 - John J. La Valle — expanded (Pure NLP career history added)
+
+## Files Added Since 2026-03-21 (status unknown — check before expanding)
+
+**Likely public figures needing biography expansion:**
+- Stever Robbins (Get-It-Done Guy, productivity/NLP)
+- Nelson Zink (NLP trainer)
+- Rex Steven Sikes (NLP/success conditioning)
+- Patrick E. Merlevede (NLP/talent management)
+- Paul Kersten (NLP)
+- Belle Steinberg (Ericksonian hypnosis)
+- Bill Mollison (permaculture founder)
+- Baldassare Forestiere (historical figure, underground gardens)
+- Nick Lima (Austin FC player)
+
+**Status unknown — verify before expanding:**
+- Andrea Rice, Malinda Lloyd, Geri Tease, Bob Bradford, Christina McFillips
+- Robert Weinberg, Jeff A. Weakley, Ronald C. Bieber, Bob Janes, Larry Kobrin, Chad Robertson
+
+**EWT genealogy records (separate format, no biography expansion needed):**
+- Col Mathew Talbot, Lee Etta Stanard, Alfred W. Talbot Sr., Vera Irene Talbot
+- Dr. Alfred Carson Waldrep Jr., John Henry White, Thomas Talbot
 
 ## Known False Positives
 - `Job Backer.md` — a bookbinding tool, not a person. File updated with explanation; can be deleted.

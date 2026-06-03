@@ -129,6 +129,10 @@ Read first: `memory/workflow_book_highlights.md` — 5 extraction paths (A photo
 ## Synthesis Layer, Query-to-File Rule, and Vault Lint Workflow
 Read first: `memory/domain/synthesis.md` — synthesis layer location/purpose, when to check/update, Query-to-File Rule (when to file a query answer as a synthesis page), Vault Lint checks (Contradictions · Thin Pages · Topic Gaps · Stale Claims).
 
+## Improve System Workflow
+Trigger: "/improve-system" or when asked to audit memory, improve a skill, capture a lesson, mine past sessions, or fill foundational knowledge gaps.
+Use the `/improve-system` skill — 5 modes: Audit (stale/conflicting/duplicate), Skill Review, Experience (capture a win or lesson), Historical Review (mine .jsonl sessions), Foundation (brand/audience/offers); full procedure in `~/.claude/commands/improve-system.md`.
+
 ## Vault Activity Log Format
 
 All Claude vault actions are logged in `D:\Obsidian\Main\01\PKM\Claude Action Log.md` — NOT in the daily journal `## My Notes` section. Append a new `## YYYY-MM-DD` section (or add to today's section if it already exists) at the end of the file after each session. Personal notes written by Wayne remain in the daily journal.

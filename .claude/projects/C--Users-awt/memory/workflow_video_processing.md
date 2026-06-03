@@ -41,79 +41,21 @@ py -3.12 -m yt_dlp --write-auto-sub --sub-lang en --skip-download --output "C:\U
 
 ## Step 3 — Clean and Reassemble Transcript
 
-YouTube auto-captions use a rolling window (each VTT block adds 1–2 words to the previous sentence), producing massive duplication. Use this Python script inline via Bash heredoc:
+YouTube auto-captions use a rolling window (each VTT block adds 1–2 words to the previous sentence), producing massive duplication. Run `parse_vtt.py` to deduplicate and group into timestamped paragraphs:
 
-```python
-import re
-
-with open(r'C:\Users\awt\AppData\Local\Temp\yt_transcriptN.en.vtt', 'r', encoding='utf-8') as f:
-    content = f.read()
-
-blocks = re.split(r'\n\n+', content.strip())
-entries = []
-for block in blocks:
-    lines = block.strip().split('\n')
-    ts_line = None
-    text_lines = []
-    for line in lines:
-        if '-->' in line:
-            ts_line = line
-        elif line and not line.startswith('WEBVTT') and not line.startswith('Kind:') \
-             and not line.startswith('Language:') and not re.match(r'^\d+$', line):
-            clean = re.sub(r'<[^>]+>', '', line).strip()
-            if clean:
-                text_lines.append(clean)
-    if ts_line and text_lines:
-        start = ts_line.split('-->')[0].strip()
-        m = re.match(r'(\d+):(\d+):(\d+)\.(\d+)', start)
-        if m:
-            h, mi, s = int(m.group(1)), int(m.group(2)), int(m.group(3))
-            total_s = h*3600 + mi*60 + s
-            ts_fmt = f"{h*60+mi:02d}:{s:02d}"
-            entries.append((total_s, ts_fmt, ' '.join(text_lines)))
-
-# Deduplicate rolling window
-result = []
-prev_words = []
-for total_s, ts, text in entries:
-    words = text.split()
-    if not prev_words:
-        result.append((total_s, ts, words))
-        prev_words = words
-        continue
-    max_overlap = min(len(prev_words), len(words))
-    overlap = 0
-    for ol in range(max_overlap, 0, -1):
-        if prev_words[-ol:] == words[:ol]:
-            overlap = ol
-            break
-    new_words = words[overlap:]
-    if new_words:
-        result.append((total_s, ts, new_words))
-    prev_words = words
-
-# Merge into ~10-second windows
-merged = []
-window_s = 10
-current_start_s = current_ts = None
-current_words = []
-for ts_s, ts, words in result:
-    if current_start_s is None:
-        current_start_s, current_ts, current_words = ts_s, ts, list(words)
-    elif ts_s - current_start_s < window_s:
-        current_words.extend(words)
-    else:
-        merged.append((current_ts, ' '.join(current_words)))
-        current_start_s, current_ts, current_words = ts_s, ts, list(words)
-if current_words:
-    merged.append((current_ts, ' '.join(current_words)))
-
-for ts, text in merged:
-    print(f"[{ts}] {text}")
-print(f"\n--- Total segments: {len(merged)} ---")
+```powershell
+py parse_vtt.py "C:\Users\awt\AppData\Local\Temp\yt_transcriptN.en.vtt"
 ```
 
-Output is large — it will be persisted to a tool-results file. Read it from there.
+- Deduplication strategy: keeps only VTT cues that have no inline `<c>` tags (the completed final form of each line); discards intermediate word-by-word cues. More reliable than word-overlap heuristics.
+- Groups cues into paragraphs using a 3-second silence gap.
+- Output format: `[MM:SS] text` blocks separated by blank lines, printed to stdout.
+- Output is large — it will be persisted to a tool-results file. Read it from there.
+
+Optional: add a second argument to write output to a file instead of stdout:
+```powershell
+py parse_vtt.py "C:\Users\awt\AppData\Local\Temp\yt_transcriptN.en.vtt" "C:\Users\awt\AppData\Local\Temp\transcript_clean.txt"
+```
 
 ## Step 4 — Write or Finish the Obsidian Note
 
