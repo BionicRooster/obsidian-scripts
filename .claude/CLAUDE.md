@@ -106,6 +106,22 @@ Use the `/resolve-unknowns` skill — accepts scope, age filter, and source flag
 Trigger: "sort todo", "sort to-do list", or "resort todos"
 Use the `/sort-todo` skill — no arguments; full procedure in `~/.claude/commands/sort-todo.md`.
 
+## Web Scraping Workflow
+Trigger: "search the web for", "scrape", "fetch page", or any request for semantic web search or JS-rendered page content.
+Use the `/web-scraping` skill — Exa for topic search, Firecrawl for JS-heavy pages; full procedure in `~/.claude/commands/web-scraping.md`.
+
+## Ingest Resource Workflow
+Trigger: "ingest", "ingest this", "save this article/video/transcript/note", or when the user points at any readable or retrievable source to add to the vault.
+Use the `/ingest-resource` skill — extracts synthesized knowledge only (no verbatim content), routes to 01/ or 02-Working Projects, updates People Index, crosslinks; full procedure in `~/.claude/commands/ingest-resource.md`.
+
+## Global Web Fetch Routing Rule
+**Whenever fetching any external URL or doing web research** (in any skill, workflow, or inline task), apply the tool-selection logic from `~/.claude/commands/web-scraping.md`:
+- Topic/concept searches → WebSearch (semantic ranking)
+- Known JS-heavy domains (ESPN, FBref stats tabs, Twitter/X, LinkedIn, GitHub Actions UI) → WebFetch with JS rendering note
+- Plain articles or static pages → WebFetch directly
+- If WebFetch returns < 200 words of body text → flag as JS-rendering candidate and note it
+This applies globally: briefing, resolve-unknowns, box scores, biography research, synthesis updates — any time a web source is consulted.
+
 ## Book Highlights Extraction Workflow
 Trigger: "extract highlights from [book]", "create clippings for [book]", or user points at a source for highlight extraction.
 Read first: `memory/workflow_book_highlights.md` — 5 extraction paths (A photos, B PDF, C pasted, D vault .md, E annotated DOCX), Path E `fix_missing_spaces()` technique, output format, incremental append mode with session dividers.

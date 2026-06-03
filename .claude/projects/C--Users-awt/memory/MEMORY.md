@@ -66,7 +66,7 @@
 - Vault folder: `D:\Obsidian\Main\01\Claude\` — dated snapshots of memory config and process docs; add new files here with `YYYY-MM-DD ` prefix whenever memory is restructured
 
 ## Recurring Workflows
-- [project_resolve_unknowns_schedule.md](project_resolve_unknowns_schedule.md) — Run "resolve unknowns box scores older than 30 days" monthly; last run 2026-05-24; remind if forgotten
+- [project_resolve_unknowns_schedule.md](project_resolve_unknowns_schedule.md) — Run "resolve unknowns box scores older than 30 days" monthly; last run 2026-06-02; remind if forgotten
 
 ## Soccer Domain
 - [domain/soccer_sources.md](domain/soccer_sources.md) — MLS box score source reliability tiers; FBref preferred clip source; FotMob ~7-min timing artifact; Sofascore banned; card reason limitations

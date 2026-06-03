@@ -88,7 +88,7 @@ For each file (excluding the always-skip folders above):
 | Science / nature | MOC - Science & Nature | — |
 | Micrometeorites | MOC - Science & Nature | Micrometeorites |
 | xkcd / Sketchplanations | MOC - Home & Practical Life | Sketchplanations |
-| Soccer / Austin FC | MOC - Sports & Recreation | Austin FC / Soccer |
+| Soccer / Austin FC | MOC - Soccer | MLS / Austin FC / Soccer |
 | Travel — Japan (JapanTrip tag) | MOC - Travel & Exploration | Japan 2026 Trip |
 | Travel — Columbia River (2024-WashingtonTrip) | MOC - Travel & Exploration | 2024 Columbia River Trip |
 | Recipes / food | MOC - Home & Practical Life | Recipes |
