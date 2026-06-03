@@ -73,6 +73,9 @@ Check `30 - Synthesis/index.md`. If the file's topic matches an existing synthes
 - Science/nature → MOC - Science & Nature
 - xkcd/sketches → MOC - Home & Practical Life > Sketchplanations
 - Micrometeorites → MOC - Science & Nature > Micrometeorites
+- Soccer / Austin FC / MLS / USMNT / USWNT → MOC - Soccer (subsections: MLS, Austin FC, National Teams)
+- Recipes / food → MOC - Home & Practical Life > Recipes
+- PKM / Obsidian / productivity → MOC - Technology & Computers > PKM & Obsidian
 
 ## Output
 Summary table: files classified, assigned MOC, subsection. Preserve UTF-8 encoding.
