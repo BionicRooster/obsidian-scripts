@@ -207,6 +207,29 @@ Append to `D:\Obsidian\Main\01\PKM\Claude Action Log.md`:
 
 ---
 
+## Step 9 — Decision Log
+
+After the log entry, report a **Decisions** section covering judgment calls made during this ingest:
+
+- **Routing:** which folder was chosen and why, if more than one could have applied
+- **Tags:** list tags applied; flag any variant or duplicate encountered (name both; mark the one applied)
+- **MOC subsection:** which subsection was chosen if the note could fit multiple
+- **Any ambiguity** where the existing rules didn't clearly resolve the choice — describe what was decided and why
+- If a decision revealed a missing or ambiguous rule, write it to memory immediately and mark *(memorized)*
+- Mark unresolved questions *(flag for user)*
+
+**Format:**
+```
+**Decisions this ingest:**
+- Routed to `{folder}` over `{alternative}` because {reason}
+- Tag `{variant}` encountered; applied `{canonical}` *(flag: confirm canonical?)*
+- MOC subsection: {subsection} chosen over {alternative} because {reason}
+```
+
+Omit this section if all routing was unambiguous and matched existing rules without judgment.
+
+---
+
 ## Key Rules
 
 - **Never save verbatim source content** — summary, key points, concepts, and people only

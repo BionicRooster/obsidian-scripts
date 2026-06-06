@@ -1,36 +1,47 @@
 """
 Parse a YouTube auto-generated VTT subtitle file into clean timestamped text.
-Auto-generated VTTs repeat lines as each word is added — we deduplicate
+Auto-generated VTTs repeat lines as each word is added -- we deduplicate
 by keeping only the 'final' version of each cue (the one with no inline
 word-level <c> tags, which is the completed line).
+
+Usage:
+    py parse_vtt.py <input.vtt>               # prints to stdout
+    py parse_vtt.py <input.vtt> <output.txt>  # writes to file
 """
 
 import re
 import sys
 
-VTT_PATH = r"C:\Users\awt\AppData\Local\Temp\ytdl\Tuesday Talks with Britin and Ann.en.vtt"
-OUT_PATH  = r"C:\Users\awt\AppData\Local\Temp\ytdl\transcript_clean.txt"
+# --- Validate arguments ---
+if len(sys.argv) < 2:
+    print("Usage: py parse_vtt.py <input.vtt> [output.txt]", file=sys.stderr)
+    sys.exit(1)
+
+VTT_PATH = sys.argv[1]                                     # path to the .vtt file from yt-dlp
+OUT_PATH = sys.argv[2] if len(sys.argv) > 2 else None      # optional output file; None = stdout
+
 
 def ts_to_seconds(ts):
-    """Convert HH:MM:SS.mmm timestamp to float seconds."""
+    """Convert HH:MM:SS.mmm timestamp string to float seconds."""
     h, m, s = ts.split(":")
     return int(h) * 3600 + int(m) * 60 + float(s)
 
+
 def clean_line(text):
-    """Remove VTT word-level timing tags and trim."""
-    text = re.sub(r"<[^>]+>", "", text)   # remove all HTML/VTT tags
-    text = text.strip()
-    return text
+    """Strip all VTT/HTML inline tags and surrounding whitespace."""
+    return re.sub(r"<[^>]+>", "", text).strip()
+
 
 def parse_vtt(path):
     """
-    Returns list of (start_seconds, text) tuples.
-    Only keeps cues whose text has no <c> tags (i.e. the 'finished' line).
+    Read a VTT file and return list of (start_seconds, text) tuples.
+    Discards intermediate word-by-word cues (those containing <c> or inline
+    timestamp tags) and keeps only the completed final form of each cue.
     """
     with open(path, "r", encoding="utf-8") as f:
         raw = f.read()
 
-    # Split into blocks separated by blank lines
+    # Split on blank lines to get individual cue blocks
     blocks = re.split(r"\n\n+", raw.strip())
 
     entries = []
@@ -38,81 +49,87 @@ def parse_vtt(path):
         lines = block.strip().splitlines()
         if not lines:
             continue
-        # Find the timing line
+
+        # Locate the --> timing line and collect text lines
         timing_line = None
         text_lines = []
         for line in lines:
             if "-->" in line:
                 timing_line = line
-            elif line and not line.startswith("WEBVTT") and not line.startswith("Kind:") \
-                 and not line.startswith("Language:") and not re.match(r"^\d+$", line):
+            elif (line
+                  and not line.startswith("WEBVTT")
+                  and not line.startswith("Kind:")
+                  and not line.startswith("Language:")
+                  and not re.match(r"^\d+$", line)):
                 text_lines.append(line)
 
         if not timing_line or not text_lines:
             continue
 
-        # Only keep cues whose text lines contain NO <c> tags (the final form)
+        # Skip intermediate cues -- they contain word-level <c> or inline time tags
         combined = " ".join(text_lines)
         if "<c>" in combined or "<00:" in combined:
-            continue  # skip intermediate word-level cues
+            continue
 
-        # Parse start time
+        # Parse start time and clean text
         start_str = timing_line.split("-->")[0].strip()
         start_sec = ts_to_seconds(start_str)
-
         text = clean_line(combined)
-        if text and text != " ":
+        if text:
             entries.append((start_sec, text))
 
     return entries
 
-def seconds_to_hms(s):
-    """Convert float seconds to HH:MM:SS string."""
-    s = int(s)
-    h = s // 3600
-    m = (s % 3600) // 60
-    sec = s % 60
-    return f"{h:02d}:{m:02d}:{sec:02d}"
 
-def group_into_paragraphs(entries, gap_seconds=4.0):
+def seconds_to_mmss(s):
+    """Convert seconds to MM:SS string, e.g. 5432 -> '90:32'."""
+    s = int(s)
+    return f"{s // 60:02d}:{s % 60:02d}"
+
+
+def group_into_paragraphs(entries, gap_seconds=3.0):
     """
-    Group consecutive entries into paragraphs when there's a gap >= gap_seconds.
+    Merge consecutive cues into paragraphs whenever the gap between adjacent
+    cues is less than gap_seconds.  A gap >= gap_seconds starts a new paragraph.
     Returns list of (start_seconds, paragraph_text) tuples.
     """
     if not entries:
         return []
 
     paragraphs = []
-    current_start = entries[0][0]
-    current_lines = [entries[0][1]]
+    current_start = entries[0][0]    # timestamp of the current paragraph's first cue
+    current_lines = [entries[0][1]]  # text lines accumulated so far
 
     for i in range(1, len(entries)):
-        prev_start = entries[i-1][0]
-        curr_start = entries[i][0]
-        gap = curr_start - prev_start
+        gap = entries[i][0] - entries[i - 1][0]  # seconds between this cue and the previous
 
         if gap >= gap_seconds:
+            # Close the current paragraph and open a new one
             paragraphs.append((current_start, " ".join(current_lines)))
-            current_start = curr_start
+            current_start = entries[i][0]
             current_lines = [entries[i][1]]
         else:
             current_lines.append(entries[i][1])
 
+    # Flush the final paragraph
     paragraphs.append((current_start, " ".join(current_lines)))
     return paragraphs
 
-entries = parse_vtt(VTT_PATH)
-print(f"Total cues parsed: {len(entries)}")
 
+# --- Main ---
+entries    = parse_vtt(VTT_PATH)
 paragraphs = group_into_paragraphs(entries, gap_seconds=3.0)
-print(f"Total paragraphs: {len(paragraphs)}")
 
-with open(OUT_PATH, "w", encoding="utf-8") as out:
-    for start, text in paragraphs:
-        out.write(f"[{seconds_to_hms(start)}] {text}\n\n")
+# Build output lines: [MM:SS] text
+lines_out   = [f"[{seconds_to_mmss(start)}] {text}" for start, text in paragraphs]
+output_text = "\n\n".join(lines_out)
 
-print(f"Written to: {OUT_PATH}")
-
-# Also print first 20 paragraphs to console for verification
-for start, text in paragraphs[:20]:
-    print(f"[{seconds_to_hms(start)}] {text[:100]}")
+if OUT_PATH:
+    # Write to file when an explicit output path is provided
+    with open(OUT_PATH, "w", encoding="utf-8") as f:
+        f.write(output_text + "\n")
+    print(f"Written {len(paragraphs)} paragraphs to: {OUT_PATH}", file=sys.stderr)
+else:
+    # Default: print to stdout so Claude can read it directly
+    print(output_text)
+    print(f"\n--- Total paragraphs: {len(paragraphs)} ---", file=sys.stderr)

@@ -11,6 +11,8 @@
 - [domain/obsidian.md](domain/obsidian.md) — MCP tool preference, MOC rules, People Index rules, Related Notes, activity log, Riḍván spelling
 - [domain/bahai_publication_standards.md](domain/bahai_publication_standards.md) — correct spellings/diacriticals for Central Figures, family terms (Afnán, Aghsán), capitalization rules, common misspellings to fix
 - [domain/synthesis.md](domain/synthesis.md) — Synthesis Layer rules, Query-to-File Rule, Vault Lint Workflow, current synthesis pages
+- [domain/vault_mocs.md](domain/vault_mocs.md) — All 17 canonical MOC file names, topic mappings, folder routing, special overrides (JapanTrip, EliasWhiteTalbot, FOL)
+- [domain/vault_tags.md](domain/vault_tags.md) — Canonical tag vocabulary (frequency-ranked); known duplicates/variants pending user decision; import artifact tags; special rules (BahaiScripture, Bahai)
 
 ## Completed Projects
 - [projects_completed.md](projects_completed.md) — Recipes (389 files), Amish Economics PDF, Title Case fix (456 renamed), Riḍván spelling fix (145 files)
@@ -23,6 +25,9 @@
 - [feedback_source_file_handling.md](feedback_source_file_handling.md) — After RTF/DOCX→.md conversion, move source to 09 - Attachments; never delete
 - [feedback_content_filter.md](feedback_content_filter.md) — API 400 content filter: use incremental Edit in small chunks; filter blocks output not input
 - [feedback_classify_notes.md](feedback_classify_notes.md) — Always do all 3 steps: move (not vault root/02-Projects), link to MOC, add tags + nav
+- [feedback_dual_moc_library.md](feedback_dual_moc_library.md) — Library-substantive content links to both its topical MOC and FOL MOC / Overview
+- [feedback_sketchplanations_xkcd.md](feedback_sketchplanations_xkcd.md) — xkcd content belongs in MOC - Home & Practical Life / Sketchplanations alongside sketchplanations.com content
+- [feedback_wcwbf_gccma.md](feedback_wcwbf_gccma.md) — WCWBF content always gets a GCCMA section link in addition to any other placement (same pattern as FOL and JapanTrip rules)
 - [feedback_biography_format.md](feedback_biography_format.md) — Gold standard: Helen Cordes.md; 3 required resources (vault + web + email); full biography format
 - [feedback_transcript_format.md](feedback_transcript_format.md) — Keep first timestamp per paragraph; group by topic shift; preserve footnotes
 - [feedback_recipe_processing.md](feedback_recipe_processing.md) — Always retain narrative; place in ## Story after recipe, before Related Notes

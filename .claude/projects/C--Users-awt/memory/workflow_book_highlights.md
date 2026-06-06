@@ -17,7 +17,7 @@ metadata:
 - **Path B (PDF with embedded annotations):** User points at a PDF; Claude writes and runs a Python script using PyMuPDF (`fitz`) to extract highlight annotation text programmatically
 - **Path C (pasted raw text):** User pastes or types the passages directly; Claude formats and structures them
 - **Path D (existing vault markdown note):** User points at a `.md` file already in the vault; Claude reads it, detects the highlight markup convention, and extracts marked passages
-- **Path E (annotated DOCX / Word document):** User points at a `.docx` file; Claude writes and runs a Python script using stdlib `zipfile` + `xml.etree.ElementTree` (no third-party packages needed) to parse `word/comments.xml` (reader annotations with their associated text) and `word/footnotes.xml` (book citations). Extracts 3 artifacts: (1) each Word comment paired with the text it annotates, in document order; (2) footnotes in document order; (3) any highlighted text runs (via `<w:highlight>` in run properties). Reference extraction script: `C:\Users\awt\extract_light_of_world.py`. Key technique: build DOCX path with `chr(0xNNNN)` for diacriticals; set `sys.stdout.reconfigure(encoding="utf-8")` to avoid Windows cp1252 crash on diacritical output. Always apply a post-processing `fix_missing_spaces()` step to all extracted text fields: `re.sub(r'([.!?])([A-ZÀ-ɏ])', r'\1 \2', text)` repairs the DOCX word-wrap artifact where adjacent `<w:t>` runs are joined without a space.
+- **Path E (annotated DOCX / Word document):** User points at a `.docx` file; run `C:\Users\awt\extract_docx_notes.py` (general-purpose, replaces per-book scripts). Uses stdlib `zipfile` + `xml.etree.ElementTree` — no third-party packages. Extracts 3 artifacts: (1) Word comments paired with annotated text; (2) footnotes in document order; (3) colored highlight runs (`<w:highlight>`). Script flags: `--docx`, `--out`, `--title`, `--author`, `--nav`, `--tags`, `--no-footnotes`, `--no-highlights`, `--append`. Key techniques: build DOCX path with `chr(0xNNNN)` for diacriticals; `sys.stdout.reconfigure(encoding="utf-8")` to avoid cp1252 crash; `fix_missing_spaces()` repairs `<w:t>` run-join artifacts. **Output format (confirmed standard):** all highlights and notes in a single `## Highlights and Notes` section, interleaved in document order. Each entry: (a) leading paragraph number prepended if the paragraph begins with one (e.g. `1.2`); (b) yellow highlights as `==text==`, other colors as `[colorname] text`; (c) source citation extracted from the END of the same paragraph via `extract_trailing_citation()` — looks for pattern `\s{2,}N.N | XX | Book Name` at paragraph tail; if absent, no source line is shown. Comments rendered as blockquote + `**Note:**` line.
 
 ## Step 2 — Markup Detection for Path D
 Check in this order:
@@ -28,14 +28,14 @@ Check in this order:
 - No markup — read full file and use judgment to identify key passages
 
 ## Step 3 — Output Note Format
-- **Destination:** `09 - Kindle Clippings/` for highlights/clippings from any source; complete books go in `09 - eBooks/`
+- **Destination:** `09 - eBook Clippings/` for highlights/clippings from any source; complete books go in `09 - eBooks/`
 - **Filename:** `{Author Last Name}-{Short Title}.md` matching Kindle clipping naming convention
 - **Frontmatter:** `title`, `author`, `tags: [BookClippings]`, `nav` pointing to relevant MOC
 - **Body:** `## Highlights` section; each passage as a blockquote; page/location reference appended if available
 
 ## Step 4 — Workflow Steps
 1. Confirm path and get file path / image folder / source
-2. Check whether a clippings note for this book already exists (search `09 - Kindle Clippings/` by author/title)
+2. Check whether a clippings note for this book already exists (search `09 - eBook Clippings/` by author/title)
 3. **If existing note found → Incremental/append mode** (see Step 6 below)
 4. **If no existing note → First session:** extract all passages, write new note with full frontmatter, link in MOC
 5. Deduplicate and order by page number where discernible

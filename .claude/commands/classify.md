@@ -133,3 +133,24 @@ Log each classified note to the Claude Action Log with `[INGEST]` prefix:
 `[INGEST] <filename> → <MOC> / <Subsection>`
 
 Preserve UTF-8 encoding on all file reads and writes.
+
+---
+
+## Decision Log (append to session output)
+
+After the summary table, include a **Decisions** section listing any non-obvious judgment calls made during the session:
+
+- Any MOC or subsection routing that wasn't a clear match — name the alternatives considered and why this one was chosen
+- Any tag choice where a variant or duplicate was encountered — name both and which was applied; flag for user if unresolved
+- Any ambiguous file that could have gone to multiple MOCs — describe the tiebreaker
+- Any new rule derived from a decision that was written to memory — mark *(memorized)*
+- Any open question that needs user input before it can be resolved — mark *(flag for user)*
+
+**Format:**
+```
+**Decisions this session:**
+- `{filename}` → {MOC / Subsection}: {1-sentence reason} *(memorized)* | *(flag: {question})*
+- Tag `{variant}` encountered on `{filename}`; applied canonical `{tag}` *(flag: confirm canonical?)*
+```
+
+Omit this section entirely if every routing decision was unambiguous and matched an existing rule.

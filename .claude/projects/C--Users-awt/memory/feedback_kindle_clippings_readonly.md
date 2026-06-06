@@ -7,10 +7,12 @@ metadata:
   originSessionId: 0b78a596-224e-45d6-a625-af4aa16a4098
 ---
 
-Never modify files in `09 - Kindle Clippings\`. When linking Kindle Clippings:
-- Add the wikilink in the MOC or source note (link IN to the clipping)
-- Do NOT add `nav` frontmatter, backlinks, or any other content to the clipping file itself
+Files in `09 - Kindle Clippings\` are created by the Kindle Highlights Obsidian plugin — they are NOT Claude-extracted book highlights. Never modify or move them.
 
-**Why:** Kindle Clippings are preserved as-imported source records. Modifications risk corrupting the original highlight data and violate the read-only intent of that folder.
+**Two distinct folders:**
+- `09 - Kindle Clippings\` — Kindle plugin output; read-only; contain `asin:` frontmatter field
+- `09 - eBook Clippings\` — Claude-extracted book highlights; contain `nav:` frontmatter, no `asin:` field
 
-**How to apply:** In any linking workflow (classify, crosslink, orphan fix), if the target is in `09 - Kindle Clippings\`, only update the linking side (MOC or note). Leave the clipping file untouched.
+**How to apply:** When the user asks to move or reorganize book clippings, only touch files in `09 - eBook Clippings\`. Identify Claude-created files by presence of `nav:` and absence of `asin:` in frontmatter. Never move or bulk-operate on `09 - Kindle Clippings\`.
+
+**Exception:** Frontmatter structural repairs (malformed YAML tags, missing closing `---`) are permitted on Kindle Clippings files when flagged by the maintenance log. Content of the clipping remains untouched.
