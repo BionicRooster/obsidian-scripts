@@ -106,6 +106,14 @@ Use the `/resolve-unknowns` skill — accepts scope, age filter, and source flag
 Trigger: "sort todo", "sort to-do list", or "resort todos"
 Use the `/sort-todo` skill — no arguments; full procedure in `~/.claude/commands/sort-todo.md`.
 
+## Deprecate Scripts Workflow
+Trigger: "deprecate scripts", "audit scripts", "clean up scripts", or "review script catalog"
+Use the `/deprecate-scripts` skill — analyzes catalog for temp/debug/one-off/superseded scripts, presents candidates by group for approval, moves approved to `_deprecated/`, refreshes catalog, commits; full procedure in `~/.claude/commands/deprecate-scripts.md`.
+
+## Vault Duplicate Cleanup Workflow
+Trigger: "check vault for duplicates", "find duplicate notes", "dedup vault", "duplicate cleanup", or "remove duplicate notes"
+Use the `/dedup-vault` skill — detects exact-filename duplicates, classifies each pair (true duplicate vs. import artifact vs. thread continuation), merges unique content into canonical version, cleans path-specific inbound links, deletes weaker file, verifies zero remaining duplicates, logs to Action Log; full procedure in `~/.claude/commands/dedup-vault.md`.
+
 ## Web Scraping Workflow
 Trigger: "search the web for", "scrape", "fetch page", or any request for semantic web search or JS-rendered page content.
 Use the `/web-scraping` skill — Exa for topic search, Firecrawl for JS-heavy pages; full procedure in `~/.claude/commands/web-scraping.md`.
