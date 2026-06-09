@@ -1,4 +1,4 @@
-Write a complete MLS soccer box score and save it as an Obsidian vault note.
+Write a complete soccer box score (MLS or USMNT/USWNT) and save it as an Obsidian vault note.
 
 ## Parameters
 
@@ -6,12 +6,15 @@ Write a complete MLS soccer box score and save it as an Obsidian vault note.
 - `/box-score Austin FC vs Portland 2026-06-01`
 - `/box-score Austin FC vs Portland on June 1`
 - `/box-score Austin FC vs Portland` (omit date → assume most recent match)
+- `/box-score USMNT vs Mexico 2026-03-25`
+- `/box-score USWNT vs Canada 2026-04-10`
 - `/box-score` with no args → prompt: "Which match? (Team A vs Team B, YYYY-MM-DD)"
 
 Parse from `$ARGUMENTS`:
-- **Team A** — first team named (typically home team for Austin FC matches, but use order as given)
+- **Team A** — first team named (typically home team, or USMNT/USWNT for national team matches)
 - **Team B** — team after "vs" or "at"
 - **Date** — YYYY-MM-DD if provided; otherwise search for the most recent completed match between the two teams
+- **Competition type** — MLS (default) or international (USMNT/USWNT/Gold Cup/World Cup Qualifying/CONCACAF Nations League/Friendly)
 
 ---
 
@@ -22,8 +25,9 @@ Parse from `$ARGUMENTS`:
 
 ---
 
-## Step 1 — Pre-flight: Search Clippings
+## Step 1 — Pre-flight: Clippings → FBref Live Scrape
 
+**1a. Check clippings folder first.**
 Grep `D:\Obsidian\Main\10 - Clippings\` for any note matching both team names and/or the match date.
 
 **If a clipping is found:**
@@ -31,13 +35,27 @@ Grep `D:\Obsidian\Main\10 - Clippings\` for any note matching both team names an
 - Use web fetches (Step 2) only to fill gaps or cross-verify disputed facts
 - Note the clipping filename as the first footnote in the source table
 - **After the box score is complete, delete the clipping note from `10 - Clippings\`**
-- Preferred clip source: **FBref** — provides complete squads with jersey numbers, full event timeline, formations, officials, managers, captains; FBref cannot be fetched via WebFetch (HTTP 403) — user must clip it before the session
+- Skip to Step 3.
+
+**1b. If no clipping found — attempt FBref live scrape via Firecrawl.**
+
+FBref is the gold-standard source (complete squads with jersey numbers, full event timeline, formations, officials, managers, captains). It blocks plain WebFetch (HTTP 403) but **Firecrawl can fetch it reliably** with `waitFor: 8000`.
+
+Procedure:
+1. Search for the FBref match URL: use `firecrawl_search` with query `site:fbref.com "{Team A}" "{Team B}" {Year} match report`
+2. From results, find the URL matching the pattern `fbref.com/en/matches/{id}/...`
+3. For MLS: the URL ends in `-Major-League-Soccer`; for international: ends in the competition name (e.g., `-CONCACAF-Nations-League`, `-FIFA-World-Cup-Qualifying`, `-Friendlies-Mens`)
+4. Scrape with `firecrawl_scrape`: `url={match_url}`, `formats=["markdown"]`, `waitFor=8000`, `onlyMainContent=true`
+5. If scrape returns > 200 words of content, treat it as the **primary source** — same authority as a manual clipping. Skip to Step 3.
+6. If scrape fails or returns thin content, proceed to Step 2.
 
 ---
 
 ## Step 2 — Web Sources
 
-Fetch in parallel (skip any already confirmed by clipping):
+Fetch in parallel (skip any already confirmed by clipping or FBref scrape):
+
+### MLS matches
 
 | Source | What it provides |
 |---|---|
@@ -56,6 +74,24 @@ Fetch in parallel (skip any already confirmed by clipping):
 
 Also read the vault Austin FC roster note as the **primary jersey number source:**
 `D:\Obsidian\Main\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md`
+
+### USMNT / USWNT matches
+
+Use the same source priority order. Swap MLS-specific sources for these international equivalents:
+
+| Source | What it provides |
+|---|---|
+| FBref (via Firecrawl — Step 1b above) | Complete lineups with jersey numbers, formations, officials, full event timeline — **primary source** |
+| ESPN match stats (`espn.com/soccer/matchstats/_/gameId/{id}`) | Team stats, attendance, card totals |
+| US Soccer official match report (`site:ussoccer.com`) | Narrative detail, disallowed goals, official lineup confirmation |
+| Opponent federation site | Opponent-side perspective on key events |
+| FotMob (`fotmob.com/match/{id}/matchfacts/`) | Event timeline, substitution times, card events — same timing artifacts as MLS |
+| Reddit r/soccer or r/ussoccer match thread | Card reasons, VAR incident details, real-time sub confirmation |
+| Major sports outlet (Guardian, NYT, Athletic, ESPN) | Red card and VAR incident descriptions; useful for controversial calls |
+
+**Jersey numbers for USMNT/USWNT:** National team squads change per camp — FBref lineup (Step 1b) is the most reliable per-match number source. No standing vault roster note; fall back to prior national team box scores in `D:\Obsidian\Main\01\Soccer\`.
+
+**Competition tags for YAML frontmatter:** Use the actual competition name — `Gold Cup`, `CONCACAF Nations League`, `FIFA World Cup Qualifying`, `International Friendly` — not just "International".
 
 ---
 

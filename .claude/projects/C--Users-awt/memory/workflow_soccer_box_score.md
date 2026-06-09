@@ -18,13 +18,17 @@ metadata:
 - Output file: `D:\Obsidian\Main\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md` (vault root)
 - Template: `D:\Obsidian\Main\05 - Templates\Soccer Template.md`
 
-## Step 1 — Pre-flight: Search Clippings
+## Step 1 — Pre-flight: Clippings → FBref Live Scrape
 Grep `D:\Obsidian\Main\10 - Clippings\` for a note matching both team names and/or the match date. If found:
-- Read it immediately as the **primary source** for all match facts (score, goals, assists, lineups, substitutions, cards)
-- Use web fetches (step 2) only to fill gaps or cross-verify disputed facts
-- Note the clipping note filename in the source discrepancy table as the first footnote
-- **After the box score is complete, delete the clipping note** from `10 - Clippings\`
-- **Preferred clip source: FBref** — provides complete squads with jersey numbers, full event timeline, formations, officials, managers, captains; FBref cannot be fetched via WebFetch (HTTP 403) — must be clipped by user before the session
+- Read it immediately as the **primary source**; delete clipping after box score is complete; skip to Step 3.
+
+**If no clipping found — try FBref via Firecrawl** (confirmed working 2026-06-08; plain WebFetch still 403):
+1. Search `site:fbref.com "{Team A}" "{Team B}" {Year} match report` to find match URL
+2. Scrape with `firecrawl_scrape`: `waitFor=8000, formats=["markdown"], onlyMainContent=true`
+3. If > 200 words returned, treat as primary source (same authority as a clipping)
+4. On failure, proceed to Step 2 web sources
+
+FBref provides: complete squads + jersey numbers, full event timeline, formations, officials, managers, captains — for both MLS and international matches.
 
 ## Step 2 — Web Sources (fetch in parallel; skip if already confirmed by clipping)
 - WebSearch for the match to locate primary sources
