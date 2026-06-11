@@ -1,9 +1,13 @@
 ---
 name: Classify Notes Workflow — Required Steps
-description: The three required steps whenever classifying vault notes — move, link, tag
-type: feedback
+description: The three required steps whenever classifying vault notes — move, link, tag; vault root no-move rule applies to single notes too
+metadata:
+  type: feedback
 originSessionId: f2c229e5-bd10-4e40-b472-28911306b580
 ---
+
+**ALWAYS load `workflow_classify_notes.md` before any classify action** — this applies to single-note requests ("format and classify X") as well as bulk `/classify` runs. Do not act from general knowledge of what "classify" means.
+
 When classifying notes (vault root, 10 - Clippings, or recent files), always do ALL THREE steps:
 
 1. **Move** the file to the appropriate `01/` subdirectory — **BUT ONLY if:**
