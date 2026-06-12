@@ -39,6 +39,9 @@
 - [feedback_bahai_scripture_tag.md](feedback_bahai_scripture_tag.md) — Add BahaiScripture tag to any note attributed to a Central Figure (Bahá'u'lláh, The Báb, 'Abdu'l-Bahá); not for Shoghi Effendi or UHJ
 - [feedback_daily_note_whats_new.md](feedback_daily_note_whats_new.md) — "What's New" dataview in daily notes uses dur(2 days), not dur(10 days)
 
+## Feedback — Corrections Log
+- [feedback_corrections_log.md](feedback_corrections_log.md) — Log confirmed corrections to C:\Users\awt\corrections.md: date, what I wrote, what user changed it to, category (Real miss/Preference/Carryover/Variation)
+
 ## Feedback — Security
 - `feedback_no_secrets_in_code` — moved to global memory (`~/.claude/memory/feedback_no_secrets_in_code.md`)
 
