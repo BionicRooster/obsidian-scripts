@@ -10,14 +10,19 @@
 #   5. Warns if the global index exceeds 200 lines (it is always fully loaded; keep it lean)
 #
 # Usage:
-#   powershell -ExecutionPolicy Bypass -File check-memory-indexes.ps1 -ProjectCwd "C:\Users\awt"
+#   pwsh -ExecutionPolicy Bypass -File check-memory-indexes.ps1 -ProjectCwd "C:\Users\awt"
+#   pwsh -ExecutionPolicy Bypass -File check-memory-indexes.ps1 -ProjectCwd "C:\Users\awt" -NoContent
+#
+# Note: use pwsh (PowerShell 7+), not powershell.exe (5.x) — the generic List type syntax
+#       triggers a parser bug in PS5 that causes cascading false errors.
 #
 # Parameters:
 #   -ProjectCwd   The current working directory of the Claude session. Used to derive the
 #                 sanitized project key and locate the project MEMORY.md. Defaults to $PWD.
 
 param(
-    [string]$ProjectCwd = $PWD.Path  # CWD passed in from optimize-memory; drives project key derivation
+    [string]$ProjectCwd = $PWD.Path,  # CWD passed in from optimize-memory; drives project key derivation
+    [switch]$NoContent                 # when set, skip the full index content dump (quick human check mode)
 )
 
 # --- Constants ---
@@ -29,7 +34,7 @@ $MaxLineLength    = 150                              # Index entry line length c
 # --- Derive project memory path from CWD ---
 # Sanitize: strip drive colon, convert all separators (\ and /) to --
 # Example: "C:\Users\awt" -> "C--Users-awt"
-$sanitized        = $ProjectCwd -replace ':', '' -replace '\\', '--' -replace '/', '--'
+$sanitized        = $ProjectCwd -replace ':\\', '--' -replace '\\', '-' -replace '/', '-'
 $ProjectMemoryDir = "C:\Users\awt\.claude\projects\$sanitized\memory"  # Project memory root
 $ProjectIndexPath = "$ProjectMemoryDir\MEMORY.md"                       # Project index file
 
@@ -51,8 +56,9 @@ function Invoke-IndexCheck {
         return
     }
 
-    # Read all lines with UTF-8 encoding (vault standard)
-    $lines     = Get-Content $IndexPath -Encoding UTF8
+    # Read all lines with UTF-8 encoding (vault standard); @() forces array even for single-line files
+    # (without @(), a one-line file returns a plain string and .Count gives string length, not 1)
+    $lines     = @(Get-Content $IndexPath -Encoding UTF8)
     $lineCount = $lines.Count  # Total line count for cap check
 
     Write-Output "    Lines: $lineCount"
@@ -123,18 +129,21 @@ Invoke-IndexCheck -IndexPath $GlobalIndexPath  -MemoryDir $GlobalMemoryDir  -Lab
 Invoke-IndexCheck -IndexPath $ProjectIndexPath -MemoryDir $ProjectMemoryDir -Label "Project"
 
 # --- Full content dump (replaces Step 1 read) ---
-Write-Output ""
-Write-Output "=== GLOBAL INDEX CONTENT ==="
-if (Test-Path $GlobalIndexPath) {
-    Get-Content $GlobalIndexPath -Encoding UTF8
-} else {
-    Write-Output "(file not found)"
-}
+# Skipped when -NoContent is set; use that flag for quick human checks
+if (-not $NoContent) {
+    Write-Output ""
+    Write-Output "=== GLOBAL INDEX CONTENT ==="
+    if (Test-Path $GlobalIndexPath) {
+        Get-Content $GlobalIndexPath -Encoding UTF8
+    } else {
+        Write-Output "(file not found)"
+    }
 
-Write-Output ""
-Write-Output "=== PROJECT INDEX CONTENT ==="
-if (Test-Path $ProjectIndexPath) {
-    Get-Content $ProjectIndexPath -Encoding UTF8
-} else {
-    Write-Output "(file not found)"
+    Write-Output ""
+    Write-Output "=== PROJECT INDEX CONTENT ==="
+    if (Test-Path $ProjectIndexPath) {
+        Get-Content $ProjectIndexPath -Encoding UTF8
+    } else {
+        Write-Output "(file not found)"
+    }
 }

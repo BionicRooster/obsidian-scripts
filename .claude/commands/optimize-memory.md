@@ -6,7 +6,7 @@ Run the helper script to read both index files and validate them in one determin
 Substitute the actual current working directory for `<CWD>`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "C:\Users\awt\.claude\commands\check-memory-indexes.ps1" -ProjectCwd "<CWD>"
+pwsh -ExecutionPolicy Bypass -File "C:\Users\awt\.claude\commands\check-memory-indexes.ps1" -ProjectCwd "<CWD>"
 ```
 
 The script outputs:
