@@ -137,6 +137,10 @@ Read first: `memory/workflow_book_highlights.md` — 5 extraction paths (A photo
 ## Synthesis Layer, Query-to-File Rule, and Vault Lint Workflow
 Read first: `memory/domain/synthesis.md` — synthesis layer location/purpose, when to check/update, Query-to-File Rule (when to file a query answer as a synthesis page), Vault Lint checks (Contradictions · Thin Pages · Topic Gaps · Stale Claims).
 
+## Adversarial Review Workflow
+Trigger: "adversarial review [note]", "validate this note", or "stress-test this".
+Use the `/adversarial-review` skill — spawns an adversarial critic against a scholarly/technical note, triages each flagged item (accept / verify-then-accept / reject) before editing, applies only corrections that survive independent verification, reports full triage; full procedure in `~/.claude/commands/adversarial-review.md`.
+
 ## Improve System Workflow
 Trigger: "/improve-system" or when asked to audit memory, improve a skill, capture a lesson, mine past sessions, or fill foundational knowledge gaps.
 Use the `/improve-system` skill — 5 modes: Audit (stale/conflicting/duplicate), Skill Review, Experience (capture a win or lesson), Historical Review (mine .jsonl sessions), Foundation (brand/audience/offers); full procedure in `~/.claude/commands/improve-system.md`.
