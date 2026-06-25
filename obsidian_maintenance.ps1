@@ -939,11 +939,14 @@ function Generate-TruncatedFilenamesList {
             'wifi', 'bluetooth', 'hdmi', 'usb', 'html', 'css', 'json', 'xml', 'sql', 'api', 'url',
             'iphone', 'ipad', 'macos', 'ios', 'linux', 'ubuntu', 'debian', 'nvidia', 'amd', 'intel',
             'pinout', 'pinouts',   # Hardware pin layout diagrams (e.g. "GPIO Pinout")
+            'apps',                # Common plural of "app" (too short for standard dictionary)
             # Common proper nouns
             'bahai', 'quran', 'torah', 'buddhist', 'hindu', 'sikh', 'zoroastrian',
+            'nino',    # NFD-normalized form of "Niño" (e.g. "El Niño")
             # Arabic/Persian name suffixes — NFD-normalized forms of diacritical words
             # e.g. "lláh" (in Bahá'u'lláh, Bahá-u-lláh) normalizes to "llah"; "Bahá" → "baha"
             'llah', 'baha', 'ullah', 'allah',
+            'mustagath',   # NFD-normalized form of "Mustaghāth" (Bahá'í prayer title)
             # Food terms
             'kimchi', 'tofu', 'tempeh', 'hummus', 'falafel', 'tahini', 'miso', 'ramen', 'udon',
             'chutney', 'naan', 'chapati', 'samosa', 'biryani', 'teriyaki', 'wasabi', 'edamame',
@@ -953,6 +956,7 @@ function Generate-TruncatedFilenamesList {
             'aiden', 'bryant', 'garcia', 'martinez', 'rodriguez', 'hernandez', 'lopez', 'gonzalez',
             'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma', 'bretz', 'rowe', 'pryor', 'valle', 'haley',
             'bauer', 'fargo', 'donath', 'davidson',
+            'weinberg', 'danesh', 'reva', 'messi', 'durden', 'hassen',   # from Truncated Filenames
             'hormouz',   # Strait of Hormouz (alternate spelling of Hormuz)
             # Tech/common terms from truncated filenames
             'perl', 'wiki', 'blog', 'gmail',
@@ -962,7 +966,7 @@ function Generate-TruncatedFilenamesList {
             'covid', 'coronavirus', 'pandemic', 'vaccine', 'mrna',
             'lgbt', 'lgbtq', 'bipoc', 'dei', 'juneteenth', 'kwanzaa', 'hanukkah', 'diwali', 'ramadan', 'eid',
             # Short words
-            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok',
+            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok', 'gnp',
             # Slang
             'duh'
         )
@@ -4869,7 +4873,7 @@ Delete-EmptyNotes
 Generate-TruncatedFilenamesList
 Delete-SmallResourceImages
 Delete-EmptyFolders
-Add-TaskTagsToCheckboxes
+# Add-TaskTagsToCheckboxes  # Disabled: auto-tagging bare checkboxes with #task is unwanted
 Fix-BrokenImageLinks
 Generate-OrphanFilesList
 Fix-MojibakeEncoding
