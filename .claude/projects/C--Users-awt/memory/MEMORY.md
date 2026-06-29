@@ -18,6 +18,7 @@
 - [projects_completed.md](projects_completed.md) — Recipes (389), Amish Economics PDF, Title Case fix (456), Riḍván spelling fix (145)
 
 ## Feedback — Writing Style
+- [feedback_transparency_patterns.md](feedback_transparency_patterns.md) — Three required patterns every session: Agentic Update Formula pre-tool statements, TaskCreate task lists for >2-step workflows, receipt tables at workflow close
 - [feedback_anti_ai_style.md](feedback_anti_ai_style.md) — Banned words, structural tics, and human constructions to use; self-check before any long response
 - [feedback_name_memories.md](feedback_name_memories.md) — Name memory files in dialogue when recalling them so Wayne can see what's being used
 - [feedback_adversarial_review.md](feedback_adversarial_review.md) — Adversarial-critic + independent verification before applying corrections; confirmed effective, now `/adversarial-review` skill
