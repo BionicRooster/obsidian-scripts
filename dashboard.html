@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -58,22 +58,6 @@
       margin-top: 4px;
     }
 
-    /* ── File-protocol warning banner ─────────────────────────────────── */
-    .file-warning {
-      background: #2a1a00;
-      border: 1px solid #aa6600;
-      border-radius: 8px;
-      padding: 10px 16px;
-      margin-bottom: 14px;
-      font-size: 0.8rem;
-      color: #ffbb55;
-      display: none;   /* shown via JS when protocol === file:  */
-    }
-    .file-warning code {
-      background: rgba(255,255,255,0.1);
-      padding: 1px 5px;
-      border-radius: 3px;
-    }
 
     /* ── Layout helpers ────────────────────────────────────────────────── */
     .row-2 {
@@ -249,33 +233,6 @@
       padding-left: 6px;
     }
 
-    /* ── Stock table ────────────────────────────────────────────────────── */
-    .stock-tbl {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .stock-tbl th {
-      text-align: left;
-      font-size: 0.66rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-sec);
-      padding: 5px 8px;
-      border-bottom: 1px solid var(--card-border);
-    }
-    .stock-tbl td {
-      padding: 9px 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      vertical-align: middle;
-    }
-    .stock-tbl tr:last-child td { border-bottom: none; }
-    .stock-ticker { font-weight: 700; font-size: 1rem; }
-    .stock-name   { font-size: 0.68rem; color: var(--text-sec); margin-top: 1px; }
-    .stock-price  { font-size: 1rem; font-weight: 700; }
-    .stock-mktstate { font-size: 0.63rem; color: var(--text-sec); }
-    .gain { color: var(--green); }
-    .loss { color: var(--red);   }
-    .stock-footer { font-size: 0.68rem; color: var(--text-sec); margin-top: 9px; }
 
     /* ── Soccer cards ────────────────────────────────────────────────────── */
     .soccer-card { text-align: center; }
@@ -321,14 +278,6 @@
   </div>
 </div>
 
-<!-- ── Banner shown only when page is opened via file:// ─────────────── -->
-<div class="file-warning" id="file-warning">
-  <strong>Tip:</strong> Some data (stocks) loads more reliably from a local web server.
-  Open a terminal in the folder containing this file and run:
-  <code>python -m http.server 8080</code>
-  then open <code>http://localhost:8080/dashboard.html</code>
-</div>
-
 <!-- ── Row 1: Air quality + current weather ──────────────────────────── -->
 <div class="row-2">
   <div class="card" id="aq-card">
@@ -362,12 +311,6 @@
   <div id="tz-body">Loading…</div>
 </div>
 
-<!-- ── Row 4: Stock prices ────────────────────────────────────────────── -->
-<div class="card full" id="stocks-card">
-  <div class="card-label">Portfolio Tracker</div>
-  <div class="loading-msg" id="stocks-body">Loading stock prices…</div>
-</div>
-
 <!-- ── Row 5: Soccer next games ──────────────────────────────────────── -->
 <div class="row-3">
   <div class="card soccer-card" id="sc-austin">
@@ -398,13 +341,6 @@ const GTXN_ZIP    = "78626";       /* Georgetown TX primary zip code            
 const GTXN_LAT    = 30.6327;       /* Georgetown TX latitude (decimal degrees)  */
 const GTXN_LNG    = -97.6772;      /* Georgetown TX longitude (decimal degrees) */
 const TZ_CT       = "America/Chicago"; /* IANA tz for Georgetown                */
-
-/* Stock positions: symbol, display name, and user's cost basis per share */
-const STOCKS = [
-  { symbol: "CALM",  name: "Cal-Maine Foods",    basis: 93.87 },
-  { symbol: "DPMLF", name: "Diploma PLC (OTC)",  basis: 41.59 },
-  { symbol: "KQQQ",  name: "ETF",                basis: 27.55 },
-];
 
 /* Timezone rows: IANA name, display abbreviation, city label,
    latitude and longitude for solar calculation, home=highlight flag */
@@ -474,14 +410,6 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000); /* refresh every 1 000 ms */
 
-/* ═══════════════════════════════════════════════════════════════════════
-   FILE-PROTOCOL BANNER
-   Shown when the page is loaded via file:// (no HTTP server running)
-   ═══════════════════════════════════════════════════════════════════════ */
-if (window.location.protocol === "file:") {
-  /* flag is visible so user knows stock data may be limited */
-  document.getElementById("file-warning").style.display = "block";
-}
 
 /* ═══════════════════════════════════════════════════════════════════════
    SECTION 2 — SOLAR / TIMEZONE UTILITIES
@@ -925,192 +853,6 @@ async function loadWeather() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SECTION 6 — STOCK PRICES
-   Strategy: Yahoo Finance v8 chart endpoint via corsproxy.io (primary);
-   Stooq.com CSV (fallback when Yahoo blocks or returns 401/429).
-   Both sources work from file:// because requests go through a proxy.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/**
- * fetchOneQuote — fetches a normalized price quote for a single ticker.
- *
- * Primary:  Yahoo Finance v8 chart API routed through corsproxy.io.
- *           Returns intraday price + day change.
- * Fallback: Stooq.com CSV — free, no auth, returns previous-close EOD data.
- *           Used when Yahoo returns any non-200 status (401, 429, etc.).
- *
- * @param  {string} symbol  ticker symbol, e.g. "CALM"
- * @returns {object}  normalized quote object (see fields below)
- */
-async function fetchOneQuote(symbol) {
-  /* Yahoo Finance v8 chart — less rate-limited than v7/quote batch endpoint */
-  const yahooBase = `https://query1.finance.yahoo.com/v8/finance/chart/`
-                  + `${encodeURIComponent(symbol)}`
-                  + `?range=1d&interval=1d&includePrePost=false`;
-  /* corsproxy.io forwards the request server-side, adding CORS headers and
-     full browser-like request headers that satisfy Yahoo's auth check */
-  const proxied   = `https://corsproxy.io/?${encodeURIComponent(yahooBase)}`;
-
-  try {
-    const res  = await fetch(proxied, { headers: { Accept: "application/json" } });
-    if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
-    const json   = await res.json();
-    const result = json?.chart?.result?.[0];    /* first (only) result element */
-    if (!result) throw new Error("Empty chart result");
-
-    const meta      = result.meta;              /* metadata object from Yahoo v8 */
-    const price     = meta.regularMarketPrice ?? 0;              /* live/delayed price     */
-    /* chartPreviousClose is more accurate for intraday; previousClose as fallback */
-    const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-    const dayChg    = price - prevClose;                         /* $ change today         */
-    const dayChgPct = prevClose !== 0 ? (dayChg / prevClose) * 100 : 0; /* % change today */
-
-    return {
-      symbol:      meta.symbol      || symbol,  /* confirmed ticker from Yahoo */
-      name:        meta.shortName   || meta.longName || symbol, /* display name */
-      price,
-      prevClose,
-      dayChg,
-      dayChgPct,
-      marketState: meta.marketState || "CLOSED", /* REGULAR | PRE | POST | CLOSED */
-      source:      "Yahoo Finance",
-      isEOD:       false,  /* false = intraday price available */
-    };
-
-  } catch (yahooErr) {
-    /* ── Stooq fallback ──────────────────────────────────────────────────
-       Stooq returns a CSV with the most recent session's OHLCV data.
-       Format: Date,Time,Open,High,Low,Close,Volume  (header + data rows)
-       Append ".us" for US-listed securities; works for OTC and ETFs.    */
-    const stooqUrl = `https://stooq.com/q/l/`
-                   + `?s=${encodeURIComponent(symbol.toLowerCase())}.us`
-                   + `&f=sd2t2ohlcv&h&e=csv`;
-    const sRes = await fetch(stooqUrl);
-    if (!sRes.ok) {
-      throw new Error(
-        `Yahoo: ${yahooErr.message} | Stooq HTTP ${sRes.status}`
-      );
-    }
-
-    const csv       = await sRes.text();         /* raw CSV text from Stooq       */
-    const lines     = csv.trim().split("\n");     /* split into header + data rows */
-    const dataRow   = lines[lines.length - 1];   /* last row = most recent session */
-    const cols      = dataRow.split(",");         /* columns: Date,Time,O,H,L,Close,Volume */
-    const price     = parseFloat(cols[5]);        /* Close price is column index 5  */
-
-    if (isNaN(price)) {
-      throw new Error(
-        `No usable price from Stooq for ${symbol} (Yahoo: ${yahooErr.message})`
-      );
-    }
-
-    return {
-      symbol,
-      name:        symbol,        /* Stooq doesn't return a display name */
-      price,
-      prevClose:   price,         /* only one price per session from Stooq */
-      dayChg:      0,             /* no intraday change available          */
-      dayChgPct:   0,
-      marketState: "CLOSED",
-      source:      "Stooq (EOD)", /* end-of-day — previous session's close */
-      isEOD:       true,          /* flag so UI can label columns correctly */
-    };
-  }
-}
-
-async function loadStocks() {
-  const body = document.getElementById("stocks-body");
-
-  /* Kick off all three quote fetches in parallel to reduce total wait time */
-  const results = await Promise.allSettled(
-    STOCKS.map(s => fetchOneQuote(s.symbol))
-  );
-
-  /* Build one table row for each position in STOCKS */
-  const rows = STOCKS.map((s, i) => {
-    const outcome = results[i];  /* the Promise.allSettled result for this symbol */
-
-    if (outcome.status === "rejected") {
-      /* Both Yahoo and Stooq failed — show error inline in the row */
-      return `
-        <tr>
-          <td><div class="stock-ticker">${s.symbol}</div></td>
-          <td colspan="5" class="error-msg" style="font-size:0.75rem;">
-            ${outcome.reason?.message ?? "Data unavailable"}
-          </td>
-        </tr>`;
-    }
-
-    const q         = outcome.value;         /* normalized quote object */
-    const price     = q.price;               /* current or EOD price     */
-    const prevClose = q.prevClose;           /* previous close           */
-    const dayChg    = q.dayChg;              /* absolute $ day change    */
-    const dayChgPct = q.dayChgPct;           /* % day change             */
-    const dollarGL  = price - s.basis;       /* total $ gain/loss vs user's cost basis */
-    const pctGL     = ((price - s.basis) / s.basis) * 100; /* % gain/loss vs basis   */
-    const glClass   = dollarGL >= 0 ? "gain" : "loss";     /* CSS class for color    */
-    const dayClass  = dayChg   >= 0 ? "gain" : "loss";
-
-    /* Show market state only when outside regular hours */
-    const mktTag  = q.marketState !== "REGULAR"
-      ? `<span class="stock-mktstate"> ${q.marketState.toLowerCase()}</span>`
-      : "";
-    /* Show "(eod)" tag when using Stooq end-of-day fallback data */
-    const eodTag  = q.isEOD
-      ? `<span class="stock-mktstate"> eod</span>`
-      : "";
-
-    const displayName = (q.name || s.name).substring(0, 26); /* truncate for layout */
-    const fmt2 = n => n.toFixed(2);   /* 2-decimal formatter for prices */
-    const fmt1 = n => n.toFixed(1);   /* 1-decimal formatter for % */
-
-    /* Day change cells show "—" / "EOD" when Stooq data is used, since
-       Stooq only returns one price per session and has no intraday change */
-    const dayChgCell = q.isEOD
-      ? `—<br><small style="color:var(--text-sec);">EOD</small>`
-      : `${dayChg >= 0 ? "+" : ""}$${fmt2(dayChg)}<br>
-         <small>${dayChgPct >= 0 ? "+" : ""}${dayChgPct.toFixed(2)}%</small>`;
-
-    return `
-      <tr>
-        <td>
-          <div class="stock-ticker">${s.symbol}${mktTag}${eodTag}</div>
-          <div class="stock-name">${displayName}</div>
-        </td>
-        <td><span class="stock-price">$${fmt2(price)}</span></td>
-        <td style="color:var(--text-sec);">$${fmt2(s.basis)}</td>
-        <td class="${glClass}">
-          ${dollarGL >= 0 ? "+" : ""}$${fmt2(dollarGL)}<br>
-          <small>${pctGL >= 0 ? "+" : ""}${fmt1(pctGL)}%</small>
-        </td>
-        <td class="${dayClass}">${dayChgCell}</td>
-        <td style="color:var(--text-sec);">$${fmt2(prevClose)}</td>
-      </tr>`;
-  }).join("");
-
-  /* Collect unique source names for the footer attribution line */
-  const sources = [...new Set(
-    results
-      .filter(r => r.status === "fulfilled")
-      .map(r => r.value.source)
-  )].join(" · ");
-
-  body.innerHTML = `
-    <table class="stock-tbl">
-      <thead>
-        <tr>
-          <th>Symbol</th><th>Price</th><th>Basis</th>
-          <th>Gain/Loss (vs basis)</th><th>Day Change</th><th>Prev Close</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="stock-footer">
-      ${sources || "No sources available"} · prices may be delayed 15 min
-    </div>`;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
    SECTION 7 — SOCCER NEXT GAMES (ESPN public API)
    ═══════════════════════════════════════════════════════════════════════ */
 
@@ -1503,7 +1245,6 @@ Promise.all([
   loadAirQuality(), /* AirNow API — Georgetown AQI          */
   loadAllergy(),    /* Ambee API — pollen/allergy forecast   */
   loadWeather(),    /* NWS API — current + 7-day forecast   */
-  loadStocks(),     /* Yahoo Finance — 3 stock quotes       */
   loadAustinFC(),   /* ESPN — Austin FC next game           */
   loadUSMNT(),      /* ESPN — USMNT next game               */
   loadUSWNT(),      /* ESPN — USWNT next game               */

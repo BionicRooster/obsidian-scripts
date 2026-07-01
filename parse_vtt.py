@@ -22,9 +22,14 @@ OUT_PATH = sys.argv[2] if len(sys.argv) > 2 else None      # optional output fil
 
 
 def ts_to_seconds(ts):
-    """Convert HH:MM:SS.mmm timestamp string to float seconds."""
-    h, m, s = ts.split(":")
-    return int(h) * 3600 + int(m) * 60 + float(s)
+    """Convert HH:MM:SS.mmm or MM:SS.mmm timestamp string to float seconds."""
+    parts = ts.split(":")
+    if len(parts) == 3:
+        h, m, s = parts
+        return int(h) * 3600 + int(m) * 60 + float(s)
+    else:
+        m, s = parts
+        return int(m) * 60 + float(s)
 
 
 def clean_line(text):

@@ -22,6 +22,7 @@
 - [feedback_anti_ai_style.md](feedback_anti_ai_style.md) — Banned words, structural tics, and human constructions to use; self-check before any long response
 - [feedback_name_memories.md](feedback_name_memories.md) — Name memory files in dialogue when recalling them so Wayne can see what's being used
 - [feedback_adversarial_review.md](feedback_adversarial_review.md) — Adversarial-critic + independent verification before applying corrections; confirmed effective, now `/adversarial-review` skill
+- [feedback_abbreviation_format.md](feedback_abbreviation_format.md) — First use of any abbreviation in a vault note must spell out the full text followed by the abbreviation in parentheses
 
 ## Feedback — UI & Design
 - [feedback_color_contrast.md](feedback_color_contrast.md) — Blue text on dark backgrounds must be very bright; blues need most contrast
