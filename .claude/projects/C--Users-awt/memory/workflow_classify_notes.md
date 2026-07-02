@@ -1,4 +1,4 @@
----
+﻿---
 name: workflow-classify-notes
 description: "Classify recent notes — Video Clipper sweep, MOC linking, People Index check, Synthesis check, moving rules, exclusions, Elias White Talbot exception"
 metadata: 
@@ -23,9 +23,9 @@ metadata:
 
 ## Moving Rules
 - ONLY move files that are already in a subdirectory (e.g., 10 - Clippings, vault root subfolders)
-- Do NOT move files in the vault root (`D:\Obsidian\Main\*.md`) — classify and link them but leave in place
+- Do NOT move files in the vault root (`C:\Users\awt\Sync\Obsidian\*.md`) — classify and link them but leave in place
 - Root-level files will be manually reviewed and moved to "20 Permanent Notes" by the user
-- **Elias White Talbot exception:** If a note contains "Elias White Talbot" or tag "EliasWhiteTalbot", move it to `D:\Obsidian\Main\02 - Working Projects\Elias White Talbot - Project\`. Ensure the `EliasWhiteTalbot` tag is present in frontmatter. This overrides ALL other moving rules — including the vault root rule.
+- **Elias White Talbot exception:** If a note contains "Elias White Talbot" or tag "EliasWhiteTalbot", move it to `C:\Users\awt\Sync\Obsidian\02 - Working Projects\Elias White Talbot - Project\`. Ensure the `EliasWhiteTalbot` tag is present in frontmatter. This overrides ALL other moving rules — including the vault root rule.
 
 ## Workflow Steps
 
@@ -33,7 +33,7 @@ metadata:
 Rename any files with U+2019 (`'`) in their names to use standard apostrophes (`'`) before any other operation. Curly apostrophes cause Move-Item to fail silently or delete the source without copying.
 
 **Step 1 — Video Clipper sweep:**
-Before processing new notes, grep `D:\Obsidian\Main\10 - Clippings\` for any files containing `*Transcript pending*`. These are Web Clipper skeletons that need transcripts. For each found file:
+Before processing new notes, grep `C:\Users\awt\Sync\Obsidian\10 - Clippings\` for any files containing `*Transcript pending*`. These are Web Clipper skeletons that need transcripts. For each found file:
 - Read the file's `source:` frontmatter field to get the YouTube URL
 - Download captions via yt-dlp (always use `py -3.12`): `py -3.12 -m yt_dlp --write-auto-sub --sub-lang en --skip-download --output "C:\Users\awt\AppData\Local\Temp\yt_transcriptN" "URL"` — increment N per video in the same session
 - Run the deduplication/merge Python script (see `workflow_video_processing.md` Step 3) to produce a clean timestamped transcript
@@ -55,8 +55,8 @@ After the video sweep, continue with the main classification loop. Files finishe
 
 **Step 3 — People Index check (after each file):**
 Scan content for named individuals (authors, subjects, players, coaches, officials, and any other people — including all roster members in sports box scores or team files). For each name:
-- Check if a file exists in `D:\Obsidian\Main\15 - People\<Name>.md`
-- Check if the name appears in `D:\Obsidian\Main\People Index.md`
+- Check if a file exists in `C:\Users\awt\Sync\Obsidian\15 - People\<Name>.md`
+- Check if the name appears in `C:\Users\awt\Sync\Obsidian\People Index.md`
 - If absent from both, add to a "New Names" list for the session
 At end of workflow, report the New Names list and offer to create stub entries.
 

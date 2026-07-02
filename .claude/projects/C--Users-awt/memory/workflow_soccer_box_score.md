@@ -1,4 +1,4 @@
----
+﻿---
 name: workflow-soccer-box-score
 description: "Full MLS soccer box score procedure — sources, content rules, event format, cross-verification, discrepancy handling"
 metadata: 
@@ -15,11 +15,11 @@ metadata:
 ---
 
 ## Output & Template
-- Output file: `D:\Obsidian\Main\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md` (vault root)
-- Template: `D:\Obsidian\Main\05 - Templates\Soccer Template.md`
+- Output file: `C:\Users\awt\Sync\Obsidian\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md` (vault root)
+- Template: `C:\Users\awt\Sync\Obsidian\05 - Templates\Soccer Template.md`
 
 ## Step 1 — Pre-flight: Clippings → FBref Live Scrape
-Grep `D:\Obsidian\Main\10 - Clippings\` for a note matching both team names and/or the match date. If found:
+Grep `C:\Users\awt\Sync\Obsidian\10 - Clippings\` for a note matching both team names and/or the match date. If found:
 - Read it immediately as the **primary source**; delete clipping after box score is complete; skip to Step 3.
 
 **If no clipping found — try FBref via Firecrawl** (confirmed working 2026-06-08; plain WebFetch still 403):
@@ -43,7 +43,7 @@ FBref provides: complete squads + jersey numbers, full event timeline, formation
   - **OurSports Central** match report
   - Pre-match lineup article (e.g., Sportsgambler) for starting XI confirmation
   - Official player availability reports (Austin FC publishes these; check both clubs)
-  - Vault Austin FC roster note: `D:\Obsidian\Main\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md` — primary jersey number source
+  - Vault Austin FC roster note: `C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md` — primary jersey number source
 - Reddit MLS match thread: useful for card reasons and substitution confirmation
 - **Journalist/fan match reports** — search `"[Team A]" "[Team B]" "[date]"` broadly (Oak Tree Times substack for Austin FC; Waking the Red for Toronto FC; equivalent fan outlets for other opponents) — best source for incident descriptions on notable cards
 - **Do not use Sofascore** — documented reversed substitution columns and team misattribution errors
@@ -60,7 +60,7 @@ FBref provides: complete squads + jersey numbers, full event timeline, formation
 - Goal assists: FotMob vs. club match report often disagree — flag disputed assists
 - Substitutions: FotMob is most complete; Reddit match thread confirms many; cross-check both
 - Yellow/red cards: ESPN match stats page is authoritative for card totals; FotMob first-half card times run systematically ~7 min earlier than FBref/official match time — record as single pattern note, not per-card entries; flag specific card only if >10 min difference or wrong half
-- Jersey numbers: use vault Austin FC roster note as primary; fall back to prior vault box scores in `D:\Obsidian\Main\01\Soccer\`; note fallback explicitly
+- Jersey numbers: use vault Austin FC roster note as primary; fall back to prior vault box scores in `C:\Users\awt\Sync\Obsidian\01\Soccer\`; note fallback explicitly
 - **Always verify player team assignments** — FotMob AI extractions sometimes mis-attribute players to wrong team
 
 ## Step 5 — Box Score Event Format
@@ -83,7 +83,7 @@ FBref provides: complete squads + jersey numbers, full event timeline, formation
 - If no source specifies reason: "Reason not specified in available sources"
 
 ## Jersey Number Fallback Rule
-If a player's jersey number is not in the current squad page or vault roster note, grep prior vault box scores in `D:\Obsidian\Main\01\Soccer\` for the player name. Use that number and note it as "prior box score fallback — not in current roster file".
+If a player's jersey number is not in the current squad page or vault roster note, grep prior vault box scores in `C:\Users\awt\Sync\Obsidian\01\Soccer\` for the player name. Use that number and note it as "prior box score fallback — not in current roster file".
 
 ## Output
 Completed vault file + summary of key source discrepancies found.

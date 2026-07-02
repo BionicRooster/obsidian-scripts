@@ -1,4 +1,4 @@
----
+﻿---
 name: feedback-anti-ai-style
 description: "Style guide instructing Claude how not to sound like AI — banned words, structural tics, and what human writing does that AI avoids"
 metadata: 
@@ -9,7 +9,7 @@ metadata:
 
 Read the style guide before writing any long-form content or any response that risks sounding generic.
 
-**File:** `D:\Obsidian\Main\01\Claude\2026-06-13 Anti-AI Style Guide.md`
+**File:** `C:\Users\awt\Sync\Obsidian\01\Claude\2026-06-13 Anti-AI Style Guide.md`
 
 **Why:** Derived from the Wikipedia "Signs of AI writing" field guide. Wayne asked for a style guide that turns these detection signals into actionable self-instructions.
 

@@ -1,4 +1,4 @@
----
+﻿---
 name: Completed Projects Archive
 description: Summary of major multi-session vault projects that are done — so they are not re-attempted
 type: project
@@ -11,8 +11,8 @@ originSessionId: f2c229e5-bd10-4e40-b472-28911306b580
 
 ## Amish Economics PDF Extraction — COMPLETE
 - All 7 articles from Community Service Newsletter, Vol XXXIV #5, Sep-Oct 1986 extracted
-- `Amish Economics - Gene Logsdon.md` → `D:\Obsidian\Main\01\Science\`
-- Other 6 articles in `D:\Obsidian\Main\10 - Clippings\`
+- `Amish Economics - Gene Logsdon.md` → `C:\Users\awt\Sync\Obsidian\01\Science\`
+- Other 6 articles in `C:\Users\awt\Sync\Obsidian\10 - Clippings\`
 
 ## Title Case Filename Fix — COMPLETE
 - 456 files renamed, 700 wikilinks updated

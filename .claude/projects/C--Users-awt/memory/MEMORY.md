@@ -1,4 +1,4 @@
-# Memory
+﻿# Memory
 
 ## Global Memory
 - Global memory index: [memory.md](../../../memory/memory.md)
@@ -18,17 +18,18 @@
 - [projects_completed.md](projects_completed.md) — Recipes (389), Amish Economics PDF, Title Case fix (456), Riḍván spelling fix (145)
 
 ## Feedback — Writing Style
-- [feedback_transparency_patterns.md](feedback_transparency_patterns.md) — Three required patterns every session: Agentic Update Formula pre-tool statements, TaskCreate task lists for >2-step workflows, receipt tables at workflow close
-- [feedback_anti_ai_style.md](feedback_anti_ai_style.md) — Banned words, structural tics, and human constructions to use; self-check before any long response
+- [feedback_transparency_patterns.md](feedback_transparency_patterns.md) — Three transparency patterns: pre-tool formula, task list, receipt table
+- [feedback_anti_ai_style.md](feedback_anti_ai_style.md) — Banned words, structural tics, self-check; plain concrete writing over AI patterns
 - [feedback_name_memories.md](feedback_name_memories.md) — Name memory files in dialogue when recalling them so Wayne can see what's being used
-- [feedback_adversarial_review.md](feedback_adversarial_review.md) — Adversarial-critic + independent verification before applying corrections; confirmed effective, now `/adversarial-review` skill
-- [feedback_abbreviation_format.md](feedback_abbreviation_format.md) — First use of any abbreviation in a vault note must spell out the full text followed by the abbreviation in parentheses
+- [feedback_adversarial_review.md](feedback_adversarial_review.md) — Adversarial critic + independent verification before corrections; now a skill
+- [feedback_abbreviation_format.md](feedback_abbreviation_format.md) — First use of abbreviation in vault: spell out full name then \(abbrev\)
 
 ## Feedback — UI & Design
 - [feedback_color_contrast.md](feedback_color_contrast.md) — Blue text on dark backgrounds must be very bright; blues need most contrast
 - [feedback_bold_spacing.md](feedback_bold_spacing.md) — Bold `**text**` needs leading whitespace; `-**text**` = literal asterisks in print
 
 ## Feedback — Vault Workflows
+- [feedback_classify_clippings_move.md](feedback_classify_clippings_move.md) — Move 10-Clippings to 01/ after classification; no leave-in-place rule
 - [feedback_source_file_handling.md](feedback_source_file_handling.md) — After RTF/DOCX→.md conversion, move source to 09 - Attachments; never delete
 - [feedback_content_filter.md](feedback_content_filter.md) — API 400 filter: incremental Edit in small chunks; filter blocks output not input
 - [feedback_classify_notes.md](feedback_classify_notes.md) — Always do all 3 steps: move (not vault root/02-Projects), link to MOC, add tags + nav
@@ -80,7 +81,7 @@
 - [tools/emclient.md](tools/emclient.md) — eM Client email; SQLite .dat files across 11+ accounts; schema, search patterns, Haiku routing
 
 ## Claude Configuration Records
-- Vault folder: `D:\Obsidian\Main\01\Claude\` — dated snapshots; add files with `YYYY-MM-DD ` prefix when restructuring memory
+- Vault folder: `C:\Users\awt\Sync\Obsidian\01\Claude\` — dated snapshots; add files with `YYYY-MM-DD ` prefix when restructuring memory
 
 ## Recurring Workflows
 - [project_resolve_unknowns_schedule.md](project_resolve_unknowns_schedule.md) — Monthly: resolve unknowns box scores >30 days; last run 2026-06-02

@@ -1,4 +1,4 @@
----
+﻿---
 name: People Notes — Gold Standard Biography Format
 description: Approved format for 15 - People/ files; modeled on Helen Cordes.md
 type: feedback
@@ -18,7 +18,7 @@ User explicitly praised `Helen Cordes.md` as the ideal model for people notes.
 - **Personal Life** section (birth, family, death if applicable)
 - **Related Notes** organized by themed sub-headings
 
-**Research standard:** For public figures, research from 10+ web sources before writing. File location: `D:\Obsidian\Main\15 - People\<Full Name>.md`
+**Research standard:** For public figures, research from 10+ web sources before writing. File location: `C:\Users\awt\Sync\Obsidian\15 - People\<Full Name>.md`
 
 **REQUIRED: All three resource types must be used for every person file (2026-05-30):**
 1. **Vault search** — Grep for the person's name across all vault files; read any GCCMA/org meeting notes, contact files, or existing references

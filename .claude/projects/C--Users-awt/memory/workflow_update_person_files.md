@@ -1,4 +1,4 @@
----
+﻿---
 name: update-person-files-workflow
 description: How to scan and expand incomplete people files in 15 - People to the gold standard biography format
 metadata: 
@@ -23,8 +23,8 @@ The gold standard biography format is exemplified by `Helen Cordes.md` and `Davi
 - For public figures: research from web sources before writing
 
 ## File Location
-- People folder: `D:\Obsidian\Main\15 - People\`
-- Index: `D:\Obsidian\Main\15 - People\15 - People.md`
+- People folder: `C:\Users\awt\Sync\Obsidian\15 - People\`
+- Index: `C:\Users\awt\Sync\Obsidian\15 - People\15 - People.md`
 
 ## Step-by-Step Workflow
 

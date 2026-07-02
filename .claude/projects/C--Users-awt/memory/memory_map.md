@@ -1,4 +1,4 @@
----
+﻿---
 name: memory-map
 description: "Full map of all Claude memory files — global and project layers, file locations, auto-injection behavior, and CLAUDE.md stub pattern"
 metadata: 
@@ -69,7 +69,8 @@ C:\Users\awt\.claude\
             ├── feedback_bold_spacing.md
             ├── feedback_source_file_handling.md
             ├── feedback_content_filter.md
-            ├── feedback_classify_notes.md
+            ├── feedback_classify_clippings_move.md
+            \
             ├── feedback_biography_format.md
             ├── feedback_transcript_format.md
             ├── feedback_recipe_processing.md

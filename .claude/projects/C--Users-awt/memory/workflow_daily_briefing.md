@@ -1,4 +1,4 @@
----
+﻿---
 name: workflow-daily-briefing
 description: "Daily journal briefing procedure — calendar, markets (CALM/KQQQ), Austin FC + USMNT/USWNT, Bahá'í Badí date and news"
 metadata: 
@@ -15,8 +15,8 @@ metadata:
 ---
 
 ## Step 1 — Target File
-- Target: `D:\Obsidian\Main\YYYY-MM-DD.md` (today's date)
-- If the file doesn't exist, create it from `D:\Obsidian\Main\05 - Templates\Daily Notes Template.md`
+- Target: `C:\Users\awt\Sync\Obsidian\YYYY-MM-DD.md` (today's date)
+- If the file doesn't exist, create it from `C:\Users\awt\Sync\Obsidian\05 - Templates\Daily Notes Template.md`
 - Always read the live file first to confirm the current state of `## Claude Briefing`
 - Replace only the content between `## Claude Briefing` and the next `##` sibling heading — never overwrite `## 🆕 What's New`, `## My Notes`, `## 🗂️ Quick Links`, or `## Related Notes`
 
@@ -77,7 +77,7 @@ Use `mcp__mcp-obsidian__obsidian_patch_content` to replace the `## Claude Briefi
 ## Key Data Constants (update when these change)
 - CALM cost basis: $93.87
 - KQQQ cost basis: $27.54
-- Austin FC vault roster: `D:\Obsidian\Main\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md`
+- Austin FC vault roster: `C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md`
 
 ## Research Rules
 - Never assert a match result that hasn't been confirmed — write "result not yet confirmed at time of briefing" if the match is in progress or just concluded

@@ -1,4 +1,4 @@
----
+﻿---
 name: video-processing-workflow
 description: "Standard process for summarizing a YouTube video and creating an Obsidian note with key points, action items, and verbatim transcript. Supports two entry paths: full workflow (Claude only) and finishing workflow (Web Clipper skeleton already created)."
 metadata: 
@@ -11,7 +11,7 @@ metadata:
 
 ## Entry Path Detection (always first)
 
-Before doing anything, grep `D:\Obsidian\Main\10 - Clippings\` for a note whose `source:` frontmatter matches the YouTube URL, OR whose body contains `*Transcript pending*`.
+Before doing anything, grep `C:\Users\awt\Sync\Obsidian\10 - Clippings\` for a note whose `source:` frontmatter matches the YouTube URL, OR whose body contains `*Transcript pending*`.
 
 - **If a matching note exists** → **Web Clipper path** (skeleton already created). Skip Steps 1–4 note creation. Go directly to Step 3 (transcript only) then Step 5 (finish note).
 - **If no matching note exists** → **Full path** (Claude creates everything). Run all steps in order.
@@ -59,7 +59,7 @@ py parse_vtt.py "C:\Users\awt\AppData\Local\Temp\yt_transcriptN.en.vtt" "C:\User
 
 ## Step 4 — Write or Finish the Obsidian Note
 
-**Location:** `D:\Obsidian\Main\10 - Clippings\<Sanitized Title>.md`
+**Location:** `C:\Users\awt\Sync\Obsidian\10 - Clippings\<Sanitized Title>.md`
 
 ### Full path (no existing note)
 
@@ -137,7 +137,7 @@ Add the note to the appropriate MOC subsection. Classify by content:
 
 ## Step 6 — Log to Claude Action Log
 
-Append a bullet to `D:\Obsidian\Main\01\PKM\Claude Action Log.md` under today's `## YYYY-MM-DD` section (create it if it doesn't exist).
+Append a bullet to `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md` under today's `## YYYY-MM-DD` section (create it if it doesn't exist).
 
 Format: `[INGEST] <Title> — video clipping created, linked to <MOC subsection>`
 

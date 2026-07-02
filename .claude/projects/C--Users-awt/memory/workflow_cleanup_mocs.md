@@ -1,4 +1,4 @@
----
+﻿---
 name: workflow-cleanup-mocs
 description: "Cleanup MOCs workflow — remove misplaced links, reassign to correct MOC subsections, 9 key MOCs, common misplacement patterns"
 metadata:
@@ -13,7 +13,7 @@ metadata:
 ---
 
 ## Location
-MOC files: `D:\Obsidian\Main\00 - Home Dashboard\*MOC*.md`
+MOC files: `C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\*MOC*.md`
 
 ## Purpose
 Remove links that don't belong in their subsections (misplaced by automated linking)
