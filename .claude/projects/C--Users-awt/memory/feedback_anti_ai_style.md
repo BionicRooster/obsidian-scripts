@@ -22,3 +22,5 @@ Read the style guide before writing any long-form content or any response that r
 3. **Use more of what AI avoids** — simple is/are/has, direct verbs (wrote not authored, moved not relocated, died not passed away), superlatives ("the first," "the only"), hedging qualifiers (very, perhaps, tends to).
 
 4. **Self-check** — count -ing sentence endings, scan banned list, delete any sentence that could apply to a different subject, cut warm preambles and trailing offers to help, remove non-definitional bold.
+
+For the comprehensive word list (hype terms, jargon, wordy constructions): **feedback_word_choice** (global memory).

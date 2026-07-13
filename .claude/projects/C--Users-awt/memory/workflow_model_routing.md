@@ -1,23 +1,23 @@
 ---
 name: workflow-model-routing
-description: Which vault workflows are safe to run on Haiku vs. require Sonnet — for token-cost optimization
+description: Which vault workflows are safe to run on Haiku 4.5 vs. require Sonnet 4.6 vs. warrant Fable 5 delegation — model routing and subagent spawning
 metadata: 
   node_type: memory
   type: feedback
   originSessionId: 878e4a3b-1840-4509-a6b8-1fd02eee9107
 ---
 
-Use this to decide whether to spawn a Haiku subagent, suggest `/model haiku` for a session, or stay on Sonnet.
+Use this to decide whether to spawn a Haiku 4.5 subagent, suggest `/model haiku` for a session, or stay on Sonnet 4.6.
 
-**Why:** Haiku is significantly cheaper per token (as of 2026-05-28; verify if pricing has changed). Mechanical, rule-based tasks don't benefit from Sonnet's reasoning. Sonnet/Opus should be reserved for judgment, synthesis, and cross-domain work.
+**Why:** Haiku 4.5 (`claude-haiku-4-5-20251001`) is significantly cheaper per token than Sonnet 4.6 or Opus 4.8. Mechanical, rule-based tasks don't benefit from Sonnet's reasoning. Sonnet 4.6/Opus 4.8 should be reserved for judgment, synthesis, and cross-domain work.
 
-**How to apply:** At session start, assess the task list. If all tasks are Haiku-safe, suggest `/model haiku`. If mixed, stay on Sonnet and spawn Haiku subagents for the mechanical portions.
+**How to apply:** At session start, assess the task list. If all tasks are Haiku-safe, suggest `/model haiku` (Haiku 4.5). If mixed, stay on Sonnet 4.6 (`claude-sonnet-4-6`) and spawn Haiku 4.5 subagents for the mechanical portions.
 
-**CONFIRMED USER PREFERENCE (2026-05-28):** Always apply model routing on classify-recent-notes sessions. Call it out explicitly at the start: identify which steps will run on Haiku vs. Sonnet before beginning work. For classify sessions, Haiku-safe steps include: file moves, action log append, People Index link additions. Sonnet steps: MOC subsection matching, frontmatter judgment, synthesis check.
+**CONFIRMED USER PREFERENCE (2026-05-28):** Always apply model routing on classify-recent-notes sessions. Call it out explicitly at the start: identify which steps will run on Haiku 4.5 vs. Sonnet 4.6 before beginning work. For classify sessions, Haiku-safe steps include: file moves, action log append, People Index link additions. Sonnet steps: MOC subsection matching, frontmatter judgment, synthesis check.
 
 ---
 
-## Haiku-Safe (mechanical, rule-based)
+## Haiku 4.5-Safe (mechanical, rule-based)
 
 | Workflow | Notes |
 |----------|-------|
@@ -38,10 +38,10 @@ Use this to decide whether to spawn a Haiku subagent, suggest `/model haiku` for
 
 ---
 
-## Sonnet-Required (judgment, synthesis, domain knowledge)
+## Sonnet 4.6-Required (judgment, synthesis, domain knowledge)
 
-| Workflow | Why Sonnet |
-|----------|------------|
+| Workflow | Why Sonnet 4.6 |
+|----------|----------------|
 | Classify recent notes | MOC subsection matching requires domain knowledge; ambiguous cases need judgment |
 | MOC cleanup | Deciding what belongs where requires understanding topic relationships |
 | Link orphans to MOCs | AI relevance ranking across vault content |
@@ -59,18 +59,46 @@ Use this to decide whether to spawn a Haiku subagent, suggest `/model haiku` for
 
 ---
 
-## Opus-Appropriate (optional upgrade for highest-stakes work)
+## Opus 4.8-Appropriate (optional upgrade for highest-stakes work)
 
-| Workflow | Why Opus |
-|----------|----------|
+| Workflow | Why Opus 4.8 |
+|----------|--------------|
 | New synthesis page creation | When establishing a new canonical view from scratch |
 | EWT research with conflicting primary sources | Maximum reasoning depth on genealogical contradictions |
 | Memory system restructuring | When reorganizing the memory layer itself |
 
 ---
 
+## Fable 5-Appropriate (highest-stakes reasoning, optional upgrade)
+
+| Workflow | Why Fable 5 |
+|----------|-------------|
+| New synthesis page creation | Establishing a canonical view from scratch across conflicting sources |
+| EWT research with conflicting primary sources | Maximum reasoning on genealogical contradictions |
+| Memory system restructuring | Reorganizing the memory layer itself |
+| Adversarial review of high-stakes notes | Deeper critic reasoning; catches subtle errors Sonnet misses |
+| Deep synthesis across novel domains | When the task requires genuine open-ended reasoning, not rule application |
+
+**Cost tradeoff:** Fable 5 is ~3.3× more expensive per token than Sonnet 4.6, uses a different tokenizer (same text tokenizes to ~1×–1.35× more tokens), and always runs thinking (billed even when omitted from display). Only route here when the reasoning depth is genuinely needed.
+
+---
+
 ## Subagent Spawning Pattern
 
-When a session mixes task types, spawn Haiku subagents for mechanical steps:
-- Example: "classify recent notes" — Haiku scans files and moves them; Sonnet does MOC judgment and synthesis updates
-- Example: "clean up vault" session — Haiku handles duplicates/empty files; Sonnet handles orphan linking decisions
+When a session mixes task types, spawn subagents at the appropriate model tier:
+- Example: "classify recent notes" — Haiku 4.5 scans files and moves them; Sonnet 4.6 does MOC judgment and synthesis updates
+- Example: "clean up vault" session — Haiku 4.5 handles duplicates/empty files; Sonnet 4.6 handles orphan linking decisions
+
+### Delegating to Fable 5 via subagent
+
+Pass `model: "fable"` to the Agent tool to route a non-fork subagent to Fable 5:
+
+```
+Agent(model: "fable", subagent_type: "general-purpose", prompt: "...")
+```
+
+**Hard rule: forks always inherit the parent model** — the `model` override is silently ignored on forks. If the coordinator is running on Sonnet 4.6, any fork is also Sonnet 4.6.
+
+To route a subtask to Fable: spawn a **fresh** (non-fork) agent with `model: "fable"`. Fresh agents start cold with no conversation context, so the prompt must be fully self-contained — brief it like a colleague who just walked in.
+
+**When to delegate to Fable:** the subtask is well-scoped enough to brief in a prompt, but benefits from stronger reasoning (adversarial critique, deep synthesis, conflicting-source reconciliation). Do not delegate mechanical or Sonnet-tier tasks to Fable — it wastes cost with no benefit.
