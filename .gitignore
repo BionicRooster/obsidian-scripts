@@ -30,3 +30,7 @@
 !.claude/projects/C--Users-awt/
 !.claude/projects/C--Users-awt/memory/
 !.claude/projects/C--Users-awt/memory/*.md
+!.claude/projects/C--Users-awt/memory/domain/
+!.claude/projects/C--Users-awt/memory/domain/*.md
+!.claude/projects/C--Users-awt/memory/tools/
+!.claude/projects/C--Users-awt/memory/tools/*.md
