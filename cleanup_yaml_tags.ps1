@@ -1,6 +1,6 @@
-# Clean up files where tags appear both in YAML and outside
+﻿# Clean up files where tags appear both in YAML and outside
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 $files = Get-ChildItem -Path $vaultRoot -Recurse -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object {
     $_.LastWriteTime -gt (Get-Date).AddHours(-3)
 }

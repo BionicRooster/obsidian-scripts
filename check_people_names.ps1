@@ -1,7 +1,7 @@
-# Check named people from recently classified notes against People Index and 15 - People folder
+﻿# Check named people from recently classified notes against People Index and 15 - People folder
 
-$peopleDir = 'D:\Obsidian\Main\15 - People'
-$indexPath = 'D:\Obsidian\Main\People Index.md'
+$peopleDir = 'C:\Users\awt\Sync\Obsidian\15 - People'
+$indexPath = 'C:\Users\awt\Sync\Obsidian\People Index.md'
 $index = [System.IO.File]::ReadAllText($indexPath, [System.Text.Encoding]::UTF8)
 
 $names = @(

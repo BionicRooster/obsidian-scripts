@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Obsidian Random Orphan MOC Linker - AI-Enhanced Subsection-Based Keywords Version
 
@@ -111,7 +111,7 @@ param(
 
 # $vaultPath: The root directory of the Obsidian vault
 # All file operations are relative to this path
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # $mocFolder: The folder containing all MOC (Map of Content) files
 # MOCs are organizational documents that link related notes together

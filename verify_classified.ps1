@@ -1,6 +1,6 @@
-# Final verification: find notes not linked in any MOC
-$vault = 'D:\Obsidian\Main'
-$dashDir = 'D:\Obsidian\Main\00 - Home Dashboard'
+﻿# Final verification: find notes not linked in any MOC
+$vault = 'C:\Users\awt\Sync\Obsidian'
+$dashDir = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard'
 
 # Load all MOC content
 $mocFiles = Get-ChildItem $dashDir -Filter '*.md'

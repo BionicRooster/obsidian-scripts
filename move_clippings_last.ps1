@@ -1,10 +1,10 @@
-# Script to move "clippings" tag to last position in YAML frontmatter
+﻿# Script to move "clippings" tag to last position in YAML frontmatter
 # Only processes files that are linked from MOC files
 # Excludes contact/Person files
 # Preserves UTF-8 encoding
 
 param(
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
     [switch]$DryRun = $false
 )
 

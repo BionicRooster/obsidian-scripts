@@ -1,8 +1,8 @@
-# Move LSA folder into 01\Baha'i and rename Be* -> BE* files
+﻿# Move LSA folder into 01\Baha'i and rename Be* -> BE* files
 # Also update [[Be1xx]] wikilinks throughout vault
 
 $ErrorActionPreference = 'Stop'
-$vault = 'D:\Obsidian\Main'
+$vault = 'C:\Users\awt\Sync\Obsidian'
 
 # Locate 01\Baha'i folder via wildcard (avoids diacritical inline embedding)
 $bahaiFolder = Get-ChildItem (Join-Path $vault '01') -Directory | Where-Object { $_.Name -like 'Bah*' } | Select-Object -First 1

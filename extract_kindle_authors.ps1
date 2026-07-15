@@ -1,5 +1,5 @@
-# Extract author fields from all Kindle Clippings files
-$folder = "D:\Obsidian\Main\09 - Kindle Clippings"
+﻿# Extract author fields from all Kindle Clippings files
+$folder = "C:\Users\awt\Sync\Obsidian\09 - Kindle Clippings"
 $files = Get-ChildItem $folder -Filter "*.md" | Sort-Object Name
 
 foreach ($f in $files) {

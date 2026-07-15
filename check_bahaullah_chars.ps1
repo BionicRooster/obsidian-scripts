@@ -1,7 +1,7 @@
-# check_bahaullah_chars.ps1
+﻿# check_bahaullah_chars.ps1
 # Finds the Daily Reading file and reports the Unicode codepoints of every character in its name
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 $file = Get-ChildItem -Path $vaultPath -Recurse -Filter "*Daily Reading*" | Select-Object -First 1
 

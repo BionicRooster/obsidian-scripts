@@ -1,7 +1,7 @@
-# Add people entries to MOCs by appending to end of file
+﻿# Add people entries to MOCs by appending to end of file
 
 # Jack Wallen -> Tech MOC
-$techPath = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Technology & Computers.md'
+$techPath = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Technology & Computers.md'
 $techContent = Get-Content $techPath -Encoding UTF8 -Raw
 if ($techContent -notmatch 'Jack Wallen') {
     $techContent = $techContent.TrimEnd() + "`n`n## People`n- [[Jack Wallen]]`n"
@@ -10,7 +10,7 @@ if ($techContent -notmatch 'Jack Wallen') {
 }
 
 # Colin Marshall -> Travel MOC (Japan section)
-$travelPath = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Travel & Exploration.md'
+$travelPath = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Travel & Exploration.md'
 $travelContent = Get-Content $travelPath -Encoding UTF8 -Raw
 if ($travelContent -notmatch 'Colin Marshall') {
     # Add to Japan section if it exists, else append

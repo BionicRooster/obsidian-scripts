@@ -1,4 +1,4 @@
-﻿param([string]$VaultPath = "D:\Obsidian\Main", [switch]$DryRun)
+﻿param([string]$VaultPath = "C:\Users\awt\Sync\Obsidian", [switch]$DryRun)
 
 Write-Host "Building vault file index..." -ForegroundColor Cyan
 $fileIndex = @{}

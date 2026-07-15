@@ -1,6 +1,6 @@
-# Copy Badí Calendar Class materials to vault
+﻿# Copy Badí Calendar Class materials to vault
 $src = "D:\Documents\Baha'i\Badí Calendar Class\Class Materials"
-$dst = "D:\Obsidian\Main\00 - Images\BadíCalendarClass"
+$dst = "C:\Users\awt\Sync\Obsidian\00 - Images\BadíCalendarClass"
 
 # Create destination if needed
 New-Item -ItemType Directory -Path $dst -Force | Out-Null

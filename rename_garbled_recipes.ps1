@@ -1,11 +1,11 @@
-# Rename garbled recipe files: replace Windows-1252 smart-quote chars with clean equivalents
+﻿# Rename garbled recipe files: replace Windows-1252 smart-quote chars with clean equivalents
 # U+0092 = right single quote (use straight apostrophe ')
 # U+0093 = left double quote, U+0094 = right double quote (remove from filename)
 # Also fix spurious space in "Da y" -> "Day", "Aya m" -> "Aya m" (keep for now - it's in content)
 
 $ErrorActionPreference = 'Stop'
-$recDir = 'D:\Obsidian\Main\01\Recipes'
-$recMOC = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md'
+$recDir = 'C:\Users\awt\Sync\Obsidian\01\Recipes'
+$recMOC = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md'
 
 $u0092 = [char]0x0092  # Windows-1252 right single quote
 $u0093 = [char]0x0093  # Windows-1252 left double quote

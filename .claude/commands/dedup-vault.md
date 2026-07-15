@@ -1,4 +1,4 @@
-# Vault Duplicate Note Cleanup (`/dedup-vault`)
+﻿# Vault Duplicate Note Cleanup (`/dedup-vault`)
 
 Detect and remove duplicate notes from the Obsidian vault. For each duplicate pair, merges unique content into the canonical version, cleans up all inbound links, and deletes the weaker file. Leaves zero broken links and zero stubs behind.
 
@@ -11,7 +11,7 @@ Detect and remove duplicate notes from the Obsidian vault. For each duplicate pa
 Run PowerShell to find all `.md` files sharing a filename across different folders (excluding `.trash`):
 
 ```powershell
-Get-ChildItem -Recurse -Filter "*.md" "D:\Obsidian\Main" |
+Get-ChildItem -Recurse -Filter "*.md" "C:\Users\awt\Sync\Obsidian" |
     Where-Object { $_.DirectoryName -notmatch '\\\.trash' } |
     Group-Object Name | Where-Object { $_.Count -gt 1 } |
     Select-Object Name, Count, @{N='Paths';E={($_.Group.FullName -join ' | ')}} |
@@ -21,7 +21,7 @@ Get-ChildItem -Recurse -Filter "*.md" "D:\Obsidian\Main" |
 Also check for numbered import artifacts (files with `(1)`, `(2)`, etc. in name):
 
 ```powershell
-Get-ChildItem -Recurse -Filter "*.md" "D:\Obsidian\Main" |
+Get-ChildItem -Recurse -Filter "*.md" "C:\Users\awt\Sync\Obsidian" |
     Where-Object { $_.Name -match '\(\d+\)' } |
     Select-Object Name, DirectoryName | Sort-Object Name
 ```
@@ -92,7 +92,7 @@ Update-VaultFile $path @("old name 1", "new name 1", "old name 2", "new name 2")
 
 ### 3d. Delete the weaker file
 ```powershell
-Remove-Item "D:\Obsidian\Main\path\to\file.md" -ErrorAction Stop
+Remove-Item "C:\Users\awt\Sync\Obsidian\path\to\file.md" -ErrorAction Stop
 ```
 
 ---
@@ -110,7 +110,7 @@ Files like `Vegan Planet - Recipe (1).md` with **no base file** are distinct not
 
 ```powershell
 # Should return no output (zero remaining duplicates)
-Get-ChildItem -Recurse -Filter "*.md" "D:\Obsidian\Main" |
+Get-ChildItem -Recurse -Filter "*.md" "C:\Users\awt\Sync\Obsidian" |
     Where-Object { $_.DirectoryName -notmatch '\\\.trash' } |
     Group-Object Name | Where-Object { $_.Count -gt 1 }
 ```
@@ -121,7 +121,7 @@ Spot-check: grep for each deleted file's explicit path — should return zero hi
 
 ## Step 6 — Log to Claude Action Log
 
-Append a `## YYYY-MM-DD` section to `D:\Obsidian\Main\01\PKM\Claude Action Log.md` with `[LINT]` prefix entries:
+Append a `## YYYY-MM-DD` section to `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md` with `[LINT]` prefix entries:
 
 ```
 [LINT] Duplicate note audit — N exact-filename duplicates resolved, 0 remaining

@@ -1,4 +1,4 @@
-# MOC Orphan Relevance Linker - Helper Script
+﻿# MOC Orphan Relevance Linker - Helper Script
 # This script gathers data for the interactive Claude Code workflow
 # It extracts MOC subsections and orphan files for AI-based relevance ranking
 
@@ -16,7 +16,7 @@ param(
 )
 
 # Vault configuration
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $mocFolder = '00 - Home Dashboard'
 
 # Function to get all MOC files from the vault

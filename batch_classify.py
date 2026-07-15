@@ -1,10 +1,10 @@
-"""Batch move and tag files for Obsidian vault classification."""
+﻿"""Batch move and tag files for Obsidian vault classification."""
 import os
 import re
 import shutil
 from pathlib import Path
 
-VAULT = Path("D:/Obsidian/Main")
+VAULT = Path("C:/Users/awt/Sync/Obsidian")
 CLIPPINGS = VAULT / "10 - Clippings"
 
 # --- move plan: (source, dest_dir, tags_to_add) ---

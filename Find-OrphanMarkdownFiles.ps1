@@ -1,9 +1,9 @@
-# Find-OrphanMarkdownFiles.ps1
+﻿# Find-OrphanMarkdownFiles.ps1
 # This script scans an Obsidian vault for markdown files that contain no wikilinks
 # Wikilinks are defined as text enclosed in double square brackets: [[link]]
 
 # Define the path to the Obsidian vault to scan
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Define folders to exclude from the scan
 # These are typically imported notes that don't have wikilinks

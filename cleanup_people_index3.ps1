@@ -1,6 +1,6 @@
-# Final cleanup pass: remove remaining false positives by exact name match
+﻿# Final cleanup pass: remove remaining false positives by exact name match
 
-$path = 'D:\Obsidian\Main\People Index.md'
+$path = 'C:\Users\awt\Sync\Obsidian\People Index.md'
 $lines = [System.Collections.Generic.List[string]]([System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8) -split "`n")
 
 $removeNames = [System.Collections.Generic.HashSet[string]]::new()

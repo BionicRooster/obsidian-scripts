@@ -1,5 +1,5 @@
-# Extract the byte pattern for the checkmark mojibake
-$content = Get-Content -Path 'D:\Obsidian\Main\Dynamic ToDo.md' -Raw -Encoding UTF8
+﻿# Extract the byte pattern for the checkmark mojibake
+$content = Get-Content -Path 'C:\Users\awt\Sync\Obsidian\Dynamic ToDo.md' -Raw -Encoding UTF8
 $match = [regex]::Match($content, '#\s*(.{1,10})\s*Dynamic')
 if ($match.Success) {
     $captured = $match.Groups[1].Value.Trim()

@@ -1,6 +1,6 @@
-# Check and add nav property to BE* files in LSA/Year in Review
+﻿# Check and add nav property to BE* files in LSA/Year in Review
 
-$yearDir = Get-ChildItem 'D:\Obsidian\Main\01' -Recurse -Directory |
+$yearDir = Get-ChildItem 'C:\Users\awt\Sync\Obsidian\01' -Recurse -Directory |
            Where-Object { $_.Name -eq 'Year in Review' } | Select-Object -First 1
 
 if (-not $yearDir) { Write-Error "Year in Review dir not found"; exit 1 }

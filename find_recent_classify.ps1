@@ -1,8 +1,8 @@
-# find_recent_classify.ps1 - Find recently CREATED vault files for classification
+﻿# find_recent_classify.ps1 - Find recently CREATED vault files for classification
 # Uses CreationTime only (not LastWriteTime) to avoid picking up files
 # that were merely modified by automated scripts.
 
-$vaultPath = 'D:\Obsidian\Main'   # Root of Obsidian vault
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'   # Root of Obsidian vault
 $cutoff    = (Get-Date).AddDays(-2)  # Look back 2 days by creation date
 
 $results = Get-ChildItem -Path $vaultPath -Filter '*.md' -Recurse |

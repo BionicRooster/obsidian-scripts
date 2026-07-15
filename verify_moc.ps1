@@ -1,6 +1,6 @@
-# verify_moc.ps1 - Verify the fixed MOC file
+﻿# verify_moc.ps1 - Verify the fixed MOC file
 $utf8 = [System.Text.Encoding]::UTF8
-$content = [System.IO.File]::ReadAllText('D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md', $utf8)
+$content = [System.IO.File]::ReadAllText('C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md', $utf8)
 
 # Check for remaining broken fragments (bullet lines not starting with [[)
 $lines = $content -split "`n"
@@ -36,7 +36,7 @@ $bullets = $lines | Where-Object { $_ -match '^\- \[\[' }
 Write-Host "Total wikilink bullets in MOC: $($bullets.Count)"
 
 # Count files with nav in Recipes folder
-$recipeFiles = Get-ChildItem 'D:\Obsidian\Main\01\Recipes\' -Filter '*.md'
+$recipeFiles = Get-ChildItem 'C:\Users\awt\Sync\Obsidian\01\Recipes\' -Filter '*.md'
 $withNav = 0
 $withoutNav = 0
 foreach ($f in $recipeFiles) {

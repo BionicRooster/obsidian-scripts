@@ -1,5 +1,5 @@
-# Sort To-Do List: uncompleted first, then completed sorted by date descending
-$path = 'D:\Obsidian\Main\To-Do List.md'
+﻿# Sort To-Do List: uncompleted first, then completed sorted by date descending
+$path = 'C:\Users\awt\Sync\Obsidian\To-Do List.md'
 $content = Get-Content $path -Encoding UTF8
 
 # Split on the separator lines

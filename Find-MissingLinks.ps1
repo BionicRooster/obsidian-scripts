@@ -1,7 +1,7 @@
-# Find-MissingLinks.ps1
+﻿# Find-MissingLinks.ps1
 # Finds all markdown files in Obsidian vault without wikilinks [[]]
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $outputFile = Join-Path $vaultPath "Missing Links.md"
 
 # Get all markdown files

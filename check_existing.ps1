@@ -1,5 +1,5 @@
-# Check if person files already exist in 15 - People or elsewhere in vault
-$vault = "D:\Obsidian\Main"
+﻿# Check if person files already exist in 15 - People or elsewhere in vault
+$vault = "C:\Users\awt\Sync\Obsidian"
 $names = @("Alfred W. Talbot Sr", "Col Mathew Talbot", "Vera Irene Talbot", "Dr. Alfred Carson Waldrep", "John Henry White", "Lee Etta Stanard", "Daniel Norris", "Mike Rowe")
 
 foreach ($name in $names) {

@@ -1,4 +1,4 @@
-$vault = "D:\Obsidian\Main"
+﻿$vault = "C:\Users\awt\Sync\Obsidian"
 $enc   = [System.Text.Encoding]::UTF8
 $link  = "[[MOC - Japan & Japanese Culture]]"
 

@@ -1,6 +1,6 @@
-# Process all content notes: rename, add frontmatter, move, delete duplicates
-$clippings = "D:\Obsidian\Main\10 - Clippings"
-$vault = "D:\Obsidian\Main"
+﻿# Process all content notes: rename, add frontmatter, move, delete duplicates
+$clippings = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 # --- Step 1: Rename Forest Gardens file (smart apostrophes -> standard) ---
 $forestOld = Get-ChildItem $clippings | Where-Object { $_.Name -like "*Forest*gardens*" }
@@ -35,15 +35,15 @@ foreach ($dup in $duplicates) {
 
 # --- Step 3: Delete old 01/ versions replaced by 15-People person notes ---
 $old01 = @(
-    "D:\Obsidian\Main\01\Genealogy\Alfred W. Talbot Sr.md",
-    "D:\Obsidian\Main\01\Genealogy\Col Mathew Talbot.md",
-    "D:\Obsidian\Main\01\Genealogy\Vera Irene Talbot.md",
-    "D:\Obsidian\Main\01\Technology\Vera Irene Talbot -I.md",
-    "D:\Obsidian\Main\01\Genealogy\Dr. Alfred Carson Waldrep Jr.md",
-    "D:\Obsidian\Main\01\Genealogy\Obituary - John Henry White.md",
-    "D:\Obsidian\Main\01\Genealogy\Lee Etta Stanard.md",
-    "D:\Obsidian\Main\01\Finance\The Daniel Norris Code for Success - The Simple Dollar.md",
-    "D:\Obsidian\Main\01\Finance\The Daniel Norris Co.md"
+    "C:\Users\awt\Sync\Obsidian\01\Genealogy\Alfred W. Talbot Sr.md",
+    "C:\Users\awt\Sync\Obsidian\01\Genealogy\Col Mathew Talbot.md",
+    "C:\Users\awt\Sync\Obsidian\01\Genealogy\Vera Irene Talbot.md",
+    "C:\Users\awt\Sync\Obsidian\01\Technology\Vera Irene Talbot -I.md",
+    "C:\Users\awt\Sync\Obsidian\01\Genealogy\Dr. Alfred Carson Waldrep Jr.md",
+    "C:\Users\awt\Sync\Obsidian\01\Genealogy\Obituary - John Henry White.md",
+    "C:\Users\awt\Sync\Obsidian\01\Genealogy\Lee Etta Stanard.md",
+    "C:\Users\awt\Sync\Obsidian\01\Finance\The Daniel Norris Code for Success - The Simple Dollar.md",
+    "C:\Users\awt\Sync\Obsidian\01\Finance\The Daniel Norris Co.md"
 )
 foreach ($path in $old01) {
     if (Test-Path $path) {

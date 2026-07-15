@@ -1,19 +1,19 @@
-# cleanup_conflicts.ps1
+﻿# cleanup_conflicts.ps1
 # Fix conflicting files and clean up 04 - Indexes folder
 
 # Replace Hardware.md with the better version from old folder
-Copy-Item -Path 'D:\Obsidian\Main\04 - Indexes\Computer Sciences\Hardware\Hardware.md' -Destination 'D:\Obsidian\Main\01\Technology\Hardware.md' -Force
+Copy-Item -Path 'C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Hardware\Hardware.md' -Destination 'C:\Users\awt\Sync\Obsidian\01\Technology\Hardware.md' -Force
 Write-Host 'Replaced Hardware.md with better version' -ForegroundColor Green
 
 # Delete the old conflicting files we don't need
-Remove-Item -Path 'D:\Obsidian\Main\04 - Indexes\Computer Sciences\Linux.md' -Force
-Remove-Item -Path 'D:\Obsidian\Main\04 - Indexes\Computer Sciences\Windows.md' -Force
-Remove-Item -Path 'D:\Obsidian\Main\04 - Indexes\Computer Sciences\Hardware\Hardware.md' -Force
-Remove-Item -Path 'D:\Obsidian\Main\04 - Indexes\Religion\Religion.md' -Force
+Remove-Item -Path 'C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Linux.md' -Force
+Remove-Item -Path 'C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Windows.md' -Force
+Remove-Item -Path 'C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Hardware\Hardware.md' -Force
+Remove-Item -Path 'C:\Users\awt\Sync\Obsidian\04 - Indexes\Religion\Religion.md' -Force
 Write-Host 'Deleted old conflicting files' -ForegroundColor Green
 
 # Clean up empty folders recursively
-$sourceFolder = 'D:\Obsidian\Main\04 - Indexes'
+$sourceFolder = 'C:\Users\awt\Sync\Obsidian\04 - Indexes'
 $emptyFolders = Get-ChildItem -Path $sourceFolder -Recurse -Directory -ErrorAction SilentlyContinue |
     Sort-Object { $_.FullName.Length } -Descending
 

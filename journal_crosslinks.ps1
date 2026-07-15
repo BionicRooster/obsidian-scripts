@@ -1,4 +1,4 @@
-$journal = 'D:\Obsidian\Main\2026-04-22.md'
+﻿$journal = 'C:\Users\awt\Sync\Obsidian\2026-04-22.md'
 $text = [System.IO.File]::ReadAllText($journal, [System.Text.Encoding]::UTF8)
 $entry = @'
 

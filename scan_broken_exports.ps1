@@ -1,5 +1,5 @@
-# Scan for broken "Exported image" references
-$vault = "D:\Obsidian\Main"
+﻿# Scan for broken "Exported image" references
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 # Build list of existing images
 $images = Get-ChildItem $vault -Recurse -Include '*.jpeg','*.jpg','*.png','*.gif' -ErrorAction SilentlyContinue |

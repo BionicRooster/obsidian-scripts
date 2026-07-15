@@ -1,5 +1,5 @@
-# Script to check and add Health tag to MOC-linked files (improved version)
-# Location: D:\Obsidian\Main
+﻿# Script to check and add Health tag to MOC-linked files (improved version)
+# Location: C:\Users\awt\Sync\Obsidian
 # Preserves UTF-8 encoding
 
 # File names from MOC - Health & Nutrition
@@ -102,7 +102,7 @@ $counters = @{
 }
 
 # Vault root directory
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Process each file
 foreach ($fileName in $filesToCheck) {

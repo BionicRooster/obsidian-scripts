@@ -1,4 +1,4 @@
-# Script to properly clean up NLP_Psy tags in all files
+﻿# Script to properly clean up NLP_Psy tags in all files
 # This removes duplicate tags and ensures proper YAML formatting
 
 # Array of all unique files from the MOC
@@ -119,7 +119,7 @@ foreach ($fileName in $uniqueFiles) {
     # Search for file in vault
     $foundFiles = @()
     try {
-        $foundFiles = Get-ChildItem -Path 'D:\Obsidian\Main' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' }
+        $foundFiles = Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' }
     } catch {
         # Ignore errors
     }

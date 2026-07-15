@@ -1,7 +1,7 @@
-# Spot-check fixed files - show their Related Notes sections
+﻿# Spot-check fixed files - show their Related Notes sections
 $files = @(
-    'D:\Obsidian\Main\16 - Organizations\National Spiritual Assembly of the Bahai''s of the United States.md',
-    'D:\Obsidian\Main\01\Psychology\Dunning-Kruger Effect - Wikipedia.md'
+    'C:\Users\awt\Sync\Obsidian\16 - Organizations\National Spiritual Assembly of the Bahai''s of the United States.md',
+    'C:\Users\awt\Sync\Obsidian\01\Psychology\Dunning-Kruger Effect - Wikipedia.md'
 )
 
 foreach ($f in $files) {

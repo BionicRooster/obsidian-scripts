@@ -1,11 +1,11 @@
-# Check exact character encoding in garbled recipe filenames vs MOC entries
+﻿# Check exact character encoding in garbled recipe filenames vs MOC entries
 
-$recMOC = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md'
+$recMOC = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md'
 $recContent = Get-Content -LiteralPath $recMOC -Encoding UTF8 -Raw
 
 # --- Soda Bread ---
 Write-Output "=== Soda Bread ==="
-$sodaFiles = Get-ChildItem 'D:\Obsidian\Main\01\Recipes' | Where-Object { $_.BaseName -like '*Soda Bread*Paddy*' }
+$sodaFiles = Get-ChildItem 'C:\Users\awt\Sync\Obsidian\01\Recipes' | Where-Object { $_.BaseName -like '*Soda Bread*Paddy*' }
 foreach ($f in $sodaFiles) {
     $bn = $f.BaseName
     Write-Output "  BaseName: [$bn]"
@@ -43,7 +43,7 @@ foreach ($f in $sodaFiles) {
 
 # --- Soto Ayam ---
 Write-Output "`n=== Soto Ayam ==="
-$sotoFiles = Get-ChildItem 'D:\Obsidian\Main\01\Recipes' | Where-Object { $_.BaseName -like '*Soto*' -or $_.BaseName -like '*Javanese*' }
+$sotoFiles = Get-ChildItem 'C:\Users\awt\Sync\Obsidian\01\Recipes' | Where-Object { $_.BaseName -like '*Soto*' -or $_.BaseName -like '*Javanese*' }
 foreach ($f in $sotoFiles) {
     $bn = $f.BaseName
     Write-Output "  BaseName: [$bn]"

@@ -1,9 +1,9 @@
-# fix_curly_apostrophes.ps1
+﻿# fix_curly_apostrophes.ps1
 # Renames all files and folders in the Obsidian vault that contain curly apostrophes
 # (U+2019) to use standard apostrophes (U+0027), using a two-step rename to avoid
 # Windows case-insensitive conflicts.
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $curlyApostrophe = [char]0x2019    # ' (U+2019 right single quotation mark)
 $straightApostrophe = "'"           # ' (U+0027 standard apostrophe)
 

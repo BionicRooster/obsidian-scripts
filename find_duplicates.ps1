@@ -1,8 +1,8 @@
-# find_duplicates.ps1
+﻿# find_duplicates.ps1
 # Scans the Obsidian vault for duplicate note filenames (same name, different folders)
 # Writes results to a markdown note at the vault root.
 
-$vaultPath   = "D:\Obsidian\Main"          # Vault root
+$vaultPath   = "C:\Users\awt\Sync\Obsidian"          # Vault root
 $outputFile  = "$vaultPath\Duplicate Notes.md"  # Output note path
 $excludeDirs = @('.smart-env', '.obsidian', '.git', '.trash')  # Folders to skip
 

@@ -1,7 +1,7 @@
-# Add MOC links to recent notes that are missing them
+﻿# Add MOC links to recent notes that are missing them
 # This creates bidirectional links from notes back to MOCs
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Classification mapping: Note pattern -> MOC name
 $noteToMocMapping = @{

@@ -1,8 +1,8 @@
-# Script to find and rename files with names longer than 40 characters
+﻿# Script to find and rename files with names longer than 40 characters
 # Uses robocopy to list files (handles long paths better)
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $maxLength = 40
-$reportPath = "D:\Obsidian\Main\TooLongFilenames.md"
+$reportPath = "C:\Users\awt\Sync\Obsidian\TooLongFilenames.md"
 
 # Initialize arrays for tracking
 $renamed = @()

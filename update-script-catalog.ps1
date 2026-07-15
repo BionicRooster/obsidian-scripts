@@ -1,4 +1,4 @@
-# update-script-catalog.ps1
+﻿# update-script-catalog.ps1
 # Scans all PowerShell (.ps1) and Python (.py) scripts in C:\Users\awt\ (root only),
 # extracts a one-line description from each file's header comment block, and writes
 # a categorized markdown catalog to two destinations:
@@ -6,7 +6,7 @@
 #   1. C:\Users\awt\.claude\projects\C--Users-awt\memory\domain\scripts.md
 #      -- the Claude memory file consulted before writing new code
 #
-#   2. D:\Obsidian\Main\01\Claude\Script Catalog.md
+#   2. C:\Users\awt\Sync\Obsidian\01\Claude\Script Catalog.md
 #      -- the vault note for human review
 #
 # Run this script whenever new scripts are added to keep the catalog current.
@@ -17,7 +17,7 @@
 # --- Paths ---
 $ScriptRoot    = "C:\Users\awt"                                                          # Root folder to scan (non-recursive)
 $MemoryOutput  = "C:\Users\awt\.claude\projects\C--Users-awt\memory\domain\scripts.md"  # Claude memory destination
-$VaultOutput   = "D:\Obsidian\Main\01\Claude\Script Catalog.md"                         # Obsidian vault destination
+$VaultOutput   = "C:\Users\awt\Sync\Obsidian\01\Claude\Script Catalog.md"                         # Obsidian vault destination
 $GeneratedDate = Get-Date -Format "yyyy-MM-dd HH:mm"                                    # Timestamp for the catalog header
 $EmDash        = [char]0x2014                                                            # Em dash character (avoids non-ASCII literals in PS1 source)
 

@@ -1,4 +1,4 @@
-# Batch Orphan Linker - Searches orphans for each MOC's keywords
+﻿# Batch Orphan Linker - Searches orphans for each MOC's keywords
 # and outputs candidates grouped by MOC for user approval
 
 param(
@@ -9,7 +9,7 @@ param(
 )
 
 # Vault path
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # Load orphan list
 $orphansJson = Get-Content "C:\Users\awt\orphan_list.json" -Encoding UTF8 -Raw

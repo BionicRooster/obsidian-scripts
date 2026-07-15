@@ -1,6 +1,6 @@
-# Find markdown files created in the last 2 days that need classification
+﻿# Find markdown files created in the last 2 days that need classification
 # Reports files missing nav property (already classified files are skipped)
-$vault = "D:\Obsidian\Main"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $cutoff = (Get-Date).AddDays(-2)
 
 # Directories to skip

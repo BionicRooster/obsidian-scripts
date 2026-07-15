@@ -1,4 +1,4 @@
-# Final comprehensive cleanup for NLP_Psy tags
+﻿# Final comprehensive cleanup for NLP_Psy tags
 # This script will properly format YAML frontmatter and remove duplicates
 
 # Array of all unique files from the MOC
@@ -120,7 +120,7 @@ foreach ($fileName in $uniqueFiles) {
     # Search for file in vault
     $foundFiles = @()
     try {
-        $foundFiles = Get-ChildItem -Path 'D:\Obsidian\Main' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' }
+        $foundFiles = Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' }
     } catch {
         # Ignore errors
     }

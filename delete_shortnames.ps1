@@ -1,5 +1,5 @@
-# Delete files using 8.3 short names
-$vaultPath = "D:\Obsidian\Main\00 - Images"
+﻿# Delete files using 8.3 short names
+$vaultPath = "C:\Users\awt\Sync\Obsidian\00 - Images"
 
 Write-Host "Finding .md files in .resources folders using short names..."
 
@@ -48,12 +48,12 @@ Write-Host ""
 Write-Host "Trying brute force deletion in Evernote-Resources..."
 
 $paths = @(
-    "D:\Obsidian\Main\00 - Images\Evernote-Resources",
-    "D:\Obsidian\Main\00 - Images\Entertainment-_resources",
-    "D:\Obsidian\Main\00 - Images\Food-_resources",
-    "D:\Obsidian\Main\00 - Images\Politics-_resources",
-    "D:\Obsidian\Main\00 - Images\Programming-_resources",
-    "D:\Obsidian\Main\00 - Images\Science-_resources"
+    "C:\Users\awt\Sync\Obsidian\00 - Images\Evernote-Resources",
+    "C:\Users\awt\Sync\Obsidian\00 - Images\Entertainment-_resources",
+    "C:\Users\awt\Sync\Obsidian\00 - Images\Food-_resources",
+    "C:\Users\awt\Sync\Obsidian\00 - Images\Politics-_resources",
+    "C:\Users\awt\Sync\Obsidian\00 - Images\Programming-_resources",
+    "C:\Users\awt\Sync\Obsidian\00 - Images\Science-_resources"
 )
 
 foreach ($basePath in $paths) {

@@ -1,10 +1,10 @@
-# fix_onenote_image_paths.ps1
+﻿# fix_onenote_image_paths.ps1
 # Fixes broken OneNote image paths by searching for images by timestamp
 # The actual images are in .md folders under 20 - Permanent Notes/
 
 param(
     # Path to the Obsidian vault
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
 
     # Limit the number of files to process (0 = no limit)
     [int]$Limit = 0,

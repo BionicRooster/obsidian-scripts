@@ -1,4 +1,4 @@
-Search vault notes for Unknown fields and attempt to resolve them using vault-internal and web sources.
+﻿Search vault notes for Unknown fields and attempt to resolve them using vault-internal and web sources.
 
 ## Parameters
 
@@ -24,10 +24,10 @@ Scan by scope + age filter:
 
 | Scope | Path | Grep terms |
 |---|---|---|
-| Box scores | `D:\Obsidian\Main\01\Soccer\` | `Unknown` |
-| EWT project | `D:\Obsidian\Main\02 - Working Projects\Elias White Talbot - Project\` | `Unknown`, `not confirmed`, `unclear`, `unverified` |
-| People Index | `D:\Obsidian\Main\People Index.md` | entries with no linked notes or explicit Unknown annotations |
-| Synthesis | `D:\Obsidian\Main\30 - Synthesis\` | `Unknown`, `not yet synthesized`, `open question`, `not addressed` |
+| Box scores | `C:\Users\awt\Sync\Obsidian\01\Soccer\` | `Unknown` |
+| EWT project | `C:\Users\awt\Sync\Obsidian\02 - Working Projects\Elias White Talbot - Project\` | `Unknown`, `not confirmed`, `unclear`, `unverified` |
+| People Index | `C:\Users\awt\Sync\Obsidian\People Index.md` | entries with no linked notes or explicit Unknown annotations |
+| Synthesis | `C:\Users\awt\Sync\Obsidian\30 - Synthesis\` | `Unknown`, `not yet synthesized`, `open question`, `not addressed` |
 
 Apply age filter: `(Get-Item $file).LastWriteTime` — skip files newer than the threshold.
 
@@ -87,7 +87,7 @@ Both resolved and "re-checked still Unknown" are valid outcomes — document bot
 
 ## Step 6 — Log
 
-Append to `D:\Obsidian\Main\01\PKM\Claude Action Log.md` with `[RESOLVE]` prefix:
+Append to `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md` with `[RESOLVE]` prefix:
 
 ```
 [RESOLVE] 2026-03-01 Austin FC box score — 2 jersey numbers confirmed; 1 still unknown after web check

@@ -1,4 +1,4 @@
-Write a complete soccer box score (MLS or USMNT/USWNT) and save it as an Obsidian vault note.
+﻿Write a complete soccer box score (MLS or USMNT/USWNT) and save it as an Obsidian vault note.
 
 ## Parameters
 
@@ -20,15 +20,15 @@ Parse from `$ARGUMENTS`:
 
 ## Output
 
-- **File:** `D:\Obsidian\Main\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md`
-- **Template:** `D:\Obsidian\Main\05 - Templates\Soccer Template.md` — read this first and use it as the base structure
+- **File:** `C:\Users\awt\Sync\Obsidian\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md`
+- **Template:** `C:\Users\awt\Sync\Obsidian\05 - Templates\Soccer Template.md` — read this first and use it as the base structure
 
 ---
 
 ## Step 1 — Pre-flight: Clippings → FBref Live Scrape
 
 **1a. Check clippings folder first.**
-Grep `D:\Obsidian\Main\10 - Clippings\` for any note matching both team names and/or the match date.
+Grep `C:\Users\awt\Sync\Obsidian\10 - Clippings\` for any note matching both team names and/or the match date.
 
 **If a clipping is found:**
 - Read it immediately — it is the **primary source** for all match facts (score, goals, assists, lineups, substitutions, cards)
@@ -73,7 +73,7 @@ Fetch in parallel (skip any already confirmed by clipping or FBref scrape):
 **Do NOT use Sofascore** — documented reversed substitution columns and team misattribution errors.
 
 Also read the vault Austin FC roster note as the **primary jersey number source:**
-`D:\Obsidian\Main\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md`
+`C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md`
 
 ### USMNT / USWNT matches
 
@@ -89,7 +89,7 @@ Use the same source priority order. Swap MLS-specific sources for these internat
 | Reddit r/soccer or r/ussoccer match thread | Card reasons, VAR incident details, real-time sub confirmation |
 | Major sports outlet (Guardian, NYT, Athletic, ESPN) | Red card and VAR incident descriptions; useful for controversial calls |
 
-**Jersey numbers for USMNT/USWNT:** National team squads change per camp — FBref lineup (Step 1b) is the most reliable per-match number source. No standing vault roster note; fall back to prior national team box scores in `D:\Obsidian\Main\01\Soccer\`.
+**Jersey numbers for USMNT/USWNT:** National team squads change per camp — FBref lineup (Step 1b) is the most reliable per-match number source. No standing vault roster note; fall back to prior national team box scores in `C:\Users\awt\Sync\Obsidian\01\Soccer\`.
 
 **Competition tags for YAML frontmatter:** Use the actual competition name — `Gold Cup`, `CONCACAF Nations League`, `FIFA World Cup Qualifying`, `International Friendly` — not just "International".
 
@@ -113,7 +113,7 @@ Use the same source priority order. Swap MLS-specific sources for these internat
 | Goal assists | FotMob vs. club report often disagree — flag disputed assists |
 | Substitutions | FotMob most complete; Reddit match thread confirms many; cross-check both |
 | Yellow/red card times | FotMob first-half times run ~7 min earlier than FBref/official (clock vs. match time) — record as a single pattern note, not per-card; flag specific card only if >10 min off or wrong half |
-| Jersey numbers | Vault Austin FC roster note is primary; fall back to prior vault box scores in `D:\Obsidian\Main\01\Soccer\`; note fallback explicitly |
+| Jersey numbers | Vault Austin FC roster note is primary; fall back to prior vault box scores in `C:\Users\awt\Sync\Obsidian\01\Soccer\`; note fallback explicitly |
 | Player team assignments | FotMob AI extractions sometimes mis-attribute players — verify all against vault history |
 
 ---
@@ -157,11 +157,11 @@ If no source specifies the reason: `"Reason not specified in available sources"`
 ## Jersey Number Fallback Rule
 
 If a player's jersey number is not in the current vault roster note:
-1. Grep prior vault box scores in `D:\Obsidian\Main\01\Soccer\` for the player name
+1. Grep prior vault box scores in `C:\Users\awt\Sync\Obsidian\01\Soccer\` for the player name
 2. Use that number and note it as: `"prior box score fallback — not in current roster file"`
 
 ---
 
 ## Output
 
-Completed vault file written to `D:\Obsidian\Main\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md` + a brief summary of key source discrepancies found during research.
+Completed vault file written to `C:\Users\awt\Sync\Obsidian\YYYY-MM-DD - {Team A} vs {Team B} Box Score.md` + a brief summary of key source discrepancies found during research.

@@ -1,5 +1,5 @@
-# Fix absolute paths in Related Notes sections
-$vaultPath = 'D:\Obsidian\Main'
+﻿# Fix absolute paths in Related Notes sections
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $count = 0
 
 # Get all markdown files except in excluded folders
@@ -12,9 +12,9 @@ foreach ($file in $files) {
     if (-not $content) { continue }
 
     # Check for absolute paths in wikilinks
-    if ($content -match '\[\[D:/Obsidian/Main/') {
+    if ($content -match '\[\[C:/Users/awt/Sync/Obsidian/') {
         # Replace absolute paths with relative paths
-        $newContent = $content -replace '\[\[D:/Obsidian/Main/', '[['
+        $newContent = $content -replace '\[\[C:/Users/awt/Sync/Obsidian/', '[['
 
         Set-Content -Path $file.FullName -Value $newContent -Encoding UTF8 -NoNewline
         $count++

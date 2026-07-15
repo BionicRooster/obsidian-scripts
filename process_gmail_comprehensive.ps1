@@ -1,9 +1,9 @@
-# Comprehensive Gmail file processing
+﻿# Comprehensive Gmail file processing
 # 1. Move recipe files to 03 - Recipes
 # 2. Move other categorized files to 01 subdirectories
 # 3. Identify duplicate email threads
 
-$vault = "D:\Obsidian\Main"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $gmail = "$vault\04 - GMail"
 $recipesFolder = "$vault\03 - Recipes"
 

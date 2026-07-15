@@ -1,4 +1,4 @@
-$vault = 'D:\Obsidian\Main'
+﻿$vault = 'C:\Users\awt\Sync\Obsidian'
 $mocDir = Join-Path $vault '00 - Home Dashboard'
 
 # Get all wikilinks from MOC files

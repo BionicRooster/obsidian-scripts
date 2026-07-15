@@ -1,4 +1,4 @@
-# Script to fix MIME-encoded headers in Gmail export files
+﻿# Script to fix MIME-encoded headers in Gmail export files
 # This script decodes:
 # - =?utf-8?Q?...?= (Quoted-Printable encoded words)
 # - =?utf-8?B?...?= (Base64 encoded words)
@@ -89,7 +89,7 @@ function Decode-QuotedPrintableBody {
 }
 
 # Target folder
-$folder = "D:\Obsidian\Main\04 - GMail"
+$folder = "C:\Users\awt\Sync\Obsidian\04 - GMail"
 
 # Search patterns for the files we need to fix
 $searchPatterns = @(

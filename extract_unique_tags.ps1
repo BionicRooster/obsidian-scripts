@@ -1,10 +1,10 @@
-# extract_unique_tags.ps1
+﻿# extract_unique_tags.ps1
 # Scans all .md files in the Obsidian vault and extracts unique tags
 # from YAML frontmatter only (not author, source, or other YAML keys).
 # Outputs sorted list with file counts.
 
 # Vault path
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Output file
 $outputFile = "C:\Users\awt\vault_tags.txt"

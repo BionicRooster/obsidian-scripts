@@ -1,8 +1,8 @@
-# add_moc_links.ps1 — Classify unclassified notes into their MOC sections
+﻿# add_moc_links.ps1 — Classify unclassified notes into their MOC sections
 # UTF-8 encoding throughout; special chars handled via [char] escapes in strings
 
 $ErrorActionPreference = 'Stop'
-$vault  = 'D:\Obsidian\Main'
+$vault  = 'C:\Users\awt\Sync\Obsidian'
 $dashDir = "$vault\00 - Home Dashboard"
 
 # ─────────────────────────────────────────────────────────────────────────────

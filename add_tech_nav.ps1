@@ -1,5 +1,5 @@
-# Add nav to Technology files missing it
-$dir = 'D:\Obsidian\Main\01\Technology'
+﻿# Add nav to Technology files missing it
+$dir = 'C:\Users\awt\Sync\Obsidian\01\Technology'
 $nav = 'nav: "[[MOC - Technology & Computers]]"'
 $updated = 0
 $skipped = 0

@@ -1,6 +1,6 @@
-# Fix duplicate nav lines inserted after closing --- by AddNav function
+﻿# Fix duplicate nav lines inserted after closing --- by AddNav function
 # Pattern: after frontmatter closing ---, there should not be a nav: line
-$clippings = "D:\Obsidian\Main\10 - Clippings"
+$clippings = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
 $fixed = 0
 
 $files = Get-ChildItem -LiteralPath $clippings -Filter "*.md" | Where-Object { $_.Name -ne "10 - Clippings.md" }

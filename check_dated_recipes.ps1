@@ -1,6 +1,6 @@
-# Check for remaining dated files
-$source = "D:\Obsidian\Main\03 - Recipes"
-$dest = "D:\Obsidian\Main\01\Recipes"
+﻿# Check for remaining dated files
+$source = "C:\Users\awt\Sync\Obsidian\03 - Recipes"
+$dest = "C:\Users\awt\Sync\Obsidian\01\Recipes"
 
 $datedFiles = Get-ChildItem -Path $source -Filter "*.md" | Where-Object {
     $_.Name -match "^\d{4}-\d{2}-\d{2}"

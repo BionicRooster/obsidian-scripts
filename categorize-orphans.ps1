@@ -1,11 +1,11 @@
-# Categorize orphan files by top-level folder
+﻿# Categorize orphan files by top-level folder
 $orphanFile = "C:\Users\awt\PowerShell\Out\OrphanFiles_2025-12-24_121630.txt"
 $lines = Get-Content $orphanFile | Where-Object { $_ -ne "" }
 
 $categories = @{}
 foreach ($line in $lines) {
-    # Extract the folder after D:\Obsidian\Main\
-    $relativePath = $line -replace "^D:\\Obsidian\\Main\\", ""
+    # Extract the folder after C:\Users\awt\Sync\Obsidian\
+    $relativePath = $line -replace "^C:\\Users\\awt\\Sync\\Obsidian\\", ""
     $topFolder = ($relativePath -split "\\")[0]
     if (-not $categories.ContainsKey($topFolder)) {
         $categories[$topFolder] = 0

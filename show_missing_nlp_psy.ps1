@@ -1,4 +1,4 @@
-# Show which files are missing the NLP_Psy tag
+﻿# Show which files are missing the NLP_Psy tag
 
 # Array of all unique files from the MOC
 $files = @(
@@ -119,7 +119,7 @@ foreach ($fileName in $uniqueFiles) {
     # Search for file in vault
     $foundFiles = $null
     try {
-        $foundFiles = @(Get-ChildItem -Path 'D:\Obsidian\Main' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' })
+        $foundFiles = @(Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' })
     } catch {
         # Ignore errors
     }

@@ -1,4 +1,4 @@
-# parse_mbox_recipes.ps1
+﻿# parse_mbox_recipes.ps1
 # Parses an mbox file and creates individual markdown files in the Obsidian vault.
 # If an email contains a recipe or a recipe URL, creates a recipe markdown file.
 
@@ -7,10 +7,10 @@ param(
     [string]$MboxPath = "D:\Downloads\takeout-20260204T142136Z-3-001\Takeout\Mail\Recipes.mbox",
 
     # Destination folder for email markdown files
-    [string]$GmailFolder = "D:\Obsidian\Main\04 - GMail",
+    [string]$GmailFolder = "C:\Users\awt\Sync\Obsidian\04 - GMail",
 
     # Destination folder for recipe files
-    [string]$RecipeFolder = "D:\Obsidian\Main\03 - Recipes",
+    [string]$RecipeFolder = "C:\Users\awt\Sync\Obsidian\03 - Recipes",
 
     # Maximum number of emails to process (0 = all)
     [int]$Limit = 0,

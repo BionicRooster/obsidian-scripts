@@ -1,5 +1,5 @@
-# List orphans using same logic as link_largest_orphan.ps1
-$vaultPath = 'D:\Obsidian\Main'
+﻿# List orphans using same logic as link_largest_orphan.ps1
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $skipFolders = @('00 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
 
 # Get all .md files

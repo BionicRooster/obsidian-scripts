@@ -1,14 +1,14 @@
-Sort the Obsidian To-Do List: uncompleted tasks first, then completed tasks sorted by most recent completion date descending.
+﻿Sort the Obsidian To-Do List: uncompleted tasks first, then completed tasks sorted by most recent completion date descending.
 
 ## Parameters
 
-No arguments. Always operates on `D:\Obsidian\Main\To-Do List.md`.
+No arguments. Always operates on `C:\Users\awt\Sync\Obsidian\To-Do List.md`.
 
 ---
 
 ## Step 1 — Read the File
 
-Read `D:\Obsidian\Main\To-Do List.md` with UTF-8 encoding, preserving BOM if present.
+Read `C:\Users\awt\Sync\Obsidian\To-Do List.md` with UTF-8 encoding, preserving BOM if present.
 
 ---
 
@@ -68,7 +68,7 @@ Rebuild the file in this order:
 6. `---`
 7. `## Related Notes` and footer content
 
-Write back to `D:\Obsidian\Main\To-Do List.md` with UTF-8 encoding.
+Write back to `C:\Users\awt\Sync\Obsidian\To-Do List.md` with UTF-8 encoding.
 
 ---
 

@@ -1,4 +1,4 @@
-# MOC Cleanup Script - 2026-03-31
+﻿# MOC Cleanup Script - 2026-03-31
 # Fixes misplaced links in MOC files and moves misallocated files in 01/ subdirectories
 # All file reads/writes use UTF-8 encoding (no BOM)
 # Uses LiteralPath for special character safety
@@ -36,7 +36,7 @@ Write-Host ""
 # PART 1: MOC FILE FIXES
 # ============================================================
 
-$mocDir = "D:\Obsidian\Main\00 - Home Dashboard"  # Folder containing all MOC files
+$mocDir = "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard"  # Folder containing all MOC files
 
 # ---- 1. Bahá'í Faith MOC ----
 # Issues found:
@@ -334,18 +334,18 @@ function Move-VaultFile {
 }
 
 # Resolve folder paths using Get-ChildItem to handle Unicode correctly
-$bahaiFolder   = (Get-ChildItem -LiteralPath 'D:\Obsidian\Main\01' -Directory | Where-Object { $_.Name -like '*Bah*' }).FullName
-$healthFolder  = 'D:\Obsidian\Main\01\Health'
-$homeFolder    = 'D:\Obsidian\Main\01\Home'
-$nlpFolder     = 'D:\Obsidian\Main\01\NLP'
-$scienceFolder = 'D:\Obsidian\Main\01\Science'
-$socialFolder  = 'D:\Obsidian\Main\01\Social'
-$techFolder    = 'D:\Obsidian\Main\01\Technology'
-$travelFolder  = 'D:\Obsidian\Main\01\Travel'
-$financeFolder = 'D:\Obsidian\Main\01\Finance'
-$pkmFolder     = 'D:\Obsidian\Main\01\PKM'
-$recipeFolder  = 'D:\Obsidian\Main\01\Recipes'
-$folFolder     = 'D:\Obsidian\Main\01\FOL'
+$bahaiFolder   = (Get-ChildItem -LiteralPath 'C:\Users\awt\Sync\Obsidian\01' -Directory | Where-Object { $_.Name -like '*Bah*' }).FullName
+$healthFolder  = 'C:\Users\awt\Sync\Obsidian\01\Health'
+$homeFolder    = 'C:\Users\awt\Sync\Obsidian\01\Home'
+$nlpFolder     = 'C:\Users\awt\Sync\Obsidian\01\NLP'
+$scienceFolder = 'C:\Users\awt\Sync\Obsidian\01\Science'
+$socialFolder  = 'C:\Users\awt\Sync\Obsidian\01\Social'
+$techFolder    = 'C:\Users\awt\Sync\Obsidian\01\Technology'
+$travelFolder  = 'C:\Users\awt\Sync\Obsidian\01\Travel'
+$financeFolder = 'C:\Users\awt\Sync\Obsidian\01\Finance'
+$pkmFolder     = 'C:\Users\awt\Sync\Obsidian\01\PKM'
+$recipeFolder  = 'C:\Users\awt\Sync\Obsidian\01\Recipes'
+$folFolder     = 'C:\Users\awt\Sync\Obsidian\01\FOL'
 
 Write-Host "Bahá'í folder: $bahaiFolder" -ForegroundColor DarkCyan
 
@@ -373,7 +373,7 @@ Move-VaultFile (Join-Path $healthFolder "XJ Unisex Running Socks.md") $homeFolde
 Move-VaultFile (Join-Path $healthFolder "Japanese Cherry Blossom Body Oil.md") $homeFolder "Body oil product → Home"
 
 # How Copyright Restri.md → Music (tags: music, art, movie - licensing/IP for art/music)
-Move-VaultFile (Join-Path $healthFolder "How Copyright Restri.md") (Join-Path 'D:\Obsidian\Main\01' 'Music') "Copyright/music → Music"
+Move-VaultFile (Join-Path $healthFolder "How Copyright Restri.md") (Join-Path 'C:\Users\awt\Sync\Obsidian\01' 'Music') "Copyright/music → Music"
 
 # --- FILES MISPLACED IN 01\Finance ---
 # A Year in the Round Why a Tipi.md → Home (home/travel/tipi, nav: MOC - Home & Practical Life)
@@ -402,18 +402,18 @@ Move-VaultFile (Join-Path $pkmFolder "How To Fold a Dress.md") $homeFolder "Clot
 Move-VaultFile (Join-Path $pkmFolder "Library.md") $folFolder "Library/FOL content → FOL"
 
 # Turn Coat - Wikipedi.md → Reading (it's a Dresden Files novel Wikipedia article)
-Move-VaultFile (Join-Path $pkmFolder "Turn Coat - Wikipedi.md") (Join-Path 'D:\Obsidian\Main\01' 'Reading') "Novel article → Reading"
+Move-VaultFile (Join-Path $pkmFolder "Turn Coat - Wikipedi.md") (Join-Path 'C:\Users\awt\Sync\Obsidian\01' 'Reading') "Novel article → Reading"
 
 # --- FILES MISPLACED IN 01\Psychology ---
 # HP Retiree Dave Packard.md → Technology (management rules at HP - tech company, person in tech)
 # Note: This is already in the NLP MOC Psychology section; moving to Tech folder
-Move-VaultFile (Join-Path 'D:\Obsidian\Main\01\Psychology' "HP Retiree Dave Packard.md") $techFolder "HP/Packard management → Technology"
+Move-VaultFile (Join-Path 'C:\Users\awt\Sync\Obsidian\01\Psychology' "HP Retiree Dave Packard.md") $techFolder "HP/Packard management → Technology"
 
 # The Oral History of.md → Home (tags: Home, TV, StarTrek - entertainment)
-Move-VaultFile (Join-Path 'D:\Obsidian\Main\01\Psychology' "The Oral History of.md") $homeFolder "Star Trek oral history → Home (Entertainment)"
+Move-VaultFile (Join-Path 'C:\Users\awt\Sync\Obsidian\01\Psychology' "The Oral History of.md") $homeFolder "Star Trek oral history → Home (Entertainment)"
 
 # Contentment - What You Have Relative to What You Want.md → Home (Sketchplanations tag - in Home MOC Sketchplanations)
-Move-VaultFile (Join-Path 'D:\Obsidian\Main\01\Psychology' "Contentment - What You Have Relative to What You Want.md") $homeFolder "Sketchplanations → Home"
+Move-VaultFile (Join-Path 'C:\Users\awt\Sync\Obsidian\01\Psychology' "Contentment - What You Have Relative to What You Want.md") $homeFolder "Sketchplanations → Home"
 
 # --- FILES MISPLACED IN 01\Home ---
 # Make Perfectly Crispy Tofu with a Waffle Iron.md → Recipes
@@ -438,7 +438,7 @@ Move-VaultFile (Join-Path $homeFolder "You All NEED These Obsidian Community Plu
 Move-VaultFile (Join-Path $homeFolder "Teaching Tuesday - Tofu Guide.md") $recipeFolder "Tofu guide → Recipes"
 
 # Leading From Any Chair.md → Music (it's about orchestral leadership/music ensemble)
-Move-VaultFile (Join-Path $homeFolder "Leading From Any Chair.md") (Join-Path 'D:\Obsidian\Main\01' 'Music') "Orchestra leadership → Music"
+Move-VaultFile (Join-Path $homeFolder "Leading From Any Chair.md") (Join-Path 'C:\Users\awt\Sync\Obsidian\01' 'Music') "Orchestra leadership → Music"
 
 # --- FILES MISPLACED IN 01\Science ---
 # Build With SIPs.md → Home (structural insulated panels for home building)

@@ -1,6 +1,6 @@
-# Remove [New post] prefix from filenames in 04 - GMail folder
+﻿# Remove [New post] prefix from filenames in 04 - GMail folder
 
-$folder = "D:\Obsidian\Main\04 - GMail"
+$folder = "C:\Users\awt\Sync\Obsidian\04 - GMail"
 
 # Get files matching pattern
 $files = Get-ChildItem -LiteralPath $folder -Filter "*.md" | Where-Object { $_.Name -match '^\[New post\]' }

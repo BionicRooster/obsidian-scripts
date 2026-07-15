@@ -1,5 +1,5 @@
-# Move classified notes to their appropriate 01/ subdirectories
-$vault = "D:\Obsidian\Main"
+﻿# Move classified notes to their appropriate 01/ subdirectories
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 # Technology: AI & UX article
 Move-Item "$vault\10 - Clippings\Human Strategy In An AI-Accelerated Workflow.md" "$vault\01\Technology\Human Strategy In An AI-Accelerated Workflow.md" -Force

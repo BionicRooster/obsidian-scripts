@@ -1,5 +1,5 @@
-# Count files in folders skipped by link_largest_orphan.ps1
-$vaultPath = 'D:\Obsidian\Main'
+﻿# Count files in folders skipped by link_largest_orphan.ps1
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $skipFolders = @('00 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
 
 $totalSkipped = 0
@@ -19,7 +19,7 @@ Write-Host "Total files in skipped folders: $totalSkipped"
 # Now count orphans in those folders from Orphan Files.md
 Write-Host ""
 Write-Host "--- Checking Orphan Files.md for breakdown ---"
-$orphanContent = Get-Content "D:\Obsidian\Main\Orphan Files.md" -Raw
+$orphanContent = Get-Content "C:\Users\awt\Sync\Obsidian\Orphan Files.md" -Raw
 foreach ($folder in $skipFolders) {
     $pattern = "## $folder"
     if ($orphanContent -match "$pattern \((\d+)\)") {

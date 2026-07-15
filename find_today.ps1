@@ -1,5 +1,5 @@
-# Find markdown files created today, excluding system folders
-$vaultPath = "D:\Obsidian\Main"
+﻿# Find markdown files created today, excluding system folders
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $today = (Get-Date).Date
 
 # Exclusion patterns for system/non-content folders

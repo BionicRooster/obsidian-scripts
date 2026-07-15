@@ -1,6 +1,6 @@
-# Move Evernote _resources to 00 - Images
-$source = "D:\Obsidian\Main\11 - Evernote\_resources"
-$dest = "D:\Obsidian\Main\00 - Images\Evernote-Resources"
+﻿# Move Evernote _resources to 00 - Images
+$source = "C:\Users\awt\Sync\Obsidian\11 - Evernote\_resources"
+$dest = "C:\Users\awt\Sync\Obsidian\00 - Images\Evernote-Resources"
 
 # Create destination if it doesn't exist
 if (-not (Test-Path $dest)) {

@@ -1,12 +1,12 @@
-# Classify recent notes - move from Clippings, add nav, link to MOCs
+﻿# Classify recent notes - move from Clippings, add nav, link to MOCs
 $ErrorActionPreference = 'Stop'
 
-$clippingsDir = 'D:\Obsidian\Main\10 - Clippings'
-$techDir = 'D:\Obsidian\Main\01\Technology'
-$socialDir = 'D:\Obsidian\Main\01\Social'
-$bahaiDir = "D:\Obsidian\Main\01\Baha'i"
-$dashDir = 'D:\Obsidian\Main\00 - Home Dashboard'
-$vaultRoot = 'D:\Obsidian\Main'
+$clippingsDir = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
+$techDir = 'C:\Users\awt\Sync\Obsidian\01\Technology'
+$socialDir = 'C:\Users\awt\Sync\Obsidian\01\Social'
+$bahaiDir = "C:\Users\awt\Sync\Obsidian\01\Baha'i"
+$dashDir = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Helper: add nav property to frontmatter of a file
 function Add-NavProperty {

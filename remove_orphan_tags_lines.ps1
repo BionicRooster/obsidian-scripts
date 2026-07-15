@@ -1,6 +1,6 @@
-# Remove orphan tags: lines that appear immediately after YAML closing ---
+﻿# Remove orphan tags: lines that appear immediately after YAML closing ---
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Get all files modified in last 4 hours
 $files = Get-ChildItem -Path $vaultRoot -Recurse -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object {

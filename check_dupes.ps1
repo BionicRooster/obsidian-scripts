@@ -1,8 +1,8 @@
-$mocs = @(
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Social Issues.md',
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Home & Practical Life.md',
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Music & Record.md',
-    "D:\Obsidian\Main\00 - Home Dashboard\MOC - Bah\u00e1'\u00ed Faith.md"
+﻿$mocs = @(
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Social Issues.md',
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Home & Practical Life.md',
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Music & Record.md',
+    "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Bah\u00e1'\u00ed Faith.md"
 )
 foreach ($path in $mocs) {
     $lines = Get-Content $path -Encoding UTF8 | Where-Object { $_ -match '^\- \[\[' }

@@ -1,4 +1,4 @@
-# Add nav property to files that are missing it
+﻿# Add nav property to files that are missing it
 # UTF-8 safe
 
 function Add-NavToFile {
@@ -14,7 +14,7 @@ function Add-NavToFile {
     } else { Write-Host "NO FRONTMATTER: $FilePath" }
 }
 
-$vault = 'D:\Obsidian\Main'
+$vault = 'C:\Users\awt\Sync\Obsidian'
 
 # Files needing nav added
 $files = @(

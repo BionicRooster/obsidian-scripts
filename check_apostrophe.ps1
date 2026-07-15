@@ -1,5 +1,5 @@
-# Check the apostrophe character encoding
-$filePath = "D:\Obsidian\Main\11 - Evernote\BionicR\After 36 Years, Arch.md"
+﻿# Check the apostrophe character encoding
+$filePath = "C:\Users\awt\Sync\Obsidian\11 - Evernote\BionicR\After 36 Years, Arch.md"
 $bytes = [System.IO.File]::ReadAllBytes($filePath)
 $str = [System.Text.Encoding]::UTF8.GetString($bytes)
 

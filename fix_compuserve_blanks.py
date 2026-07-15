@@ -1,4 +1,4 @@
-"""
+﻿"""
 Second pass: collapse intra-paragraph blank lines in the CompuServe transcript.
 Lines within a speaker's paragraph are separated by blank lines due to 80-char
 BBS word-wrap. Join them into proper paragraphs.
@@ -13,7 +13,7 @@ Rules:
 
 import re
 
-SRC = 'D:/Obsidian/Main/01/NLP/Transcript of a CompUSERVE THREAD ON THE USE OF NLP IN TRAINING.md'
+SRC = 'C:/Users/awt/Sync/Obsidian/01/NLP/Transcript of a CompUSERVE THREAD ON THE USE OF NLP IN TRAINING.md'
 
 with open(SRC, 'r', encoding='utf-8') as f:
     content = f.read()

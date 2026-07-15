@@ -1,7 +1,7 @@
-# Extract only clean author names from frontmatter author: fields across all .md files
+﻿# Extract only clean author names from frontmatter author: fields across all .md files
 # This is the most reliable source of real human names
 
-$vaultRoot = "D:\Obsidian\Main"
+$vaultRoot = "C:\Users\awt\Sync\Obsidian"
 $results = @{}
 
 # Get all .md files excluding noisy folders

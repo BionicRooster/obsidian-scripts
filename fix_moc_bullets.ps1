@@ -1,5 +1,5 @@
-# Quick test script to run just Phase 20
-$vaultPath = "D:\Obsidian\Main"
+﻿# Quick test script to run just Phase 20
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $dryRun = $false
 
 function Write-Log {

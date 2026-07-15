@@ -1,4 +1,4 @@
-# fix_smart_apostrophe_links.ps1
+﻿# fix_smart_apostrophe_links.ps1
 # Purpose: Fix broken Obsidian links that contain smart/curly apostrophes (')
 #          by replacing them with standard apostrophes (')
 #
@@ -13,7 +13,7 @@
 # ============================================================================
 
 # Path to the Obsidian vault - modify this if your vault is in a different location
-$VaultPath = "D:\Obsidian\Main"
+$VaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Smart apostrophe character to find (Unicode: U+2019 - Right Single Quotation Mark)
 $SmartApostrophe = [char]0x2019  # This is the curly/smart apostrophe: '

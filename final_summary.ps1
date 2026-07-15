@@ -1,6 +1,6 @@
-# Final summary of the tag addition process
+﻿# Final summary of the tag addition process
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # All files listed in the MOC that should have been processed
 $allFilesFromMOC = @(

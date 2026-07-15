@@ -1,4 +1,4 @@
-"""
+﻿"""
 Extract screenshots from a video at specified timestamps using ffmpeg.
 Names files as screenshot_HH_MM_SS.jpg.
 Also copies screenshots to the Obsidian images folder.
@@ -19,7 +19,7 @@ OUT_DIR = r"C:\Users\awt\AppData\Local\Temp\ytdl\screenshots"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Obsidian images folder
-OBS_DIR = r"D:\Obsidian\Main\00 - Images"
+OBS_DIR = r"C:\Users\awt\Sync\Obsidian\00 - Images"
 
 # Scene change timestamps in seconds (from ffmpeg scene detection)
 TIMESTAMPS = [

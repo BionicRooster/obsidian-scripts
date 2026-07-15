@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Fix 8 malformed Daily Quotes files where the YAML frontmatter is broken:
   - tags written inline: "tags: - Bahai - BahaiScripture" (should be multi-line)
@@ -28,7 +28,7 @@ APOS    = chr(0x27)   # standard apostrophe '
 BAHAI = f"Bah{ACUTE_A}{APOS}{ACUTE_I}"   # Bahá'í (filesystem spelling)
 NAV   = f"MOC - {BAHAI} Faith"            # nav property value (without [[ ]])
 
-DIR = f"D:\\Obsidian\\Main\\01\\{BAHAI}\\Daily Quotes"
+DIR = f"C:\\Users\\awt\\Sync\\Obsidian\\01\\{BAHAI}\\Daily Quotes"
 
 # The 8 files identified as malformed
 FILES = [

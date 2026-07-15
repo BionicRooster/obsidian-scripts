@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 fix_nlp_related_links.py
@@ -19,7 +19,7 @@ import sys
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-NLP_DIR = r"D:\Obsidian\Main\01\NLP"
+NLP_DIR = r"C:\Users\awt\Sync\Obsidian\01\NLP"
 
 # Known file titles in the NLP folder (filename without .md)
 # We'll build this dynamically from the filesystem

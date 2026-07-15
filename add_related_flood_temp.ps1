@@ -1,5 +1,5 @@
-# Add Related Notes to the cataclysmic flood file
-$folder = 'D:\Obsidian\Main\10 - Clippings'
+﻿# Add Related Notes to the cataclysmic flood file
+$folder = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 $file = Get-ChildItem $folder | Where-Object { $_.Name -match "cataclysmic" } | Select-Object -First 1
 if ($file) {
     $content = Get-Content -LiteralPath $file.FullName -Encoding UTF8 -Raw

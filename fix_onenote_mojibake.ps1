@@ -1,7 +1,7 @@
-# PowerShell script to fix mojibake in OneNote folder files
+﻿# PowerShell script to fix mojibake in OneNote folder files
 # Fixes multi-encoded apostrophes, quotes, and special characters
 
-$VaultPath = "D:\Obsidian\Main\12 - OneNote"
+$VaultPath = "C:\Users\awt\Sync\Obsidian\12 - OneNote"
 
 # Common mojibake patterns and their replacements
 # These are multi-encoded UTF-8 characters that need to be fixed

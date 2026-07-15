@@ -1,6 +1,6 @@
-# Fix duplicate tags lines in files that were just modified
+﻿# Fix duplicate tags lines in files that were just modified
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Get all markdown files modified in the last 2 hours
 $files = Get-ChildItem -Path $vaultRoot -Recurse -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object {

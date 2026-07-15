@@ -1,7 +1,7 @@
-$cutoff = (Get-Date).AddDays(-2)
+﻿$cutoff = (Get-Date).AddDays(-2)
 $excludes = @('People','Journals','00 - Journal','Templates','.resources','images','Attachments','00 - Images','00 - Home Dashboard')
 
-Get-ChildItem -Path 'D:\Obsidian\Main' -Recurse -Filter '*.md' |
+Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -Recurse -Filter '*.md' |
 Where-Object {
     $f = $_.FullName
     $_.CreationTime -ge $cutoff -and

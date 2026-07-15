@@ -1,10 +1,10 @@
-# build_alltime_roster.ps1
+﻿# build_alltime_roster.ps1
 # Parses Austin FC roster.md (fbref season tables) and builds all-time career stats note.
 # Aggregates MP/Starts/Min/Gls/Ast/G-PK/PK/PKatt/CrdY/CrdR across all seasons (2021-2026).
 # Adds jersey numbers, sorts by last name, writes 01/Soccer/Austin FC All-Time Roster.md.
 
-$rosterPath = "D:\Obsidian\Main\Austin FC roster.md"
-$outputPath = "D:\Obsidian\Main\01\Soccer\Austin FC All-Time Roster.md"
+$rosterPath = "C:\Users\awt\Sync\Obsidian\Austin FC roster.md"
+$outputPath = "C:\Users\awt\Sync\Obsidian\01\Soccer\Austin FC All-Time Roster.md"
 
 # ── Jersey number lookup ──────────────────────────────────────────────────────
 # Key = exact fbref display name; Value = jersey string ("N" or "N1→N2→N3")

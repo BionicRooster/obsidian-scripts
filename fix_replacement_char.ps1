@@ -1,8 +1,8 @@
-# Script to remove the Unicode replacement character (U+FFFD) from markdown files
+﻿# Script to remove the Unicode replacement character (U+FFFD) from markdown files
 # The replacement character "�" appears when encoding fails
 
 param(
-    [string]$Path = "D:\Obsidian\Main",  # Directory to scan
+    [string]$Path = "C:\Users\awt\Sync\Obsidian",  # Directory to scan
     [switch]$DryRun                       # Preview changes without saving
 )
 

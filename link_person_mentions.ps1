@@ -1,4 +1,4 @@
-# link_person_mentions.ps1
+﻿# link_person_mentions.ps1
 # Creates bidirectional links in person notes to all notes that mention them
 # UTF-8 encoding preserved throughout
 
@@ -9,7 +9,7 @@ param(
 )
 
 # Vault path
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 # People folder path
 $peoplePath = Join-Path $vaultPath "15 - People"
 

@@ -1,6 +1,6 @@
-# fix_orphans.ps1 - Fixes all identified orphan file problems
+﻿# fix_orphans.ps1 - Fixes all identified orphan file problems
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $mocDir    = Join-Path $vaultPath '00 - Home Dashboard'
 
 # Read a file preserving UTF-8 BOM

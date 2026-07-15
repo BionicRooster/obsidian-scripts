@@ -1,8 +1,8 @@
-# alphabetize_moc_links.ps1
+﻿# alphabetize_moc_links.ps1
 # Sorts bullet-point wikilinks alphabetically within each subsection of all MOC files
 # No nested functions - avoids PowerShell scope issues
 
-$mocDir = "D:\Obsidian\Main\00 - Home Dashboard"
+$mocDir = "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard"
 $enc    = [System.Text.Encoding]::UTF8
 
 Get-ChildItem $mocDir -Filter "MOC - *.md" | ForEach-Object {

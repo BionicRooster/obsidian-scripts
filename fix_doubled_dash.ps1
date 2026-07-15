@@ -1,4 +1,4 @@
-# fix_doubled_dash.ps1
+﻿# fix_doubled_dash.ps1
 # Fixes the "  - - tag" doubled dash issue in YAML tags
 # caused by the inline tag splitter not stripping the leading "- " from first token.
 
@@ -12,7 +12,7 @@ if (-not $WhatIf -and -not $Apply) {
     exit 1
 }
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $files = Get-ChildItem -Path $vaultPath -Recurse -Filter "*.md" -File
 $fixCount = 0
 

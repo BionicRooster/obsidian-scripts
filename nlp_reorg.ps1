@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # NLP / Psychology Folder Reorganization
 # - Creates 01\NLP
 # - Moves NLP Master Class subfolder to 01\NLP\NLP Master Class
@@ -7,11 +7,11 @@
 # - Renames 01\NLP_Psy to 01\Psychology
 # =============================================================================
 
-$nlpPsyDir = 'D:\Obsidian\Main\01\NLP_Psy'
-$nlpDir    = 'D:\Obsidian\Main\01\NLP'
-$psyDir    = 'D:\Obsidian\Main\01\Psychology'
-$mcSrc     = 'D:\Obsidian\Main\01\NLP_Psy\NLP Master Class'
-$mcDst     = 'D:\Obsidian\Main\01\NLP\NLP Master Class'
+$nlpPsyDir = 'C:\Users\awt\Sync\Obsidian\01\NLP_Psy'
+$nlpDir    = 'C:\Users\awt\Sync\Obsidian\01\NLP'
+$psyDir    = 'C:\Users\awt\Sync\Obsidian\01\Psychology'
+$mcSrc     = 'C:\Users\awt\Sync\Obsidian\01\NLP_Psy\NLP Master Class'
+$mcDst     = 'C:\Users\awt\Sync\Obsidian\01\NLP\NLP Master Class'
 
 # ── Step 1: Create 01\NLP ────────────────────────────────────────────────────
 Write-Host "Step 1: Creating 01\NLP..." -ForegroundColor Cyan

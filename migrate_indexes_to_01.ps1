@@ -1,9 +1,9 @@
-# migrate_indexes_to_01.ps1
+﻿# migrate_indexes_to_01.ps1
 # Migrates files from "04 - Indexes" folder to appropriate "01" subdirectories
 # while updating all wikilinks throughout the vault
 
 # Define vault path
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 # Source folder containing files to migrate
 $sourceFolder = Join-Path $vaultPath "04 - Indexes"
 # Target base folder for migrations

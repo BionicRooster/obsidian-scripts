@@ -1,6 +1,6 @@
-import os, datetime
+﻿import os, datetime
 
-vault = 'D:/Obsidian/Main'
+vault = 'C:/Users/awt/Sync/Obsidian'
 cutoff = datetime.datetime.now() - datetime.timedelta(days=2)
 excludes = ['/People/', '/Journals/', '/00 - Journal/', '/Templates/', '/images/',
             '/Attachments/', '/00 - Home Dashboard/', '/.resources/']

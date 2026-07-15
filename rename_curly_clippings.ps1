@@ -1,8 +1,8 @@
-# rename_curly_clippings.ps1
+﻿# rename_curly_clippings.ps1
 # Renames files in 10 - Clippings that have curly/smart quotes in their names,
 # replacing them with standard straight apostrophes/quotes before any file operations.
 
-$folder = 'D:\Obsidian\Main\10 - Clippings'
+$folder = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 
 $files = Get-ChildItem -Path $folder -Filter '*.md' -ErrorAction SilentlyContinue
 

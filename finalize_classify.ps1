@@ -1,7 +1,7 @@
-# finalize_classify.ps1
+﻿# finalize_classify.ps1
 # Adds missing MOC links and fixes nav/frontmatter issues for recently classified files
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # -- Helper: add a wikilink bullet after a section header in a MOC file -----------
 function Add-MOCLink {

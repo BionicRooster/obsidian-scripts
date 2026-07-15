@@ -1,11 +1,11 @@
-# fix_gmail_encoding.ps1
+﻿# fix_gmail_encoding.ps1
 # Fixes MIME encoding, HTML, and quoted-printable issues in Gmail markdown files
 # Preserves YAML frontmatter, header (# title, **From/To/Date:**), and ## Links section
 # Cleans up the body content between header --- and ## Links
 
 param(
     # Path to the Gmail folder
-    [string]$GmailFolder = "D:\Obsidian\Main\04 - GMail",
+    [string]$GmailFolder = "C:\Users\awt\Sync\Obsidian\04 - GMail",
 
     # If set, only show what would be done
     [switch]$DryRun,

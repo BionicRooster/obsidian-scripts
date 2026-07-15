@@ -1,14 +1,14 @@
-# Move final remaining files
-$src = "D:\Obsidian\Main\20 - Permanent Notes"
+﻿# Move final remaining files
+$src = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 
 # Move each specific file
 $files = Get-ChildItem -Path $src -Filter "*.md" | Where-Object { $_.Name -ne "20 - Permanent Notes.md" }
 
 foreach ($file in $files) {
     $dest = switch -regex ($file.Name) {
-        "Judaism" { "D:\Obsidian\Main\01\Religion" }
-        "Coronavirus" { "D:\Obsidian\Main\01\Health" }
-        default { "D:\Obsidian\Main\01\Home" }
+        "Judaism" { "C:\Users\awt\Sync\Obsidian\01\Religion" }
+        "Coronavirus" { "C:\Users\awt\Sync\Obsidian\01\Health" }
+        default { "C:\Users\awt\Sync\Obsidian\01\Home" }
     }
 
     $destPath = Join-Path $dest $file.Name

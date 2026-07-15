@@ -1,4 +1,4 @@
-# Crosslink Related Files Across MOCs
+﻿# Crosslink Related Files Across MOCs
 # This script identifies files with overlapping topics and creates bidirectional crosslinks
 
 param(
@@ -9,7 +9,7 @@ param(
 )
 
 # Vault configuration
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # Cross-topic relationship patterns
 # Maps topics to their related topics for crosslinking

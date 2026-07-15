@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Convert CATALOGU.doc (CompuServe AIEXPERT+ forum thread dump, file 3184.THD)
 into a single continuous-thread Obsidian note.
@@ -35,7 +35,7 @@ DOCX_PATH = r"C:\Users\awt\AppData\Local\Temp\docconv\CATALOGU.docx"
 
 # OUT_PATH: destination note at the vault root, per explicit user instruction
 # (root placement, not the usual 01/NLP classification folder).
-OUT_PATH = r"D:\Obsidian\Main\PRODUCT CATALOG AVAILABL — AIEXPERT+ Forum Thread (Jul 1995).md"
+OUT_PATH = r"C:\Users\awt\Sync\Obsidian\PRODUCT CATALOG AVAILABL — AIEXPERT+ Forum Thread (Jul 1995).md"
 
 # ILLEGIBLE_MARKER: replaces bytes in the source .doc that LibreOffice could
 # not resolve to a real character. Confirmed by direct codepoint inspection

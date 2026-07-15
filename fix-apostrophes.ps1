@@ -1,7 +1,7 @@
-# Script to find and rename files with curly apostrophes
+﻿# Script to find and rename files with curly apostrophes
 $folders = @(
-    "D:\Obsidian\Main\20 - Permanent Notes",
-    "D:\Obsidian\Main\09 - Kindle Clippings"
+    "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes",
+    "C:\Users\awt\Sync\Obsidian\09 - Kindle Clippings"
 )
 
 foreach ($folder in $folders) {

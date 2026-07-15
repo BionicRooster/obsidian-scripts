@@ -1,4 +1,4 @@
-# fix_malformed_tags.ps1
+﻿# fix_malformed_tags.ps1
 # Fixes malformed tags in YAML frontmatter across the Obsidian vault.
 # Categories of fixes:
 #   1. Inline tags: "tags: - recipe - vegan" -> proper YAML list
@@ -26,7 +26,7 @@ if (-not $WhatIf -and -not $Apply) {
 }
 
 # Vault path
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Tags with spaces -> replacement mapping
 $spaceTagFixes = @{

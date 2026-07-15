@@ -1,6 +1,6 @@
-# Find and move all "resources" or "_resources" folders to 00 - Images
-$vaultPath = "D:\Obsidian\Main"
-$destBase = "D:\Obsidian\Main\00 - Images"
+﻿# Find and move all "resources" or "_resources" folders to 00 - Images
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
+$destBase = "C:\Users\awt\Sync\Obsidian\00 - Images"
 
 # Find all directories named "resources" or "_resources"
 Write-Host "Searching for resources folders..."

@@ -1,5 +1,5 @@
-# Add nav properties to classified files
-$vault = "D:\Obsidian\Main"
+﻿# Add nav properties to classified files
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 # Define folder -> MOC mappings
 $mocMappings = @{

@@ -1,4 +1,4 @@
-# Comprehensive script to find unlinked connections in Obsidian vault
+﻿# Comprehensive script to find unlinked connections in Obsidian vault
 # Outputs results in batches for user review
 
 param(
@@ -6,7 +6,7 @@ param(
     [int]$BatchNumber = 1  # Which batch to display (1-indexed)
 )
 
-$vaultPath = "D:\Obsidian\Main"  # Path to Obsidian vault
+$vaultPath = "C:\Users\awt\Sync\Obsidian"  # Path to Obsidian vault
 $cacheFile = "C:\Users\awt\PowerShell\connection_cache.json"  # Cache file for storing results
 
 # Function to check if a mention is NOT linked

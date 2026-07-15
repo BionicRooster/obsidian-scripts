@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 fix_nlp_junk_links.py
@@ -17,7 +17,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 # Process ALL .md files in the NLP folder, not just the target subset
-NLP_DIR = r"D:\Obsidian\Main\01\NLP"
+NLP_DIR = r"C:\Users\awt\Sync\Obsidian\01\NLP"
 
 # Patterns of junk link lines to remove (applied to Related Notes sections AND globally in list context)
 JUNK_LINK_PATTERNS = [

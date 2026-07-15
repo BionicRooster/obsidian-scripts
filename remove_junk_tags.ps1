@@ -1,4 +1,4 @@
-# Remove citation reference and auto-generated tags from Obsidian vault
+﻿# Remove citation reference and auto-generated tags from Obsidian vault
 # Patterns to remove:
 # - #B1, #B2, ... #B140 (numbered citations)
 # - #b1, #b2, ... #b29 (lowercase numbered citations)
@@ -15,7 +15,7 @@ param(
     [switch]$Verbose  # Show detailed output
 )
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Regex patterns for junk tags to remove
 # Each pattern matches #tagname but not ##heading

@@ -1,7 +1,7 @@
-# verify_bytes.ps1
+﻿# verify_bytes.ps1
 # Verify the actual UTF-8 bytes for Bahá'í in the description line
 
-$path = "D:\Obsidian\Main\2010 Personal Calendar Summary.md"
+$path = "C:\Users\awt\Sync\Obsidian\2010 Personal Calendar Summary.md"
 $bytes = [System.IO.File]::ReadAllBytes($path)
 $text = [System.Text.Encoding]::UTF8.GetString($bytes)
 $lines = $text -split "`n"

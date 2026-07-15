@@ -1,5 +1,5 @@
-# Fix files that still have onenote-import tag - replace with meaningful tags
-$clippings = "D:\Obsidian\Main\10 - Clippings"
+﻿# Fix files that still have onenote-import tag - replace with meaningful tags
+$clippings = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
 
 # Map of file patterns to proper tags
 $tagFixes = @{

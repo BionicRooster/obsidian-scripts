@@ -1,10 +1,10 @@
-# review_orphans.ps1
+﻿# review_orphans.ps1
 # For each orphan file, check:
 #   1. Actual filename (double spaces? special chars?)
 #   2. Whether the MOC has a link with single space (mismatch)
 #   3. First few lines of the file (topic/tags)
 
-$vaultPath = 'D:\Obsidian\Main'   # Vault root
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'   # Vault root
 
 # Orphan paths as reported (some with double spaces, one with special chars)
 $orphanNames = @(

@@ -1,5 +1,5 @@
-# Check for duplicate Abdu'l files
-$folder = "D:\Obsidian\Main\20 - Permanent Notes"
+﻿# Check for duplicate Abdu'l files
+$folder = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 $files = Get-ChildItem -Path $folder -Filter "*Abdu*"
 
 Write-Host "Found $($files.Count) file(s) matching 'Abdu':"

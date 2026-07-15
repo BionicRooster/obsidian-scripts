@@ -1,4 +1,4 @@
-# reformat_roster.ps1
+﻿# reformat_roster.ps1
 # Rewrites Austin FC roster.md as a properly structured Obsidian note:
 #   - Frontmatter with tags
 #   - One ## section per season (2021-2026), newest first
@@ -8,8 +8,8 @@
 #   - Matches column removed
 #   - Nav links and Related Notes
 
-$inPath  = "D:\Obsidian\Main\Austin FC roster.md"
-$outPath = "D:\Obsidian\Main\Austin FC roster.md"
+$inPath  = "C:\Users\awt\Sync\Obsidian\Austin FC roster.md"
+$outPath = "C:\Users\awt\Sync\Obsidian\Austin FC roster.md"
 
 $raw = [System.IO.File]::ReadAllText($inPath, [System.Text.Encoding]::UTF8)
 

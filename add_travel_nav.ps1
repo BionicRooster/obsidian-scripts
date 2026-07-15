@@ -1,11 +1,11 @@
-# Add nav property to New Mexico travel files that are missing it
+﻿# Add nav property to New Mexico travel files that are missing it
 $travelFiles = @(
-    'D:\Obsidian\Main\01\Travel\Santa Fe Scenic Railroad.md',
-    'D:\Obsidian\Main\01\Travel\Acoma Sky City - 60 mi w of Alb.md',
-    'D:\Obsidian\Main\01\Travel\Pecos National Historical Park.md',
-    'D:\Obsidian\Main\01\Travel\Santa Fe Plaza.md',
-    'D:\Obsidian\Main\01\Travel\Turquoise Trail National Scenic Byway.md',
-    'D:\Obsidian\Main\01\Travel\Cumbres & Toltec Scenic Railroad.md'
+    'C:\Users\awt\Sync\Obsidian\01\Travel\Santa Fe Scenic Railroad.md',
+    'C:\Users\awt\Sync\Obsidian\01\Travel\Acoma Sky City - 60 mi w of Alb.md',
+    'C:\Users\awt\Sync\Obsidian\01\Travel\Pecos National Historical Park.md',
+    'C:\Users\awt\Sync\Obsidian\01\Travel\Santa Fe Plaza.md',
+    'C:\Users\awt\Sync\Obsidian\01\Travel\Turquoise Trail National Scenic Byway.md',
+    'C:\Users\awt\Sync\Obsidian\01\Travel\Cumbres & Toltec Scenic Railroad.md'
 )
 
 foreach ($f in $travelFiles) {

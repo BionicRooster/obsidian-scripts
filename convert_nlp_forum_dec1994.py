@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 convert_nlp_forum_dec1994.py
@@ -18,7 +18,7 @@ from datetime import datetime
 # ---------------------------------------------------------------------------
 
 DOCX_PATH = r'D:\Documents\NLP\converted\NLP-FRUM.docx'
-OUTPUT_DIR = r'D:\Obsidian\Main\01\NLP'
+OUTPUT_DIR = r'C:\Users\awt\Sync\Obsidian\01\NLP'
 
 # Thread IDs to include (skip 2C88=Time Line Therapy and 2CCC=NLP World)
 THREADS_TO_INCLUDE = {

@@ -1,5 +1,5 @@
-# Fix nav properties for people files
-$peopleDir = 'D:\Obsidian\Main\15 - People'
+﻿# Fix nav properties for people files
+$peopleDir = 'C:\Users\awt\Sync\Obsidian\15 - People'
 
 # 1. Rex Steven Sikes - fix nav (has breadcrumb content in it)
 $sikes = Join-Path $peopleDir 'Rex Steven Sikes.md'

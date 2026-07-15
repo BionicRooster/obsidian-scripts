@@ -1,8 +1,8 @@
-# analyze_broken_links.ps1
+﻿# analyze_broken_links.ps1
 # Script to categorize broken wikilinks in an Obsidian vault
 
 param(
-    [string]$VaultPath = "D:\Obsidian\Main"
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian"
 )
 
 $startTime = Get-Date

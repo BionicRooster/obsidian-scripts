@@ -1,11 +1,11 @@
-# compare_conflicts.ps1
+﻿# compare_conflicts.ps1
 # Compare conflicting files to determine if they're duplicates
 
 $conflicts = @(
-    @{Old='D:\Obsidian\Main\04 - Indexes\Computer Sciences\Linux.md'; New='D:\Obsidian\Main\01\Technology\Linux.md'},
-    @{Old='D:\Obsidian\Main\04 - Indexes\Computer Sciences\Windows.md'; New='D:\Obsidian\Main\01\Technology\Windows.md'},
-    @{Old='D:\Obsidian\Main\04 - Indexes\Computer Sciences\Hardware\Hardware.md'; New='D:\Obsidian\Main\01\Technology\Hardware.md'},
-    @{Old='D:\Obsidian\Main\04 - Indexes\Religion\Religion.md'; New='D:\Obsidian\Main\01\Religion\Religion.md'}
+    @{Old='C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Linux.md'; New='C:\Users\awt\Sync\Obsidian\01\Technology\Linux.md'},
+    @{Old='C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Windows.md'; New='C:\Users\awt\Sync\Obsidian\01\Technology\Windows.md'},
+    @{Old='C:\Users\awt\Sync\Obsidian\04 - Indexes\Computer Sciences\Hardware\Hardware.md'; New='C:\Users\awt\Sync\Obsidian\01\Technology\Hardware.md'},
+    @{Old='C:\Users\awt\Sync\Obsidian\04 - Indexes\Religion\Religion.md'; New='C:\Users\awt\Sync\Obsidian\01\Religion\Religion.md'}
 )
 
 foreach ($c in $conflicts) {
@@ -34,7 +34,7 @@ foreach ($c in $conflicts) {
 
 # Clean up empty folders
 Write-Host "=== Cleaning up empty folders ===" -ForegroundColor Cyan
-$sourceFolder = "D:\Obsidian\Main\04 - Indexes"
+$sourceFolder = "C:\Users\awt\Sync\Obsidian\04 - Indexes"
 
 $emptyFolders = Get-ChildItem -Path $sourceFolder -Recurse -Directory -ErrorAction SilentlyContinue |
     Sort-Object { $_.FullName.Length } -Descending

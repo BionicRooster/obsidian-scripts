@@ -1,10 +1,10 @@
-# fix_moc_links.ps1
+﻿# fix_moc_links.ps1
 # For each broken MOC wikilink:
 #   1. Try starts-with match (truncated filenames)
 #   2. Try all-words-contained match (renamed files)
 #   3. Replace with best match, or remove line if nothing found
 
-$vaultPath = "D:\Obsidian\Main"                          # Vault root
+$vaultPath = "C:\Users\awt\Sync\Obsidian"                          # Vault root
 $mocDir    = "$vaultPath\00 - Home Dashboard"            # Folder containing MOC files
 $enc       = [System.Text.Encoding]::UTF8                # Encoding for all file I/O
 

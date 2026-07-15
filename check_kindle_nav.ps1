@@ -1,5 +1,5 @@
-# Check all Kindle Clippings files for nav properties or outgoing wikilinks in frontmatter
-$folder = "D:\Obsidian\Main\09 - Kindle Clippings"
+﻿# Check all Kindle Clippings files for nav properties or outgoing wikilinks in frontmatter
+$folder = "C:\Users\awt\Sync\Obsidian\09 - Kindle Clippings"
 $files = Get-ChildItem $folder -Filter "*.md" | Sort-Object Name
 
 Write-Host "=== Files with nav or outgoing links ==="

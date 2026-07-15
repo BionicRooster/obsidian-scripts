@@ -1,7 +1,7 @@
-# Remove nav properties from frontmatter and outgoing wikilinks from body
+﻿# Remove nav properties from frontmatter and outgoing wikilinks from body
 # in Kindle Clippings files
 
-$folder = "D:\Obsidian\Main\09 - Kindle Clippings"
+$folder = "C:\Users\awt\Sync\Obsidian\09 - Kindle Clippings"
 
 function CleanFile($path, $removeNavFromFM, $removeBodyPattern) {
     $content = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)

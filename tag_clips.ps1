@@ -1,7 +1,7 @@
-# Script to add tags to clippings files
+﻿# Script to add tags to clippings files
 # Each entry: filename, array of tags (clippings always last if present)
 
-$base = 'D:\Obsidian\Main\10 - Clippings'
+$base = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 
 # Define tags for each file
 $tagMap = @{

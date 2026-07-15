@@ -1,5 +1,5 @@
-# Move recently classified files to 01 subdirectories
-$vault = "D:\Obsidian\Main"
+﻿# Move recently classified files to 01 subdirectories
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 # GCCMA Black Author Panel -> 01\Social (alongside GCCMA Overview.md)
 $src1 = Join-Path $vault "10 - Clippings\GCCMA Black Author Panel.md"

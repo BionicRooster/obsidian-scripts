@@ -1,5 +1,5 @@
-# Add ## Related Notes cross-links between thematically connected notes across topic areas
-$vault = 'D:\Obsidian\Main\01'
+﻿# Add ## Related Notes cross-links between thematically connected notes across topic areas
+$vault = 'C:\Users\awt\Sync\Obsidian\01'
 
 function Add-RelatedNotes {
     param(

@@ -1,5 +1,5 @@
-# Check the folder name character encoding
-$folderPath = "D:\Obsidian\Main\00 - Images\Evernote-Resources"
+﻿# Check the folder name character encoding
+$folderPath = "C:\Users\awt\Sync\Obsidian\00 - Images\Evernote-Resources"
 $folders = Get-ChildItem -Path $folderPath -Directory | Where-Object { $_.Name -like "*Wright*" }
 
 foreach ($folder in $folders) {

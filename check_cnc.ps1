@@ -1,4 +1,4 @@
-$files = Get-ChildItem 'D:\Obsidian\Main\10 - Clippings\' | Where-Object { $_.Name -like '*CNC*' }
+﻿$files = Get-ChildItem 'C:\Users\awt\Sync\Obsidian\10 - Clippings\' | Where-Object { $_.Name -like '*CNC*' }
 foreach ($f in $files) {
     Write-Host "Name: $($f.Name)"
     Write-Host "FullName: $($f.FullName)"

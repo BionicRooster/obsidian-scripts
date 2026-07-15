@@ -1,4 +1,4 @@
-Populate today's Obsidian daily journal with a structured morning briefing covering calendar, markets, soccer, and Bahá'í news.
+﻿Populate today's Obsidian daily journal with a structured morning briefing covering calendar, markets, soccer, and Bahá'í news.
 
 ## Parameters
 
@@ -8,8 +8,8 @@ No arguments required. Always runs for today's date.
 
 ## Step 1 — Target File
 
-- Target: `D:\Obsidian\Main\YYYY-MM-DD.md` using today's date
-- If the file does not exist, create it from the template at `D:\Obsidian\Main\05 - Templates\Daily Notes Template.md`
+- Target: `C:\Users\awt\Sync\Obsidian\YYYY-MM-DD.md` using today's date
+- If the file does not exist, create it from the template at `C:\Users\awt\Sync\Obsidian\05 - Templates\Daily Notes Template.md`
 - Read the live file first to confirm the current state of the `## Claude Briefing` section
 - Replace **only** the content between `## Claude Briefing` and the next `##` sibling heading
 - Never overwrite: `## 🆕 What's New`, `## My Notes`, `## 🗂️ Quick Links`, or `## Related Notes`
@@ -113,4 +113,4 @@ Use `mcp__mcp-obsidian__obsidian_patch_content` targeting the `Claude Briefing` 
 |---|---|
 | CALM cost basis | $93.87 |
 | KQQQ cost basis | $27.54 |
-| Austin FC vault roster | `D:\Obsidian\Main\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md` |
+| Austin FC vault roster | `C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\2026 Austin FC Roster as of 2026-04-18 Status.md` |

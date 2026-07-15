@@ -1,7 +1,7 @@
-# check_recipes_state.ps1
+﻿# check_recipes_state.ps1
 # Shows all [[D]] and broken-looking links in Recipes MOC
 
-$file = "D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md"
+$file = "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md"
 $enc  = [System.Text.Encoding]::UTF8
 $bytes  = [System.IO.File]::ReadAllBytes($file)
 $hasBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF

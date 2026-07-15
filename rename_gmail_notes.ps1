@@ -1,7 +1,7 @@
-# Script to move date prefix from filename to YAML and rename files
+﻿# Script to move date prefix from filename to YAML and rename files
 # For notes in 04 - GMail folder
 
-$folder = "D:\Obsidian\Main\04 - GMail"
+$folder = "C:\Users\awt\Sync\Obsidian\04 - GMail"
 
 # Get all files with date prefix pattern (YYYY-MM-DD - )
 $files = Get-ChildItem -Path $folder -Filter "*.md" | Where-Object { $_.Name -match "^\d{4}-\d{2}-\d{2} - " }

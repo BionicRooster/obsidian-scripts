@@ -1,4 +1,4 @@
-$folder = "D:\Obsidian\Main\09 - Kindle Clippings"
+﻿$folder = "C:\Users\awt\Sync\Obsidian\09 - Kindle Clippings"
 
 function RemoveOutgoingLinks($path) {
     $content = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)

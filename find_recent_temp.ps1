@@ -1,4 +1,4 @@
-Get-ChildItem -Path 'D:\Obsidian\Main' -Recurse -Filter '*.md' |
+﻿Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -Recurse -Filter '*.md' |
 Where-Object {
     $_.CreationTime -ge (Get-Date).AddDays(-2) -and
     $_.FullName -notmatch '\\People\\' -and

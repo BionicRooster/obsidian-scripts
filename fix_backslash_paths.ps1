@@ -1,7 +1,7 @@
-# Fix backslash paths in Obsidian image embeds
+﻿# Fix backslash paths in Obsidian image embeds
 # Converts ![[path\to\image.jpg]] to ![[path/to/image.jpg]]
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $fixed = 0
 $filesModified = @()
 

@@ -1,5 +1,5 @@
-# Find recent files in 04 - GMail folder (last 7 days)
-$folder = "D:\Obsidian\Main\04 - GMail"
+﻿# Find recent files in 04 - GMail folder (last 7 days)
+$folder = "C:\Users\awt\Sync\Obsidian\04 - GMail"
 $cutoff = (Get-Date).AddDays(-7)
 
 Write-Host "=== Recent files in 04 - GMail (last 7 days) ===" -ForegroundColor Cyan

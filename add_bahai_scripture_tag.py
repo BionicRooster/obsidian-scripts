@@ -1,4 +1,4 @@
-"""
+﻿"""
 Add BahaiScripture tag to all Daily Quotes notes in the vault.
 Inserts '  - BahaiScripture' after the existing '  - Bahai' tag line.
 Skips files that already have the tag.
@@ -8,7 +8,7 @@ import os
 import re
 
 # Path with diacritical characters — written to file to avoid shell encoding issues
-QUOTES_DIR = r"D:\Obsidian\Main\01\Bahá'í\Daily Quotes"
+QUOTES_DIR = r"C:\Users\awt\Sync\Obsidian\01\Bahá'í\Daily Quotes"
 
 tagged = []    # files successfully updated
 skipped = []   # files already having the tag

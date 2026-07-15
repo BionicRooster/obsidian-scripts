@@ -1,50 +1,50 @@
-# process_washington_trip.ps1
+﻿# process_washington_trip.ps1
 # Move all Travel+Megaflood/Washington notes to 2024 Columbia River Trip project folder
 # Adds 2024-WashingtonTrip tag, orders Clipping as penultimate, onenote-import as last
 
 # Destination folder
-$dest = "D:\Obsidian\Main\02 - Working Projects\2024 Columbia River Trip"
+$dest = "C:\Users\awt\Sync\Obsidian\02 - Working Projects\2024 Columbia River Trip"
 
 # Full list of files to process
 $sourceFiles = @(
     # 10 - Clippings files (Travel + Washington/Megaflood tagged)
-    "D:\Obsidian\Main\10 - Clippings\Day 3 Driving.md",
-    "D:\Obsidian\Main\10 - Clippings\Day 5 driving.md",
-    "D:\Obsidian\Main\10 - Clippings\Kalama Gap.md",
-    "D:\Obsidian\Main\10 - Clippings\Mocks Crest to Overlook Park   (Portland).md",
-    "D:\Obsidian\Main\10 - Clippings\Reed Island  & Steigerwald Wildlife Refuge.md",
-    "D:\Obsidian\Main\10 - Clippings\Pillars of Hercules.md",
-    "D:\Obsidian\Main\10 - Clippings\Cape Horn.md",
-    "D:\Obsidian\Main\10 - Clippings\Lahar deposits plastered against ancient Columbia River deposits.md",
-    "D:\Obsidian\Main\10 - Clippings\Mosier Erratic Overlook.md",
-    "D:\Obsidian\Main\10 - Clippings\Coyote Wall.md",
-    "D:\Obsidian\Main\10 - Clippings\Memaloose Island.md",
-    "D:\Obsidian\Main\10 - Clippings\Pendant Flood Bar.md",
-    "D:\Obsidian\Main\10 - Clippings\Columbia Gorge Interpretive Center.md",
-    "D:\Obsidian\Main\10 - Clippings\The Reach Museum.md",
-    "D:\Obsidian\Main\10 - Clippings\Columbia Hills State Park.md",
-    "D:\Obsidian\Main\10 - Clippings\The Great Gravel Bar of Moses Coulee National Natural Landmark.md",
-    "D:\Obsidian\Main\10 - Clippings\Grand Coulee Dam Visitor Center.md",
-    "D:\Obsidian\Main\10 - Clippings\Let Your Feet, and Your Imagination Roam at Rowena Crest and Tom McCall Preserve 1.md",
-    "D:\Obsidian\Main\10 - Clippings\Frenchman Coulee.md",
-    "D:\Obsidian\Main\10 - Clippings\Multnomah Falls and Lodge.md",
-    "D:\Obsidian\Main\10 - Clippings\Crown Point National Natural Landmark.md",
-    "D:\Obsidian\Main\10 - Clippings\Columbia Gorge Discovery Center & Museum.md",
-    "D:\Obsidian\Main\10 - Clippings\Let Your Feet, and Your Imagination Roam at Rowena Crest and Tom McCall Preserve.md",
-    "D:\Obsidian\Main\10 - Clippings\Grand Coulee National Natural Landmark (U.S. National Park Service).md",
-    "D:\Obsidian\Main\10 - Clippings\Sun Lakes-Dry Falls State Park (U.S. National Park Service).md",
-    "D:\Obsidian\Main\10 - Clippings\Glacial Lake Missoula National Natural Landmark (Camas Prairie Ripples) (U.S. National Park Service).md",
-    "D:\Obsidian\Main\10 - Clippings\The Great Gravel Bar of Moses Coulee National Natural Landmark (U.S. National Park Service).md",
-    "D:\Obsidian\Main\10 - Clippings\Visit Grand Coulee Dam.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Day 3 Driving.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Day 5 driving.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Kalama Gap.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Mocks Crest to Overlook Park   (Portland).md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Reed Island  & Steigerwald Wildlife Refuge.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Pillars of Hercules.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Cape Horn.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Lahar deposits plastered against ancient Columbia River deposits.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Mosier Erratic Overlook.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Coyote Wall.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Memaloose Island.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Pendant Flood Bar.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Columbia Gorge Interpretive Center.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\The Reach Museum.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Columbia Hills State Park.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\The Great Gravel Bar of Moses Coulee National Natural Landmark.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Grand Coulee Dam Visitor Center.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Let Your Feet, and Your Imagination Roam at Rowena Crest and Tom McCall Preserve 1.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Frenchman Coulee.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Multnomah Falls and Lodge.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Crown Point National Natural Landmark.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Columbia Gorge Discovery Center & Museum.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Let Your Feet, and Your Imagination Roam at Rowena Crest and Tom McCall Preserve.md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Grand Coulee National Natural Landmark (U.S. National Park Service).md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Sun Lakes-Dry Falls State Park (U.S. National Park Service).md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Glacial Lake Missoula National Natural Landmark (Camas Prairie Ripples) (U.S. National Park Service).md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\The Great Gravel Bar of Moses Coulee National Natural Landmark (U.S. National Park Service).md",
+    "C:\Users\awt\Sync\Obsidian\10 - Clippings\Visit Grand Coulee Dam.md",
     # 01\Travel files (inline hashtags, from OneNote import)
-    "D:\Obsidian\Main\01\Travel\Lyle - Floods foreset beds.md",
-    "D:\Obsidian\Main\01\Travel\Wallula Junction rhythmites.md",
-    "D:\Obsidian\Main\01\Travel\Lake Lewis highest abandoned spillway.md",
-    "D:\Obsidian\Main\01\Travel\Grand Coulee Dam Visitor Center, X267+57, WA-155, Coulee Dam, WA 99116.md",
-    "D:\Obsidian\Main\01\Travel\Devil's Punchbowl.md",
-    "D:\Obsidian\Main\01\Travel\Granite Erratic Atop Steamboat Rock.md",
-    "D:\Obsidian\Main\01\Travel\Hogback Islands of Alkali Lake.md",
-    "D:\Obsidian\Main\01\Travel\The Great Blade.md"
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Lyle - Floods foreset beds.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Wallula Junction rhythmites.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Lake Lewis highest abandoned spillway.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Grand Coulee Dam Visitor Center, X267+57, WA-155, Coulee Dam, WA 99116.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Devil's Punchbowl.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Granite Erratic Atop Steamboat Rock.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\Hogback Islands of Alkali Lake.md",
+    "C:\Users\awt\Sync\Obsidian\01\Travel\The Great Blade.md"
 )
 
 # Tags to extract from inline body if not already in YAML
@@ -183,7 +183,7 @@ foreach ($filePath in $sourceFiles) {
 
     $results += [PSCustomObject]@{
         File        = $fileName
-        Source      = $filePath -replace [regex]::Escape("D:\Obsidian\Main\"), ""
+        Source      = $filePath -replace [regex]::Escape("C:\Users\awt\Sync\Obsidian\"), ""
         Tags        = ($finalTags -join ", ")
     }
 

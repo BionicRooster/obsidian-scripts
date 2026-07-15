@@ -1,5 +1,5 @@
-# Move categorized files from Gmail to appropriate 01 folders
-$vault = "D:\Obsidian\Main"
+﻿# Move categorized files from Gmail to appropriate 01 folders
+$vault = "C:\Users\awt\Sync\Obsidian"
 $gmail = "$vault\04 - GMail"
 
 $moved = @()

@@ -1,4 +1,4 @@
-# link_classified_orphans.ps1
+﻿# link_classified_orphans.ps1
 # Links orphan files to MOC subsections based on AI classification results
 # Uses UTF-8 encoding to preserve diacritical characters
 
@@ -8,7 +8,7 @@ param(
 )
 
 # Vault path
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 # MOC folder path
 $mocFolder = Join-Path $vaultPath "00 - Home Dashboard"
 

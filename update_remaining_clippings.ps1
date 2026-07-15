@@ -1,8 +1,8 @@
-# Update remaining 10 - Clippings files
+﻿# Update remaining 10 - Clippings files
 # Adds nav property and cleans content for each file
 # Uses LiteralPath to handle special characters in filenames
 
-$vault = "D:\Obsidian\Main"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $clippings = "$vault\10 - Clippings"
 
 function WriteUTF8 {

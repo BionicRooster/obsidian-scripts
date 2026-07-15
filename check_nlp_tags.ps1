@@ -1,5 +1,5 @@
-# List files and collect tags from NLP_Psy folder
-$folder = "D:\Obsidian\Main\01\NLP_Psy"
+﻿# List files and collect tags from NLP_Psy folder
+$folder = "C:\Users\awt\Sync\Obsidian\01\NLP_Psy"
 $enc    = [System.Text.Encoding]::UTF8
 
 Write-Host "=== Files in NLP_Psy ==="

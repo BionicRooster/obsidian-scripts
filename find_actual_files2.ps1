@@ -1,4 +1,4 @@
-$path = "D:\Obsidian\Main\20 - Permanent Notes"
+﻿$path = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 $patterns = @(
     "I let my local*", "Is it eczema*", "Israel*fluorid*", "Jacqueline*TikTok*",
     "Kindle 3*", "Kindle*PC*", "Making Drum*", "Mapping*Uncharted*",

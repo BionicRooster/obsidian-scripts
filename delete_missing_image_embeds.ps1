@@ -1,4 +1,4 @@
-# Delete embeds for images that don't exist anywhere in the vault
+﻿# Delete embeds for images that don't exist anywhere in the vault
 # These are truly missing files (not just wrong paths)
 # Usage: .\delete_missing_image_embeds.ps1 [-Fix] [-Limit 100]
 
@@ -7,7 +7,7 @@ param(
     [int]$Limit = 0         # Limit number of files to process (0 = all)
 )
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 Write-Host "=== Delete Missing Image Embeds ===" -ForegroundColor Cyan
 Write-Host "Mode: $(if ($Fix) { 'FIX' } else { 'DRY RUN' })" -ForegroundColor $(if ($Fix) { 'Yellow' } else { 'Gray' })

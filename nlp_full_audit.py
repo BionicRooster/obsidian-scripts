@@ -1,9 +1,9 @@
-# Full audit of D:/Documents/NLP vs vault D:/Obsidian/Main/01/NLP.
+﻿# Full audit of D:/Documents/NLP vs vault C:/Users/awt/Sync/Obsidian/01/NLP.
 # Checks every source file (all subdirs) against vault content.
 import os, re
 
 SRC = 'D:/Documents/NLP'
-VAULT = 'D:/Obsidian/Main/01/NLP'
+VAULT = 'C:/Users/awt/Sync/Obsidian/01/NLP'
 
 
 # Binary/unreadable extensions to skip
@@ -200,7 +200,7 @@ for rel, stem_raw, stem, ext, size, path in sorted(src_files):
         results['new'].append((rel, size, stem))
 
 print(f"{'='*70}")
-print(f"AUDIT: D:/Documents/NLP -> D:/Obsidian/Main/01/NLP")
+print(f"AUDIT: D:/Documents/NLP -> C:/Users/awt/Sync/Obsidian/01/NLP")
 print(f"{'='*70}")
 print(f"\nSKIPPED (binary/system/empty): {len(results['skip'])}")
 for rel, ext, size, reason in results['skip']:

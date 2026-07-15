@@ -1,5 +1,5 @@
-# Delete .md files with long paths using \\?\ prefix
-$vaultPath = "D:\Obsidian\Main"
+﻿# Delete .md files with long paths using \\?\ prefix
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 Write-Host "Finding remaining .md files in .resources folders..."
 

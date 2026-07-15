@@ -1,6 +1,6 @@
-# Move files from flat NLP folder back to NLP Master Class subfolder
-$flatDir = 'D:\Obsidian\Main\01\NLP'
-$destDir = 'D:\Obsidian\Main\01\NLP\NLP Master Class'
+﻿# Move files from flat NLP folder back to NLP Master Class subfolder
+$flatDir = 'C:\Users\awt\Sync\Obsidian\01\NLP'
+$destDir = 'C:\Users\awt\Sync\Obsidian\01\NLP\NLP Master Class'
 
 $toMove = @(
     'NLP - Change of Experience.md',

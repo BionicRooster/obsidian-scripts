@@ -1,5 +1,5 @@
-# Update MOC files to add newly classified notes
-$vault = 'D:\Obsidian\Main'
+﻿# Update MOC files to add newly classified notes
+$vault = 'C:\Users\awt\Sync\Obsidian'
 
 # ── MOC - Social Issues ────────────────────────────────────────────────────
 $socialMoc = Join-Path $vault '00 - Home Dashboard\MOC - Social Issues.md'

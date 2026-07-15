@@ -1,7 +1,7 @@
-# Restore NLP Forum file with properly formatted content
+﻿# Restore NLP Forum file with properly formatted content
 # Content reconstructed from the single-line version captured before accidental zeroing
 
-$dir = 'D:\Obsidian\Main\01\NLP'
+$dir = 'C:\Users\awt\Sync\Obsidian\01\NLP'
 $file = Get-ChildItem -Path $dir -Filter '*NLP Forum*Contest*' | Select-Object -First 1
 
 if ($null -eq $file) {

@@ -1,6 +1,6 @@
-# add_nav_frontmatter.ps1 - Add YAML frontmatter nav property to files that lack it
+﻿# add_nav_frontmatter.ps1 - Add YAML frontmatter nav property to files that lack it
 
-$vaultPath = 'D:\Obsidian\Main'   # Vault root
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'   # Vault root
 
 # Helper: add YAML frontmatter with nav to a file that has no frontmatter at all
 function Add-NavFrontmatter {

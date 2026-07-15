@@ -1,4 +1,4 @@
-$filePath = "D:\Obsidian\Main\20 - Permanent Notes\The Living Descendants of British Royal Blood Talbot, Field.md"
+﻿$filePath = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\The Living Descendants of British Royal Blood Talbot, Field.md"
 $content = [System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::UTF8)
 
 Write-Host "First 15 character codes:"

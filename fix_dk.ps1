@@ -1,4 +1,4 @@
-$f = Get-ChildItem 'D:\Obsidian\Main\10 - Clippings\Dunning*' | Select-Object -First 1
+﻿$f = Get-ChildItem 'C:\Users\awt\Sync\Obsidian\10 - Clippings\Dunning*' | Select-Object -First 1
 $content = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
 if ($content[0] -eq [char]0xFEFF) { $content = $content.Substring(1) }
 

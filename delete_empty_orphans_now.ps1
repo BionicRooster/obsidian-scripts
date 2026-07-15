@@ -1,5 +1,5 @@
-# Simple direct delete of small orphan files
-$vaultPath = 'D:\Obsidian\Main'
+﻿# Simple direct delete of small orphan files
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $skipFolders = @('00 - Journal', '05 - Templates', '00 - Images', 'attachments', '.trash', '.obsidian', '.smart-env')
 
 Write-Host "Scanning vault..." -ForegroundColor Cyan

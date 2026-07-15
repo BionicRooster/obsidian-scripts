@@ -1,4 +1,4 @@
-# check_yaml.ps1 - Scan and fix YAML frontmatter issues in Obsidian vault
+﻿# check_yaml.ps1 - Scan and fix YAML frontmatter issues in Obsidian vault
 # Checks for:
 #   1. Inline tags (space/comma/bracket separated on one line)
 #   2. Unclosed frontmatter (--- open but no closing ---)
@@ -9,7 +9,7 @@
 # UTF-8 safe: reads/writes with System.Text.Encoding::UTF8, never re-encodes.
 
 param(
-    [string]$VaultRoot = "D:\Obsidian\Main",
+    [string]$VaultRoot = "C:\Users\awt\Sync\Obsidian",
     [switch]$DryRun = $false
 )
 

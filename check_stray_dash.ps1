@@ -1,4 +1,4 @@
-$path = "D:\Obsidian\Main\20 - Permanent Notes"
+﻿$path = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 Get-ChildItem $path -Filter "*.md" | Where-Object { $_.Name -match '^[I-Zx]' -or $_.Name -match '^[i-z]' } | ForEach-Object {
     $c = Get-Content $_.FullName -Raw -Encoding UTF8
     if ($c -match '(?m)^-\s*$' -and $c -match '(?s)^---') {

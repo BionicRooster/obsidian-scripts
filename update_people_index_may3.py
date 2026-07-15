@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
-Update D:\\Obsidian\\Main\\People Index.md for the 2026-05-03 box score.
+Update C:\\Users\\awt\\Sync\\Obsidian\\People Index.md for the 2026-05-03 box score.
   1. Append box score link to all existing ATX player entries
   2. Update Vazquez and Wolff status (returned from injury; debuted May 3)
   3. Add new STL player + official entries in alphabetical order
@@ -10,7 +10,7 @@ import re
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-PEOPLE_INDEX = "D:\\Obsidian\\Main\\People Index.md"
+PEOPLE_INDEX = "C:\\Users\\awt\\Sync\\Obsidian\\People Index.md"
 # The box score bullet line to add
 BOX = "- [[2026-05-03 - Austin FC vs St. Louis City SC Box Score]]"
 

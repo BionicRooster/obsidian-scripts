@@ -1,8 +1,8 @@
-#Requires -Version 5.0
+﻿#Requires -Version 5.0
 # rebuild_people_index.ps1
 # Rebuilds the People Index for the Obsidian vault.
 # Scans all .md files for person names in frontmatter and wikilinks to 15 - People.
-# Writes output to D:\Obsidian\Main\People Index.md in UTF-8 (no BOM).
+# Writes output to C:\Users\awt\Sync\Obsidian\People Index.md in UTF-8 (no BOM).
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Continue'
@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Continue'
 # ─── Configuration ────────────────────────────────────────────────────────────
 
 # Root of the Obsidian vault
-$VaultRoot = 'D:\Obsidian\Main'
+$VaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Output file path
 $OutputFile = Join-Path $VaultRoot 'People Index.md'

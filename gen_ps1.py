@@ -1,4 +1,4 @@
-import base64, os, sys
+﻿import base64, os, sys
 
 # We construct the PS1 line by line using only double-quoted Python strings.
 # Dollar signs in PS are escaped as \x24 in Python double-quoted strings,
@@ -8,4 +8,4 @@ import base64, os, sys
 L = []
 def a(s): L.append(s)
 a("param()")
-a("$vaultRoot  = \"D:\\Obsidian\\Main\"")
+a("$vaultRoot  = \"C:\\Users\\awt\\Sync\\Obsidian\"")

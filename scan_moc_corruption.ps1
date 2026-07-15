@@ -1,7 +1,7 @@
-# scan_moc_corruption.ps1
+﻿# scan_moc_corruption.ps1
 # Finds corrupted/suspicious wikilinks in MOC files
 
-$mocDir = "D:\Obsidian\Main\00 - Home Dashboard"   # folder to scan
+$mocDir = "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard"   # folder to scan
 $enc    = [System.Text.Encoding]::UTF8              # UTF-8 for all I/O
 
 Get-ChildItem $mocDir -Filter "MOC - *.md" | Sort-Object Name | ForEach-Object {

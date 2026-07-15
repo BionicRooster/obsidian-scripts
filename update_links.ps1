@@ -1,7 +1,7 @@
-# update_links.ps1
+﻿# update_links.ps1
 # Update all references to "04 - Indexes" to point to new locations in "01"
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Build a mapping of old paths to new paths
 # We'll search for patterns like [[04 - Indexes/...]] and update them

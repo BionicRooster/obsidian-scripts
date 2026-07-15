@@ -1,8 +1,8 @@
-"""Write clean version of the Kintsugi note to 01/Japan."""
+﻿"""Write clean version of the Kintsugi note to 01/Japan."""
 import os, glob
 
 # Remove the garbled file first
-matches = glob.glob('D:/Obsidian/Main/01/Japan/*Kintsugi*')
+matches = glob.glob('C:/Users/awt/Sync/Obsidian/01/Japan/*Kintsugi*')
 for f in matches:
     os.remove(f)
 
@@ -46,7 +46,7 @@ Noah would hardly be the only person to see in these reconstituted ceramic vesse
 - [[Inemuri, the Japanese Art of Taking Power Naps]]
 """
 
-dst = "D:/Obsidian/Main/01/Japan/Trevor Noah Explains How Kintsugi Helped Him Overcome Life's Tragedies.md"
+dst = "C:/Users/awt/Sync/Obsidian/01/Japan/Trevor Noah Explains How Kintsugi Helped Him Overcome Life's Tragedies.md"
 with open(dst, 'w', encoding='utf-8') as f:
     f.write(content)
 

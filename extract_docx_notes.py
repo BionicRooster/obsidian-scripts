@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 General-purpose extractor for reading notes and highlights from annotated DOCX files.
 Replaces the per-book scripts (extract_light_of_world.py, extract_sacred_writings_notes.py).
@@ -14,7 +14,7 @@ Output format:
 Usage:
     py -3.12 extract_docx_notes.py \\
         --docx  "C:\\path\\to\\book.docx"                         (required) \\
-        --out   "D:\\Obsidian\\Main\\09 - Kindle Clippings\\x.md"  (required) \\
+        --out   "C:\\Users\\awt\\Sync\\Obsidian\\09 - Kindle Clippings\\x.md"  (required) \\
         --title "Book Title"                                       (required) \\
         --author "Author Name"                                     (required) \\
         --nav   "MOC - Bahá'í Faith"                               (required) \\
@@ -28,7 +28,7 @@ Examples:
     # Light of the World (has footnotes, no highlights):
     py -3.12 extract_docx_notes.py \\
         --docx "D:\\Documents\\light-of-the-world-full-diacritics.docx" \\
-        --out  "D:\\Obsidian\\Main\\09 - Kindle Clippings\\AbdulBaha-Light-of-the-World.md" \\
+        --out  "C:\\Users\\awt\\Sync\\Obsidian\\09 - Kindle Clippings\\AbdulBaha-Light-of-the-World.md" \\
         --title "Light of the World" --author "'Abdu'l-Bahá" \\
         --nav "MOC - Bahá'í Faith" --tags "BookClippings,Bahai,AbdulBaha" \\
         --no-highlights
@@ -36,7 +36,7 @@ Examples:
     # Bahá'í Sacred Writings WT Notes R3 (has highlights, no footnotes):
     py -3.12 extract_docx_notes.py \\
         --docx "C:\\Users\\awt\\Sync\\Bahá'í\\Word\\Bahá'í Sacred Writings - WT Notes R3.docx" \\
-        --out  "D:\\Obsidian\\Main\\09 - Kindle Clippings\\BahaiSacredWritings-WT-Notes.md" \\
+        --out  "C:\\Users\\awt\\Sync\\Obsidian\\09 - Kindle Clippings\\BahaiSacredWritings-WT-Notes.md" \\
         --title "Bahá'í Sacred Writings — Reading Notes" --author "Wayne Talbot (annotator)" \\
         --nav "MOC - Bahá'í Faith" --tags "BookClippings,Bahai,BahaiScripture" \\
         --no-footnotes

@@ -1,9 +1,9 @@
-# update_japan_moc_links.ps1
+﻿# update_japan_moc_links.ps1
 # Bidirectionally link notes to MOC - Japan & Japanese Culture
 # Group A: add nav property to frontmatter
 # Group B: add Japan MOC to Related Notes section
 
-$vault    = "D:\Obsidian\Main"
+$vault    = "C:\Users\awt\Sync\Obsidian"
 $enc      = [System.Text.Encoding]::UTF8
 $japanMoc = "[[MOC - Japan & Japanese Culture]]"
 

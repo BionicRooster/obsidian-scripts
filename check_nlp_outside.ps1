@@ -1,5 +1,5 @@
-# Check why suspicious "outside" notes contain "MOC - NLP & Psychology"
-$vault = "D:\Obsidian\Main"
+﻿# Check why suspicious "outside" notes contain "MOC - NLP & Psychology"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $enc   = [System.Text.Encoding]::UTF8
 
 $suspicious = @(

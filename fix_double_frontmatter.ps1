@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Fixes files that ended up with two YAML frontmatter blocks after inline tag conversion.
 
@@ -23,7 +23,7 @@ if (-not $WhatIf -and -not $Apply) {
     exit 1
 }
 
-$vaultRoot = "D:\Obsidian\Main"
+$vaultRoot = "C:\Users\awt\Sync\Obsidian"
 $fixed = 0      # Count of files fixed
 
 # Scan all .md files in the vault

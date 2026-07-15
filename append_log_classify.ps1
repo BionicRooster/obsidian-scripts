@@ -1,7 +1,7 @@
-# Append classify session entries to the Claude Action Log
+﻿# Append classify session entries to the Claude Action Log
 # Uses Add-Content with UTF8 encoding to preserve vault encoding
 
-$logFile = 'D:\Obsidian\Main\01\PKM\Claude Action Log.md'
+$logFile = 'C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md'
 
 $lines = @(
     "",

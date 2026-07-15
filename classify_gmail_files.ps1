@@ -1,5 +1,5 @@
-# Classify and move Gmail files to appropriate 01 subdirectories
-$vault = "D:\Obsidian\Main"
+﻿# Classify and move Gmail files to appropriate 01 subdirectories
+$vault = "C:\Users\awt\Sync\Obsidian"
 $gmail = "$vault\04 - GMail"
 
 # Define classification rules (filename patterns -> destination folder)

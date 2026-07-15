@@ -1,4 +1,4 @@
-# Verify Related Notes links exist in vault
+﻿# Verify Related Notes links exist in vault
 $linksToCheck = @(
     'NLP for Programmers - May 1995',
     'NLP Forum - DHE Article by Carolyn Maiers (April 1995)',
@@ -11,7 +11,7 @@ $linksToCheck = @(
 )
 
 foreach ($name in $linksToCheck) {
-    $found = Get-ChildItem 'D:\Obsidian\Main' -Recurse -Filter '*.md' -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $name } | Select-Object -First 1
+    $found = Get-ChildItem 'C:\Users\awt\Sync\Obsidian' -Recurse -Filter '*.md' -ErrorAction SilentlyContinue | Where-Object { $_.BaseName -eq $name } | Select-Object -First 1
     if ($found) {
         Write-Host "EXISTS: $name"
     } else {

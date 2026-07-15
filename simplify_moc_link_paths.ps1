@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Simplifies Obsidian wiki links by removing path prefixes, keeping just the filename.
 
@@ -27,7 +27,7 @@
 
 param(
     # Path to the Obsidian vault
-    [string]$Path = "D:\Obsidian\Main",
+    [string]$Path = "C:\Users\awt\Sync\Obsidian",
 
     # Preview mode - show what would be changed without modifying files
     [switch]$WhatIf,

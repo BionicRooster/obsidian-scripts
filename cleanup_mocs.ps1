@@ -1,5 +1,5 @@
-# MOC Cleanup — remove misplaced links and reassign to correct MOCs
-$dashboard = 'D:\Obsidian\Main\00 - Home Dashboard'
+﻿# MOC Cleanup — remove misplaced links and reassign to correct MOCs
+$dashboard = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard'
 
 # Helper: remove a line containing a specific wikilink from a file
 function Remove-MOCLink {

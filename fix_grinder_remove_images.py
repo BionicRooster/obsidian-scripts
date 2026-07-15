@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 fix_grinder_remove_images.py
@@ -19,7 +19,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 # Target file
-FILE = r"D:\Obsidian\Main\09 - Full eBooks\On Deletion Phenomena in English - Grinder 1976.md"
+FILE = r"C:\Users\awt\Sync\Obsidian\09 - Full eBooks\On Deletion Phenomena in English - Grinder 1976.md"
 
 # Page number artifact pattern: line starts with 1-3 digits, a space, then a letter.
 # This matches "6 both clarifies..." but not "(1) (a)..." or "1. Deletion..." or "---".

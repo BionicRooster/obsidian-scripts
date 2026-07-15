@@ -1,6 +1,6 @@
-# Analyze remaining unlinked orphan files
+﻿# Analyze remaining unlinked orphan files
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # Read orphan list
 $orphans = Get-Content 'C:\Users\awt\orphan_filtered.txt'

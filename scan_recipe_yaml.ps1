@@ -1,4 +1,4 @@
-# scan_recipe_yaml.ps1
+﻿# scan_recipe_yaml.ps1
 # Scans all .md files in the Recipes folder for malformed YAML frontmatter
 # Issues checked:
 #   1. Mixed inline/block tags: tags: [recipe] followed by "  - recipe" (invalid YAML)
@@ -7,7 +7,7 @@
 #   4. Blank lines inside the YAML frontmatter
 
 # Path to recipes folder
-$recipesPath = "D:\Obsidian\Main\01\Recipes"
+$recipesPath = "C:\Users\awt\Sync\Obsidian\01\Recipes"
 
 # Get all markdown files in the recipes folder
 $files = Get-ChildItem -Path $recipesPath -Filter "*.md" -Recurse

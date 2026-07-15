@@ -1,4 +1,4 @@
-Fetch web content using Exa for semantic search and Firecrawl for JavaScript-heavy pages.
+﻿Fetch web content using Exa for semantic search, Playwright MCP for JavaScript-heavy pages, and Firecrawl only as a last resort.
 
 ## Parameters
 
@@ -22,14 +22,19 @@ Parse from `$ARGUMENTS`:
 | Situation | Tool | Reason |
 |---|---|---|
 | Finding relevant pages on a topic | Exa (WebSearch) | Semantic ranking surfaces conceptually related results, not just keyword matches |
-| Page uses heavy JavaScript / SPA | Firecrawl (WebFetch with JS) | Renders the DOM before extracting; handles React, Vue, Angular pages |
 | Static HTML page or plain article | WebFetch directly | Fastest; no JS render needed |
+| Page uses heavy JavaScript / SPA | **Playwright MCP** (`browser_navigate` + `browser_get_text`) | Runs real Chromium headless; handles React, Vue, Angular, infinite scroll, tabs |
+| Playwright fails or unavailable | Firecrawl (last resort) | API fallback; costs credits; only when Playwright errors or times out |
 | Unclear which to use | Default to Exa search first | Find the right URL, then decide whether to scrape |
 
-**When to prefer Firecrawl over plain WebFetch:**
-- URL is from a known JS-heavy domain (e.g., ESPN, FBref stats tabs, Twitter/X, LinkedIn, GitHub Actions UI)
-- Initial WebFetch returns near-empty body or only nav/footer text
+**When to escalate from WebFetch → Playwright:**
+- URL is from a known JS-heavy domain (ESPN, FBref stats tabs, Twitter/X, LinkedIn, GitHub Actions UI)
+- WebFetch returns < 200 words of body text
 - Page content requires scroll or click to load (infinite scroll, tabs, accordions)
+
+**When to use Firecrawl (last resort only):**
+- Playwright MCP returns an error or times out after one retry
+- Playwright is not available in the current session
 
 ---
 
@@ -52,11 +57,16 @@ Use `WebSearch` with the query string.
 - Collect: title, URL, snippet/summary, published date if available
 - Rank by relevance to the original query intent, not just keyword overlap
 
-### Scrape mode (Firecrawl / WebFetch)
+### Scrape mode (Playwright MCP → WebFetch → Firecrawl)
 
-Use `WebFetch` on the target URL.
+1. Try `WebFetch` first on the target URL.
+2. If content is < 200 words or clearly incomplete, escalate to **Playwright MCP**:
+   - `browser_navigate` to the URL
+   - `browser_get_text` (or `browser_snapshot`) to extract content
+   - `browser_close` when done
+3. Only if Playwright errors or times out → fall back to Firecrawl as last resort.
 
-- If the page returns empty or thin content (< 200 words of body text), retry with a note that JS rendering may be required
+For all paths:
 - Strip nav, footer, cookie banners, and sidebar ads from the extracted text
 - Preserve: headings, tables, ordered/unordered lists, and code blocks
 - Return the cleaned Markdown representation of the page body
@@ -89,7 +99,7 @@ Source: Exa · {timestamp}
 
 ```
 ## Scraped: {URL}
-Source: Firecrawl · {timestamp}
+Source: {Playwright MCP | WebFetch | Firecrawl} · {timestamp}
 
 {Cleaned Markdown body}
 ```
@@ -103,7 +113,7 @@ Show both the search result list and the full scraped content of the chosen URL,
 ## Step 4 — Vault Save (optional)
 
 If the user says "save to vault" or "save as a clipping":
-- Save to `D:\Obsidian\Main\10 - Clippings\` as `YYYY-MM-DD - {Page Title}.md`
+- Save to `C:\Users\awt\Sync\Obsidian\10 - Clippings\` as `YYYY-MM-DD - {Page Title}.md`
 - Frontmatter:
 
 ```yaml
@@ -118,7 +128,7 @@ source: {Exa | Firecrawl | WebFetch}
 ```
 
 - Body: the cleaned Markdown from Step 3
-- Log to `D:\Obsidian\Main\01\PKM\Claude Action Log.md` with `[INGEST]` prefix:
+- Log to `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md` with `[INGEST]` prefix:
   ```
   [INGEST] {filename} ← web-scraping skill ({mode}) — {query or URL}
   ```
@@ -127,8 +137,9 @@ source: {Exa | Firecrawl | WebFetch}
 
 ## Key Rules
 
-- **Never hardcode API keys.** Both Exa and Firecrawl authenticate via MCP server configuration; no keys appear in skill code or prompts.
-- If WebFetch returns a 403/429/bot-block response, report it clearly — do not silently retry more than once.
+- **Never hardcode API keys.** Exa and Firecrawl authenticate via MCP server configuration; no keys appear in skill code or prompts.
+- If WebFetch returns a 403/429/bot-block response, escalate to Playwright MCP — do not retry WebFetch.
 - If the scraped content is behind a login wall, report "Login required — content not accessible" rather than returning the login page HTML.
-- Firecrawl is the fallback for JS-heavy pages, not the default — use plain WebFetch first when the URL is a simple article or static page.
+- **Priority order: WebFetch → Playwright MCP → Firecrawl.** Firecrawl is last resort only.
+- Always `browser_close` after a Playwright session to avoid leaked browser processes.
 - For Obsidian vault saves, follow UTF-8 encoding rules and preserve diacritical characters unchanged.

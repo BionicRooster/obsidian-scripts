@@ -1,5 +1,5 @@
-# Find markdown files directly in vault root that need classification
-$vault = "D:\Obsidian\Main"
+﻿# Find markdown files directly in vault root that need classification
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 Write-Host "=== Files directly in vault root ===" -ForegroundColor Cyan
 $rootFiles = Get-ChildItem -Path $vault -Filter "*.md" -File

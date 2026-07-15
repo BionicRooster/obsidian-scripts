@@ -1,5 +1,5 @@
-"""
-Compare D:\Documents\NLP (flat) against D:\Obsidian\Main\01\NLP (vault).
+﻿"""
+Compare D:\Documents\NLP (flat) against C:\Users\awt\Sync\Obsidian\01\NLP (vault).
 Extract a title hint from each source file and find vault matches.
 Output: list of files likely NOT yet converted.
 """
@@ -7,7 +7,7 @@ Output: list of files likely NOT yet converted.
 import os, re, glob
 
 SRC_DIR  = 'D:/Documents/NLP'
-VAULT_DIR = 'D:/Obsidian/Main/01/NLP'
+VAULT_DIR = 'C:/Users/awt/Sync/Obsidian/01/NLP'
 
 # ── Vault file inventory ──────────────────────────────────────────────────
 vault_files = []

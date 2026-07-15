@@ -1,5 +1,5 @@
-# Fix triple closing brackets in MOC files
-$mocPath = "D:\Obsidian\Main\00 - Home Dashboard"
+﻿# Fix triple closing brackets in MOC files
+$mocPath = "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard"
 
 Get-ChildItem -Path $mocPath -Filter "*MOC*.md" | ForEach-Object {
     $content = Get-Content $_.FullName -Raw -Encoding UTF8

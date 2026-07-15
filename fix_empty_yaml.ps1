@@ -1,6 +1,6 @@
-# Find and fix all empty YAML blocks (--- followed immediately by ---)
+﻿# Find and fix all empty YAML blocks (--- followed immediately by ---)
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Get all files modified in last 6 hours
 $files = Get-ChildItem -Path $vaultRoot -Recurse -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object {

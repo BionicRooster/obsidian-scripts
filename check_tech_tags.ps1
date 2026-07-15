@@ -1,4 +1,4 @@
-# Script to check and add "tech" tag to all files linked in MOC - Technology & Computers
+﻿# Script to check and add "tech" tag to all files linked in MOC - Technology & Computers
 # UTF-8 encoding is preserved throughout
 
 # Define the files to check from the MOC - Computer Sciences section
@@ -75,7 +75,7 @@ $filesToCheck = @(
 )
 
 # Set vault root directory
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Initialize counters
 $added = 0

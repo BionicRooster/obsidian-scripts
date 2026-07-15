@@ -1,10 +1,10 @@
-# Move BionicR contents up one level and fix links
+﻿# Move BionicR contents up one level and fix links
 
 param(
     [switch]$DryRun = $false
 )
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $bionicPath = Join-Path $vaultPath '11 - Evernote\BionicR'
 $targetPath = Join-Path $vaultPath '11 - Evernote'
 

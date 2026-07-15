@@ -1,8 +1,8 @@
-# write_ps.py - writes find_people_names.ps1
+﻿# write_ps.py - writes find_people_names.ps1
 ps = []
 a = ps.append
 a('param()')
-a('$vaultRoot  = "D:\Obsidian\Main"')
+a('$vaultRoot  = "C:\Users\awt\Sync\Obsidian"')
 a('$outputFile = "C:\Users\awt\people_name_results.txt"')
 a('$excludeFolders = @("15 - People","00 - Home Dashboard","00 - Journal","Templates")')
 a('$nonNameWords = @(')

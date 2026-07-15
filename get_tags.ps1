@@ -1,5 +1,5 @@
-$tags = @{}
-Get-ChildItem 'D:\Obsidian\Main' -Recurse -Filter '*.md' | ForEach-Object {
+﻿$tags = @{}
+Get-ChildItem 'C:\Users\awt\Sync\Obsidian' -Recurse -Filter '*.md' | ForEach-Object {
     $c = Get-Content $_.FullName -Raw -Encoding UTF8
     if ($c -match '(?s)^---\r?\n(.*?)\r?\n---') {
         $yaml = $Matches[1]

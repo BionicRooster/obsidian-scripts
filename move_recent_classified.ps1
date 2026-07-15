@@ -1,7 +1,7 @@
-# move_recent_classified.ps1
+﻿# move_recent_classified.ps1
 # Moves the 4 recently classified clippings to their target 01/ subdirectories.
 
-$vault = 'D:\Obsidian\Main'
+$vault = 'C:\Users\awt\Sync\Obsidian'
 $clippings = Join-Path $vault '10 - Clippings'
 
 $moves = @(

@@ -1,6 +1,6 @@
-# Append activity log to today's journal
+﻿# Append activity log to today's journal
 
-$journal = 'D:\Obsidian\Main\2026-04-28.md'
+$journal = 'C:\Users\awt\Sync\Obsidian\2026-04-28.md'
 
 # Read existing content
 $content = Get-Content -LiteralPath $journal -Encoding UTF8 -Raw

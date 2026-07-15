@@ -1,30 +1,30 @@
-# Move files from 10 - Clippings to appropriate 01 subdirectories
-$src = "D:\Obsidian\Main\10 - Clippings"
+﻿# Move files from 10 - Clippings to appropriate 01 subdirectories
+$src = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
 
 # Define moves: filename => destination folder
 $moves = @{
     # Social Issues (7 files)
-    "Announcements - Community Service Newsletter Sep 1986.md" = "D:\Obsidian\Main\01\Social"
-    "Bioregionalism Conference - Jane Morgan.md" = "D:\Obsidian\Main\01\Social"
-    "Commentary - Response to Victor Tauferner - Jann Rucquoi.md" = "D:\Obsidian\Main\01\Social"
-    "Readers Write - Community Service Newsletter Sep 1986.md" = "D:\Obsidian\Main\01\Social"
-    "Selling the New Age Message.md" = "D:\Obsidian\Main\01\Social"
-    "This School Principal's Song Went Viral and Became the Black National Anthem.md" = "D:\Obsidian\Main\01\Social"
-    "What About the Children.md" = "D:\Obsidian\Main\01\Social"
+    "Announcements - Community Service Newsletter Sep 1986.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
+    "Bioregionalism Conference - Jane Morgan.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
+    "Commentary - Response to Victor Tauferner - Jann Rucquoi.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
+    "Readers Write - Community Service Newsletter Sep 1986.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
+    "Selling the New Age Message.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
+    "This School Principal's Song Went Viral and Became the Black National Anthem.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
+    "What About the Children.md" = "C:\Users\awt\Sync\Obsidian\01\Social"
     # Technology (3 files)
-    "Free Online PDF Editor.md" = "D:\Obsidian\Main\01\Technology"
-    "How to Email to sms Address - Google Search.md" = "D:\Obsidian\Main\01\Technology"
-    "I Didn't Realize This Tiny Letter on My microSD Card Was So Important.md" = "D:\Obsidian\Main\01\Technology"
+    "Free Online PDF Editor.md" = "C:\Users\awt\Sync\Obsidian\01\Technology"
+    "How to Email to sms Address - Google Search.md" = "C:\Users\awt\Sync\Obsidian\01\Technology"
+    "I Didn't Realize This Tiny Letter on My microSD Card Was So Important.md" = "C:\Users\awt\Sync\Obsidian\01\Technology"
     # Reading (1 file)
-    "Book Review - From the Roots Up - Brian Fallon.md" = "D:\Obsidian\Main\01\Reading"
+    "Book Review - From the Roots Up - Brian Fallon.md" = "C:\Users\awt\Sync\Obsidian\01\Reading"
     # Home (5 files)
-    "Bosses vs Leaders.md" = "D:\Obsidian\Main\01\Home"
-    "Leading From Any Chair.md" = "D:\Obsidian\Main\01\Home"
-    "When There's a Gold Rush, Sell Shovels.md" = "D:\Obsidian\Main\01\Home"
+    "Bosses vs Leaders.md" = "C:\Users\awt\Sync\Obsidian\01\Home"
+    "Leading From Any Chair.md" = "C:\Users\awt\Sync\Obsidian\01\Home"
+    "When There's a Gold Rush, Sell Shovels.md" = "C:\Users\awt\Sync\Obsidian\01\Home"
 }
 
 # Handle Bahá'í separately due to special characters
-$bahaiDest = "D:\Obsidian\Main\01\Bah" + [char]0x00E1 + "'" + [char]0x00ED
+$bahaiDest = "C:\Users\awt\Sync\Obsidian\01\Bah" + [char]0x00E1 + "'" + [char]0x00ED
 $moves["How Do Baha'is Plan to Change the World.md"] = $bahaiDest
 
 $moved = 0
@@ -67,16 +67,16 @@ foreach ($file in $moves.Keys) {
 
 # New moves for today's classification session (2026-04-10)
 $newMoves = @(
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\Wit, Unker, Git The Lost Medieval Pronouns of English Intimacy.md";
-       Dst = "D:\Obsidian\Main\01\Science\Wit, Unker, Git The Lost Medieval Pronouns of English Intimacy.md" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\Nhs Epaulette Rankss.md";
-       Dst = "D:\Obsidian\Main\01\Home\NHS Epaulette Ranks.md" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\Nhs Epaulette Rankss North West Ambulance Service.md";
-       Dst = "D:\Obsidian\Main\01\Home\NHS Epaulette Ranks - North West Ambulance Service.md" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\Relationship Rupture and the Limbic System The Physiology of Abandonment and Separation.md";
-       Dst = "D:\Obsidian\Main\01\Psychology\Relationship Rupture and the Limbic System The Physiology of Abandonment and Separation.md" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\So Nothing Rhymes with Orange.md";
-       Dst = "D:\Obsidian\Main\01\Home\So Nothing Rhymes with Orange.md" }
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Wit, Unker, Git The Lost Medieval Pronouns of English Intimacy.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Science\Wit, Unker, Git The Lost Medieval Pronouns of English Intimacy.md" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Nhs Epaulette Rankss.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Home\NHS Epaulette Ranks.md" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Nhs Epaulette Rankss North West Ambulance Service.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Home\NHS Epaulette Ranks - North West Ambulance Service.md" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Relationship Rupture and the Limbic System The Physiology of Abandonment and Separation.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Psychology\Relationship Rupture and the Limbic System The Physiology of Abandonment and Separation.md" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\So Nothing Rhymes with Orange.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Home\So Nothing Rhymes with Orange.md" }
 )
 
 foreach ($move in $newMoves) {
@@ -99,20 +99,20 @@ foreach ($move in $newMoves) {
 }
 
 # New moves for 2026-04-17 classification session
-$bahaiFolder = (Get-ChildItem 'D:\Obsidian\Main\01' -Directory | Where-Object { $_.Name -like 'Bah*' } | Select-Object -First 1).FullName
+$bahaiFolder = (Get-ChildItem 'C:\Users\awt\Sync\Obsidian\01' -Directory | Where-Object { $_.Name -like 'Bah*' } | Select-Object -First 1).FullName
 
 # Build the ellipsis filename for the Baha'i article
-$bahaiArticleSrc = "D:\Obsidian\Main\10 - Clippings\If You Can't Say Something Nice" + [char]0x2026 + ".md"
+$bahaiArticleSrc = "C:\Users\awt\Sync\Obsidian\10 - Clippings\If You Can't Say Something Nice" + [char]0x2026 + ".md"
 
 $newMoves2 = @(
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\Lost Lincoln Portrait From Teddy Roosevelt's Office Reemerges After a Century.md";
-       Dst = "D:\Obsidian\Main\01\Social\" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\How Mobile Phone Cameras Have Helped Unearth a Mysterious Kingdom.md";
-       Dst = "D:\Obsidian\Main\01\Science\" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\A Lost Icon The American Chestnut and Its Central Place in the Eastern Landscape.md";
-       Dst = "D:\Obsidian\Main\01\Science\" },
-    @{ Src = "D:\Obsidian\Main\10 - Clippings\Good Vibrations.md";
-       Dst = "D:\Obsidian\Main\01\Health\" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Lost Lincoln Portrait From Teddy Roosevelt's Office Reemerges After a Century.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Social\" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\How Mobile Phone Cameras Have Helped Unearth a Mysterious Kingdom.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Science\" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\A Lost Icon The American Chestnut and Its Central Place in the Eastern Landscape.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Science\" },
+    @{ Src = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Good Vibrations.md";
+       Dst = "C:\Users\awt\Sync\Obsidian\01\Health\" },
     @{ Src = $bahaiArticleSrc;
        Dst = "$bahaiFolder\" }
 )

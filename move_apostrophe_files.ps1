@@ -1,9 +1,9 @@
-# Move two 10-Clippings files with smart apostrophes (U+2019) in their names
+﻿# Move two 10-Clippings files with smart apostrophes (U+2019) in their names
 # Step 1: Find and rename in-place, Step 2: Move to destination
 
-$clippings = 'D:\Obsidian\Main\10 - Clippings'
-$socialDest = 'D:\Obsidian\Main\01\Social'
-$techDest   = 'D:\Obsidian\Main\01\Technology'
+$clippings = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
+$socialDest = 'C:\Users\awt\Sync\Obsidian\01\Social'
+$techDest   = 'C:\Users\awt\Sync\Obsidian\01\Technology'
 
 # Define the two target files and their destinations
 $targets = @(

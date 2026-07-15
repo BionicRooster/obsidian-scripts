@@ -1,7 +1,7 @@
-# PowerShell script to fix UTF-8 encoding corruption (mojibake) in Obsidian vault
+﻿# PowerShell script to fix UTF-8 encoding corruption (mojibake) in Obsidian vault
 # Uses byte-level operations to avoid encoding issues in the script itself
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $filesFixed = 0
 
 # Define patterns as hex strings and their UTF-8 replacements

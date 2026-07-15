@@ -1,4 +1,4 @@
-# Script to fix and verify NLP_Psy tag in all files linked in MOC - NLP & Psychology
+﻿# Script to fix and verify NLP_Psy tag in all files linked in MOC - NLP & Psychology
 
 # Array of all unique files from the MOC
 $files = @(
@@ -119,7 +119,7 @@ foreach ($fileName in $uniqueFiles) {
     # Search for file in vault
     $foundFiles = @()
     try {
-        $foundFiles = Get-ChildItem -Path 'D:\Obsidian\Main' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' }
+        $foundFiles = Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -File -Filter "$fileName*" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.md' }
     } catch {
         # Ignore errors
     }

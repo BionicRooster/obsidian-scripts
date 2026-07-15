@@ -18,7 +18,7 @@ param(
 
 # -- Configuration ------------------------------------------------------------
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $mocFolder = '00 - Home Dashboard'
 
 # Number of score points the best alternative MOC must exceed the current MOC

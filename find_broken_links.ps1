@@ -1,10 +1,10 @@
-# find_broken_links.ps1
+﻿# find_broken_links.ps1
 # Script to find and optionally delete broken wikilinks in an Obsidian vault
 # A broken link is a [[Link]] that points to a note that does not exist
 
 param(
     # Path to the Obsidian vault root directory
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
 
     # If specified, actually delete the broken links from files
     [switch]$Delete,

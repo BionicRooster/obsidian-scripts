@@ -1,4 +1,4 @@
-# Find and fix broken image links in Obsidian vault
+﻿# Find and fix broken image links in Obsidian vault
 # Searches for image embeds that point to non-existent paths and finds the correct location
 # Handles character encoding mismatches (like » vs _ _) common in Evernote exports
 
@@ -7,7 +7,7 @@ param(
     [int]$Limit = 100
 )
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $brokenLinks = @()
 
 # Helper function to normalize a filename for fuzzy matching

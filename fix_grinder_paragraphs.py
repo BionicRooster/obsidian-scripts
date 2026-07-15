@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 fix_grinder_paragraphs.py
@@ -18,7 +18,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 # File to fix
-FILE = r"D:\Obsidian\Main\09 - Full eBooks\On Deletion Phenomena in English - Grinder 1976.md"
+FILE = r"C:\Users\awt\Sync\Obsidian\09 - Full eBooks\On Deletion Phenomena in English - Grinder 1976.md"
 
 # Lines shorter than this are left alone
 MIN_LENGTH = 500

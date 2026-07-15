@@ -1,4 +1,4 @@
-Set-Location 'D:\Obsidian\Main'
+﻿Set-Location 'C:\Users\awt\Sync\Obsidian'
 # Search all commits for Science & Nature
 git log --all --oneline -- "00 - Home Dashboard/MOC - Science & Nature.md"
 Write-Host "---"

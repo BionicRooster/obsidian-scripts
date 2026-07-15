@@ -17,9 +17,13 @@
 - [domain/synthesis.md](domain/synthesis.md) — Synthesis Layer rules, Query-to-File Rule, Vault Lint Workflow, current synthesis pages
 - [domain/vault_mocs.md](domain/vault_mocs.md) — 17 canonical MOC names, topic routing, special overrides (JapanTrip, EliasWhiteTalbot, FOL)
 - [domain/vault_tags.md](domain/vault_tags.md) — Canonical tag vocabulary, duplicates/variants, import artifact tags; BahaiScripture and Bahai rules
+- [domain/bahai_research_sources.md](domain/bahai_research_sources.md) — bahai-library.com LLM resources page audited; NotebookLM links need human auth, only Sifter search tool + loomofreality PDFs are agent-usable
 
 ## Completed Projects
 - [projects_completed.md](projects_completed.md) — Recipes (389), Amish Economics PDF, Title Case fix (456), Riḍván spelling fix (145)
+
+## Feedback — Web Tools
+- [feedback_web_fetch_routing.md](feedback_web_fetch_routing.md) — Playwright MCP first for JS pages; Firecrawl last resort only (costs credits)
 
 ## Feedback — Writing Style
 - [feedback_transparency_patterns.md](feedback_transparency_patterns.md) — Response mode (exploratory vs execution) + 6 patterns: pre-tool formula, execution narration (keep), task list, batch receipt table, workplan parity, structured input for ambiguous requests

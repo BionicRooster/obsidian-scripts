@@ -1,4 +1,4 @@
-# Classify and move orphan files to appropriate 01 subdirectories
+﻿# Classify and move orphan files to appropriate 01 subdirectories
 # This script analyzes file content and moves files based on keywords and tags
 
 param(
@@ -9,8 +9,8 @@ param(
 )
 
 # Define source and destination paths
-$sourcePath = "D:\Obsidian\Main\20 - Permanent Notes"
-$destBase = "D:\Obsidian\Main\01"
+$sourcePath = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
+$destBase = "C:\Users\awt\Sync\Obsidian\01"
 
 # Map category names to actual folder names (handles special characters)
 $categoryFolderMap = @{

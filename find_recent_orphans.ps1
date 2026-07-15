@@ -1,7 +1,7 @@
-# Find recent orphan files in 20 - Permanent Notes folder only
+﻿# Find recent orphan files in 20 - Permanent Notes folder only
 # These are true orphan files that need classification
 
-$vaultPath = "D:\Obsidian\Main\20 - Permanent Notes"
+$vaultPath = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 $cutoffDate = (Get-Date).AddDays(-60)
 
 # Get all .md files in Permanent Notes

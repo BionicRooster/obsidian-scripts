@@ -1,4 +1,4 @@
-$base = 'D:\Obsidian\Main\10 - Clippings'
+﻿$base = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 Get-ChildItem "$base\*.md" | ForEach-Object {
     $lines = [System.IO.File]::ReadAllLines($_.FullName, [System.Text.Encoding]::UTF8)
     for ($i = 0; $i -lt $lines.Count - 1; $i++) {

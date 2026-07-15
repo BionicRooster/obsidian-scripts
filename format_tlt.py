@@ -1,4 +1,4 @@
-"""
+﻿"""
 Reformat Time Line Therapy.md:
 - Fix YAML frontmatter
 - Convert CompuServe thread file headers into ## headings
@@ -10,7 +10,7 @@ Reformat Time Line Therapy.md:
 import re
 
 # Read the source file with UTF-8 encoding
-src = 'D:/Obsidian/Main/01/NLP/Time Line Therapy.md'
+src = 'C:/Users/awt/Sync/Obsidian/01/NLP/Time Line Therapy.md'
 with open(src, 'r', encoding='utf-8') as f:
     lines = f.readlines()
 
@@ -223,7 +223,7 @@ while i < len(lines):
     out.append(line + "\n")
 
 # Write the output file
-dst = 'D:/Obsidian/Main/01/NLP/Time Line Therapy.md'
+dst = 'C:/Users/awt/Sync/Obsidian/01/NLP/Time Line Therapy.md'
 with open(dst, 'w', encoding='utf-8') as f:
     f.writelines(out)
 

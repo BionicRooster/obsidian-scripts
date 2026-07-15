@@ -1,12 +1,12 @@
-# fetch_recipe_urls.ps1
+﻿# fetch_recipe_urls.ps1
 # Fetches recipe URLs and creates/updates recipe files in Obsidian vault
 
 param(
     # Path to the URLs file
-    [string]$UrlsFile = "D:\Obsidian\Main\04 - GMail\_recipe_urls_to_fetch.txt",
+    [string]$UrlsFile = "C:\Users\awt\Sync\Obsidian\04 - GMail\_recipe_urls_to_fetch.txt",
 
     # Destination folder for recipe files
-    [string]$RecipeFolder = "D:\Obsidian\Main\03 - Recipes",
+    [string]$RecipeFolder = "C:\Users\awt\Sync\Obsidian\03 - Recipes",
 
     # Maximum number of URLs to fetch (0 = all)
     [int]$Limit = 10,

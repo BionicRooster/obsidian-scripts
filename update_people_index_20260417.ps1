@@ -1,6 +1,6 @@
-# Update People Index with new names from 2026-04-17 classification session
+﻿# Update People Index with new names from 2026-04-17 classification session
 # Reads and writes with UTF-8 encoding to preserve Obsidian content
-$indexPath = 'D:\Obsidian\Main\People Index.md'
+$indexPath = 'C:\Users\awt\Sync\Obsidian\People Index.md'
 
 # Read file preserving UTF-8 encoding
 $content = [System.IO.File]::ReadAllText($indexPath, [System.Text.Encoding]::UTF8)

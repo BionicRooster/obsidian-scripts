@@ -1,10 +1,10 @@
-# fix_people_index.ps1
+﻿# fix_people_index.ps1
 # Fixes the People Index by:
 # 1. Removing duplicate alphabet sections (keeping only the first full A-Z)
 # 2. Removing non-person entries (food, NLP concepts, places, etc.)
 # 3. Deduplicating person entries within each section
 
-$path = 'D:\Obsidian\Main\People Index.md'
+$path = 'C:\Users\awt\Sync\Obsidian\People Index.md'
 $lines = Get-Content $path -Encoding UTF8
 
 # --- Step 1: Find where duplicates begin ---

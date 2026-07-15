@@ -1,7 +1,7 @@
-# rebuild_science_moc.ps1 - Reconstruct MOC - Science & Nature.md from nav properties
+﻿# rebuild_science_moc.ps1 - Reconstruct MOC - Science & Nature.md from nav properties
 # Groups files from 01\Science\ by topic keywords into sections
 
-$vaultPath = 'D:\Obsidian\Main'   # Root of Obsidian vault
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'   # Root of Obsidian vault
 $mocPath   = "$vaultPath\00 - Home Dashboard\MOC - Science & Nature.md"
 
 # Find all files in 01\Science that have nav pointing to Science & Nature

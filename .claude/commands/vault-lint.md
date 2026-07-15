@@ -1,21 +1,21 @@
-Run a quality audit of the Synthesis layer and EWT wiki: flag thin pages, topic gaps, stale claims, contradictions, and orphaned synthesis pages.
+﻿Run a quality audit of the Synthesis layer and EWT wiki: flag thin pages, topic gaps, stale claims, contradictions, and orphaned synthesis pages.
 
 ## Parameters
 
-No arguments. Always operates on `D:\Obsidian\Main\30 - Synthesis\` and the EWT wiki index.
+No arguments. Always operates on `C:\Users\awt\Sync\Obsidian\30 - Synthesis\` and the EWT wiki index.
 
 ---
 
 ## Step 1 — Inventory Synthesis Pages
 
-Read `D:\Obsidian\Main\30 - Synthesis\index.md` to get the full list of synthesis pages.
+Read `C:\Users\awt\Sync\Obsidian\30 - Synthesis\index.md` to get the full list of synthesis pages.
 
 For each page listed:
 - Read the file and extract `source_count` from frontmatter
 - Note the `updated:` date if present
 - Note whether the page is linked from any MOC or synthesis index
 
-Also read: `D:\Obsidian\Main\02 - Working Projects\Elias White Talbot - Project\wiki-index.md`
+Also read: `C:\Users\awt\Sync\Obsidian\02 - Working Projects\Elias White Talbot - Project\wiki-index.md`
 
 ---
 
@@ -35,7 +35,7 @@ Flag any synthesis page with `source_count` ≤ 2 as a candidate for enrichment.
 List them with their current `source_count` and a note about what additional sources might strengthen them.
 
 ### Check 3: Topic Gaps
-Grep the vault notes in `D:\Obsidian\Main\01\` for recurring topics that appear in 5 or more notes but have no corresponding synthesis page. Common gap patterns to check:
+Grep the vault notes in `C:\Users\awt\Sync\Obsidian\01\` for recurring topics that appear in 5 or more notes but have no corresponding synthesis page. Common gap patterns to check:
 - A concept or term that appears frequently across multiple MOC areas
 - A named individual with 5+ vault references but no synthesis bio
 - A recurring theme in Bahá'í, soccer, health, or PKM notes that is never synthesized
@@ -84,7 +84,7 @@ End with a one-line summary:
 
 ## Step 5 — Log
 
-Append to `D:\Obsidian\Main\01\PKM\Claude Action Log.md` with `[LINT]` prefix:
+Append to `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md` with `[LINT]` prefix:
 
 ```
 [LINT] YYYY-MM-DD — N thin pages · N topic gaps · N contradictions · N orphans

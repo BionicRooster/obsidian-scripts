@@ -1,9 +1,9 @@
-# Script to rename .md files with names longer than 20 characters
+﻿# Script to rename .md files with names longer than 20 characters
 # and create a summary report
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $maxLength = 20
-$reportPath = "D:\Obsidian\Main\TooLongFilenames.md"
+$reportPath = "C:\Users\awt\Sync\Obsidian\TooLongFilenames.md"
 $results = @()
 
 # Find all .md files with basenames longer than 20 characters

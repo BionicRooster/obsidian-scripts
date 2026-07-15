@@ -1,4 +1,4 @@
-Improve the Claude Code system (memory, skills, or captured knowledge) using one of five modes. Pick the mode from context clues in the user's message; ask if unclear.
+﻿Improve the Claude Code system (memory, skills, or captured knowledge) using one of five modes. Pick the mode from context clues in the user's message; ask if unclear.
 
 ## Mode Detection
 
@@ -118,7 +118,7 @@ From the user's message, identify:
 | Ongoing project context, deadline, decision | `project` | `memory/domain/<project>.md` |
 | Personal preference, role, expertise level | `user` | `memory/user_*.md` |
 | Where information lives externally | `reference` | `memory/reference_*.md` |
-| Substantial synthesis (5+ facts, complex topic) | synthesis page | `D:\Obsidian\Main\30 - Synthesis\<Topic>.md` |
+| Substantial synthesis (5+ facts, complex topic) | synthesis page | `C:\Users\awt\Sync\Obsidian\30 - Synthesis\<Topic>.md` |
 
 ### Step 3 — Check for an existing file to update
 
@@ -145,7 +145,7 @@ Lead with the rule or fact.
 
 Then add a pointer line in the correct index (`MEMORY.md` or `memory.md`).
 
-If the experience belongs in the vault as a synthesis update, also update `D:\Obsidian\Main\30 - Synthesis\index.md`.
+If the experience belongs in the vault as a synthesis update, also update `C:\Users\awt\Sync\Obsidian\30 - Synthesis\index.md`.
 
 ---
 

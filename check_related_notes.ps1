@@ -1,10 +1,10 @@
-# Check Related Notes sections of recently added notes
+﻿# Check Related Notes sections of recently added notes
 $files = @(
-    'D:\Obsidian\Main\20 - Permanent Notes\Medieval Monks Knew Something About Vinegar We''ve Completely Forgot.md',
-    'D:\Obsidian\Main\01\Science\How Moss Could Help Roads Cope with Heavy Rain and Reduce Air Pollution.md',
-    'D:\Obsidian\Main\01\Science\What Drew These 1,300 Perfect Circles on the Sea Floor We May Finally Know.md',
-    'D:\Obsidian\Main\20 - Permanent Notes\The Story of the Manchester Bee Tattoo.md',
-    'D:\Obsidian\Main\20 - Permanent Notes\The 22 May 2017 Manchester Terrorist Attack - Bee Tattoo.md'
+    'C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\Medieval Monks Knew Something About Vinegar We''ve Completely Forgot.md',
+    'C:\Users\awt\Sync\Obsidian\01\Science\How Moss Could Help Roads Cope with Heavy Rain and Reduce Air Pollution.md',
+    'C:\Users\awt\Sync\Obsidian\01\Science\What Drew These 1,300 Perfect Circles on the Sea Floor We May Finally Know.md',
+    'C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\The Story of the Manchester Bee Tattoo.md',
+    'C:\Users\awt\Sync\Obsidian\20 - Permanent Notes\The 22 May 2017 Manchester Terrorist Attack - Bee Tattoo.md'
 )
 
 foreach ($f in $files) {

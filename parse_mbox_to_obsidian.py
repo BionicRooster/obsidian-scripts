@@ -1,4 +1,4 @@
-# parse_mbox_to_obsidian.py
+﻿# parse_mbox_to_obsidian.py
 # Parses Gmail mbox export into Obsidian markdown files
 # Creates recipe files in 01/Recipes when recipe content is detected
 
@@ -18,9 +18,9 @@ import ssl
 # Path to the mbox file to parse
 MBOX_PATH = r"C:\Users\awt\takeout-20260203T200710Z-3-001\Takeout\Mail\Receipts.mbox"
 # Output directory for general email markdown files
-GMAIL_OUTPUT_DIR = r"D:\Obsidian\Main\04 - GMail"
+GMAIL_OUTPUT_DIR = r"C:\Users\awt\Sync\Obsidian\04 - GMail"
 # Output directory for recipe markdown files
-RECIPE_OUTPUT_DIR = r"D:\Obsidian\Main\01\Recipes"
+RECIPE_OUTPUT_DIR = r"C:\Users\awt\Sync\Obsidian\01\Recipes"
 
 # ==================== HTML TO TEXT CONVERTER ====================
 class HTMLToText(HTMLParser):

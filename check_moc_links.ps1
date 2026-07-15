@@ -1,8 +1,8 @@
-# check_moc_links.ps1
+﻿# check_moc_links.ps1
 # Scans all MOC files for broken wikilinks, attempts to find renamed/moved targets,
 # reports action taken for each broken link.
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $mocDir    = "$vaultPath\00 - Home Dashboard"
 $enc       = [System.Text.Encoding]::UTF8
 

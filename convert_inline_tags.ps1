@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Converts inline hashtags in Obsidian markdown files to YAML frontmatter tags.
 
@@ -34,7 +34,7 @@ if (-not $WhatIf -and -not $Apply) {
 }
 
 # Vault root path
-$vaultRoot = "D:\Obsidian\Main"
+$vaultRoot = "C:\Users\awt\Sync\Obsidian"
 
 # Folders to exclude from processing
 $excludeFolders = @(

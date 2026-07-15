@@ -1,5 +1,5 @@
-# Delete .md files inside .resources folders, keeping images/attachments
-$vaultPath = "D:\Obsidian\Main"
+﻿# Delete .md files inside .resources folders, keeping images/attachments
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 Write-Host "Searching for .md files inside .resources folders..."
 

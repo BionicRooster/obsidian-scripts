@@ -1,7 +1,7 @@
-# Bulk move script for classified clippings 2026-03-31
+﻿# Bulk move script for classified clippings 2026-03-31
 # All files move from 10 - Clippings to their 01/ subdirectory
 
-$vault = "D:\Obsidian\Main"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $src = "$vault\10 - Clippings"
 
 # Helper: move a file using LiteralPath to handle special characters

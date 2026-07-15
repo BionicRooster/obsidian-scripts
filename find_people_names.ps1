@@ -1,5 +1,5 @@
-param()
-$vaultRoot  = "D:\Obsidian\Main"
+﻿param()
+$vaultRoot  = "C:\Users\awt\Sync\Obsidian"
 $outputFile = "C:\Users\awt\people_name_results.txt"
 $excludeFolders = @("15 - People","00 - Home Dashboard","00 - Journal","Templates")
 $nonNameWords = @(

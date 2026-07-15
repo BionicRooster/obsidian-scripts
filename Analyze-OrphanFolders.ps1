@@ -1,11 +1,11 @@
-# Read the orphan files list
+﻿# Read the orphan files list
 $files = Get-Content 'C:\Users\awt\PowerShell\Out\OrphanFiles_2025-12-22_084508.txt'
 
 # Hash table to count files per folder
 $folders = @{}
 
 foreach ($f in $files) {
-    if ($f -match 'D:\\Obsidian\\Main\\([^\\]+)') {
+    if ($f -match 'C:\\Users\\awt\\Sync\\Obsidian\\([^\\]+)') {
         $folder = $matches[1]
         if ($folders.ContainsKey($folder)) {
             $folders[$folder]++

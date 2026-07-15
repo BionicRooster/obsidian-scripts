@@ -1,5 +1,5 @@
-# Move unclassified notes to appropriate 01 subdirectories
-$vault = 'D:\Obsidian\Main'
+﻿# Move unclassified notes to appropriate 01 subdirectories
+$vault = 'C:\Users\awt\Sync\Obsidian'
 
 # Define moves: source relative path => destination relative path
 $moves = @(

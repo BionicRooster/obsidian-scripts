@@ -1,5 +1,5 @@
-# Fix the duplicate Abdu'l files
-$folder = "D:\Obsidian\Main\20 - Permanent Notes"
+﻿# Fix the duplicate Abdu'l files
+$folder = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 $standardApos = [char]0x0027  # '
 $smartApos = [char]0x2019     # '
 

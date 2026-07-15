@@ -1,6 +1,6 @@
-# Consolidate duplicate email threads
+﻿# Consolidate duplicate email threads
 # Keep the file with highest number (most recent in thread), delete others
-$vault = "D:\Obsidian\Main"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $gmail = "$vault\04 - GMail"
 
 $deleted = @()

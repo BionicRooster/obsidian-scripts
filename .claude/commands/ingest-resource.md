@@ -1,4 +1,4 @@
-Extract synthesized knowledge from any source and file it as a permanent vault note. Never saves verbatim content — output is always distilled key points, concepts, and people only.
+﻿Extract synthesized knowledge from any source and file it as a permanent vault note. Never saves verbatim content — output is always distilled key points, concepts, and people only.
 
 ## Parameters
 
@@ -165,7 +165,7 @@ Structure:
 
 For every person listed under Key People:
 
-1. Read `D:\Obsidian\Main\People Index.md`
+1. Read `C:\Users\awt\Sync\Obsidian\People Index.md`
 2. Determine the correct alphabetical letter section (People Index is organized by last name initial)
 3. **If the person is missing:**
    - Locate the correct letter section (e.g., `## T` for Talbot)
@@ -199,7 +199,7 @@ For every person listed under Key People:
 
 ## Step 8 — Log
 
-Append to `D:\Obsidian\Main\01\PKM\Claude Action Log.md`:
+Append to `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md`:
 
 ```
 [INGEST] {filename} → {folder} | source: {source_type} — {URL or filename} | {N} crosslinks | {N} People Index entries added/updated

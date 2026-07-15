@@ -1,8 +1,8 @@
-# Script to find potential unlinked connections in Obsidian vault
+﻿# Script to find potential unlinked connections in Obsidian vault
 # This script searches for note titles mentioned in other notes that aren't already linked
 
 # Parameters
-$vaultPath = "D:\Obsidian\Main"  # Path to the Obsidian vault
+$vaultPath = "C:\Users\awt\Sync\Obsidian"  # Path to the Obsidian vault
 $outputFile = "C:\Users\awt\PowerShell\unlinked_connections.csv"  # Output file path
 
 # Get all markdown files in the vault

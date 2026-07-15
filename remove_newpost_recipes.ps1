@@ -1,5 +1,5 @@
-# Remove [New post] prefix from recipe filenames in 01/Recipes
-$folder = "D:\Obsidian\Main\01\Recipes"
+﻿# Remove [New post] prefix from recipe filenames in 01/Recipes
+$folder = "C:\Users\awt\Sync\Obsidian\01\Recipes"
 
 $files = Get-ChildItem -Path $folder -Filter "*.md" | Where-Object {
     $_.Name -match "^\[New post\]"

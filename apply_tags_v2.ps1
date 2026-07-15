@@ -1,7 +1,7 @@
-# Apply tags to files in 20 - Permanent Notes (I-Z range)
+﻿# Apply tags to files in 20 - Permanent Notes (I-Z range)
 # Rules: 1-5 tags from existing collection, clippings tag last, skip <20 chars content
 
-$vaultPath = "D:\Obsidian\Main\20 - Permanent Notes"
+$vaultPath = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 
 # File -> Tags mapping - ONLY files confirmed to exist in 20 - Permanent Notes
 $tagMap = @{

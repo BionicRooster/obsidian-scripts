@@ -1,10 +1,10 @@
-# Sync C:\Users\awt\.claude\CLAUDE.md to the Obsidian vault root
+﻿# Sync C:\Users\awt\.claude\CLAUDE.md to the Obsidian vault root
 # Called by Claude Code PostToolUse hook after every Edit or Write operation.
 # Only copies if the source is newer than the destination.
 
 # --- Path constants ---
 $src  = 'C:\Users\awt\.claude\CLAUDE.md'   # Authoritative source
-$dest = 'D:\Obsidian\Main\CLAUDE.md'        # Vault root copy
+$dest = 'C:\Users\awt\Sync\Obsidian\CLAUDE.md'        # Vault root copy
 
 # --- Check source exists ---
 if (-not (Test-Path $src)) {

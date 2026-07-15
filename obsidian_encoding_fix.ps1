@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # Obsidian Vault Encoding Fix Script (ISOLATED - USE WITH CAUTION)
 # =============================================================================
 # Purpose: Attempts to repair UTF-8 encoding corruption (mojibake) in markdown files
@@ -20,7 +20,7 @@
 # =============================================================================
 
 # Configuration
-$vaultPath = "D:\Obsidian\Main"                              # Path to Obsidian vault
+$vaultPath = "C:\Users\awt\Sync\Obsidian"                              # Path to Obsidian vault
 $logPath = "C:\Users\awt\PowerShell\logs\obsidian_encoding_fix_log.txt"  # Log file location
 $dryRun = $true                                              # SET TO $true FOR SAFETY - preview changes first
 

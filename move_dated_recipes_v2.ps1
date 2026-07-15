@@ -1,5 +1,5 @@
-# Move date prefix from filename to YAML - Fixed version without -Raw
-$vault = "D:\Obsidian\Main"
+﻿# Move date prefix from filename to YAML - Fixed version without -Raw
+$vault = "C:\Users\awt\Sync\Obsidian"
 $source = "$vault\03 - Recipes"
 $dest = "$vault\01\Recipes"
 

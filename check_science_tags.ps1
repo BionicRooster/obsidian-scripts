@@ -1,7 +1,7 @@
-# Script to check and add science tags to files linked in MOC - Science & Nature
+﻿# Script to check and add science tags to files linked in MOC - Science & Nature
 # Preserves UTF-8 encoding
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 Set-Location $vaultPath
 
 # List of files to check from MOC - Science & Nature

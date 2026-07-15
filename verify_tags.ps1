@@ -1,4 +1,4 @@
-$base = 'D:\Obsidian\Main\10 - Clippings'
+﻿$base = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 $files = @(
     "'Anything that can be built can be taken down'.md",
     "Chasing Quicksilver History in Beautiful Big Bend.md",

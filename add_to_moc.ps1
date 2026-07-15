@@ -1,5 +1,5 @@
-# Add Jack Wallen to MOC - Technology & Computers
-$techMoc = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Technology & Computers.md'
+﻿# Add Jack Wallen to MOC - Technology & Computers
+$techMoc = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Technology & Computers.md'
 $content = Get-Content $techMoc -Encoding UTF8 -Raw
 # Check if already there
 if ($content -notmatch 'Jack Wallen') {
@@ -18,7 +18,7 @@ if ($content -notmatch 'Jack Wallen') {
 }
 
 # Add Colin Marshall to MOC - Travel & Exploration
-$travelMoc = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Travel & Exploration.md'
+$travelMoc = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Travel & Exploration.md'
 $content = Get-Content $travelMoc -Encoding UTF8 -Raw
 if ($content -notmatch 'Colin Marshall') {
     if ($content -match '## People') {

@@ -1,8 +1,8 @@
-# rename_curly2.ps1
+﻿# rename_curly2.ps1
 # Cleans all curly/smart quote characters from filenames in 10 - Clippings.
 # Runs all four replacements in a single expression without line continuation comments.
 
-$folder = 'D:\Obsidian\Main\10 - Clippings'
+$folder = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 
 $leftSingle  = [char]0x2018   # LEFT single quotation mark
 $rightSingle = [char]0x2019   # RIGHT single quotation mark

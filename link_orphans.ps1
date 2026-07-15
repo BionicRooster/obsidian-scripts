@@ -16,7 +16,7 @@ param(
 
 # -- Configuration ------------------------------------------------------------
 
-$vaultPath  = 'D:\Obsidian\Main'       # Root of the Obsidian vault
+$vaultPath  = 'C:\Users\awt\Sync\Obsidian'       # Root of the Obsidian vault
 $orphanList = 'C:\Users\awt\orphan_filtered.txt'  # File produced by orphan detection
 
 # Minimum score a MOC must achieve to be considered a valid match.

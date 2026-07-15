@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 process_bahai_emails.py
 
 Filters the Bahá'í-cluster email JSON dump down to community-only senders
 and creates one vault note per surviving email under:
-    D:\\Obsidian\\Main\\01\\Bahá'í\\
+    C:\\Users\\awt\\Sync\\Obsidian\\01\\Bahá'í\\
 
 Source JSON: C:\\Users\\awt\\AppData\\Local\\Temp\\bahai_cluster_emails_v2.json
 Each record has keys: date, subject, from_name, from_addr, preview
@@ -39,7 +39,7 @@ SOURCE_JSON = r"C:\Users\awt\AppData\Local\Temp\bahai_cluster_emails_v2.json"
 # os.listdir that this is the CORRECT diacritical folder (B-a-h-á-'-í), not
 # the typo duplicate "Bah'á'í" (stray apostrophe after "Bah") found
 # alongside it.
-VAULT_FOLDER = r"D:\Obsidian\Main\01\Bahá'í"
+VAULT_FOLDER = r"C:\Users\awt\Sync\Obsidian\01\Bahá'í"
 
 # Domain strings that, if found anywhere in from_addr (case-insensitive),
 # qualify the email as community-sourced regardless of subject/preview.

@@ -1,8 +1,8 @@
-# Second cleanup pass — removes remaining false-positive People Index entries
+﻿# Second cleanup pass — removes remaining false-positive People Index entries
 # These are NLP procedure steps, park labels, forum usernames, etc.
 
 $enc = New-Object System.Text.UTF8Encoding($false)
-$filePath = 'D:\Obsidian\Main\People Index.md'
+$filePath = 'C:\Users\awt\Sync\Obsidian\People Index.md'
 
 $bytes  = [System.IO.File]::ReadAllBytes($filePath)
 $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)

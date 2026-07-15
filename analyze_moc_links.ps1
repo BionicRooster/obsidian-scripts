@@ -16,7 +16,7 @@ param(
 
 # -- Configuration ------------------------------------------------------------
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $mocFolder = '00 - Home Dashboard'
 
 # A link is flagged as misplaced when the best-matching MOC scores at least

@@ -1,9 +1,9 @@
-# Migration script to move Evernote and OneNote imports
+﻿# Migration script to move Evernote and OneNote imports
 # Moves .md files to 20 - Permanent Notes
 # Moves image/resource files to 00 - Images
 # Updates all links throughout the vault
 
-$VaultPath = "D:\Obsidian\Main"
+$VaultPath = "C:\Users\awt\Sync\Obsidian"
 $EvernotePath = Join-Path $VaultPath "11 - Evernote"
 $OneNotePath = Join-Path $VaultPath "12 - OneNote"
 $PermanentNotesPath = Join-Path $VaultPath "20 - Permanent Notes"

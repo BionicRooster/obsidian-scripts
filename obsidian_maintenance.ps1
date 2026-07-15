@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # Obsidian Vault Maintenance Script
 # =============================================================================
 # Purpose: Comprehensive maintenance for an Obsidian vault:
@@ -45,7 +45,7 @@
 # =============================================================================
 
 # Configuration
-$vaultPath = "D:\Obsidian\Main"                              # Path to Obsidian vault
+$vaultPath = "C:\Users\awt\Sync\Obsidian"                              # Path to Obsidian vault
 $logPath = "C:\Users\awt\PowerShell\logs\obsidian_maintenance_log.txt"  # Log file location
 $dryRun = $false                                             # Set to $true to preview changes without applying
 $maxPathLength = 240                                         # Windows max path safety limit
@@ -957,6 +957,7 @@ function Generate-TruncatedFilenamesList {
             'uberstzig', 'powell', 'klein', 'utne', 'hahn', 'ahmad', 'frys', 'koma', 'bretz', 'rowe', 'pryor', 'valle', 'haley',
             'bauer', 'fargo', 'donath', 'davidson',
             'weinberg', 'danesh', 'reva', 'messi', 'durden', 'hassen',   # from Truncated Filenames
+            'alves', 'dwyer', 'bihe',   # from Truncated Filenames
             'hormouz',   # Strait of Hormouz (alternate spelling of Hormuz)
             # Tech/common terms from truncated filenames
             'perl', 'wiki', 'blog', 'gmail',
@@ -966,7 +967,7 @@ function Generate-TruncatedFilenamesList {
             'covid', 'coronavirus', 'pandemic', 'vaccine', 'mrna',
             'lgbt', 'lgbtq', 'bipoc', 'dei', 'juneteenth', 'kwanzaa', 'hanukkah', 'diwali', 'ramadan', 'eid',
             # Short words
-            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok', 'gnp',
+            'md', 'vs', 'tv', 'uk', 'us', 'dc', 'ny', 'la', 'sf', 'ai', 'pc', 'dj', 'ok', 'gnp', 'jul',
             # Slang
             'duh'
         )

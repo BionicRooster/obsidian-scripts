@@ -1,9 +1,9 @@
-# Backfill nav property to all notes missing it under 01\
+﻿# Backfill nav property to all notes missing it under 01\
 param(
     [switch]$DryRun
 )
 
-$vault = 'D:\Obsidian\Main'
+$vault = 'C:\Users\awt\Sync\Obsidian'
 $notesRoot = Join-Path $vault '01'
 
 # Folder-name to MOC wikilink mapping

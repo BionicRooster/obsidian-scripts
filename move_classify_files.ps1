@@ -1,6 +1,6 @@
-# move_classify_files.ps1 - Move recently classified files to correct folders
+﻿# move_classify_files.ps1 - Move recently classified files to correct folders
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 $moves = @(
     # New Research Brains: 10 - Clippings -> 01\Health\

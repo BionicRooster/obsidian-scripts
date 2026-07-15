@@ -1,5 +1,5 @@
-# Rename file with curly apostrophe to standard apostrophe (two-step via temp)
-$folder = 'D:\Obsidian\Main\10 - Clippings'
+﻿# Rename file with curly apostrophe to standard apostrophe (two-step via temp)
+$folder = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 $old = Get-ChildItem $folder | Where-Object { $_.Name -match 'cataclysmic' } | Select-Object -First 1
 if ($old) {
     $newName = $old.Name -replace [char]0x2019, "'"

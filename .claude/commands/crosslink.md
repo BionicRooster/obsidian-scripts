@@ -1,14 +1,14 @@
-Find vault notes that bridge multiple topic areas and add wikilinks between them in their Related Notes sections.
+﻿Find vault notes that bridge multiple topic areas and add wikilinks between them in their Related Notes sections.
 
 ## Parameters
 
-No arguments. Operates across all content folders in `D:\Obsidian\Main\01\`.
+No arguments. Operates across all content folders in `C:\Users\awt\Sync\Obsidian\01\`.
 
 ---
 
 ## Step 1 — Identify Cross-Topic Candidates
 
-Scan notes in `D:\Obsidian\Main\01\` for content that meaningfully connects to another topic area. Use the patterns below as a guide, but apply judgment — the goal is genuine intellectual connection, not forced association.
+Scan notes in `C:\Users\awt\Sync\Obsidian\01\` for content that meaningfully connects to another topic area. Use the patterns below as a guide, but apply judgment — the goal is genuine intellectual connection, not forced association.
 
 **Cross-topic connection patterns:**
 

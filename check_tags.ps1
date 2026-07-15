@@ -1,7 +1,7 @@
-$check = @('Ergonomic','audio','Astronomy','Soccer','Hobbies','craft','energy','fundraising','Cleaning','Behavior','DRM','eBook','Ferment','baking','dessert','healthy-cooking','literature','tablets','printing','virtualization','allergy','humor','9YearPlan','Sustainability','architecture','design','geology','maker','pecan')
+﻿$check = @('Ergonomic','audio','Astronomy','Soccer','Hobbies','craft','energy','fundraising','Cleaning','Behavior','DRM','eBook','Ferment','baking','dessert','healthy-cooking','literature','tablets','printing','virtualization','allergy','humor','9YearPlan','Sustainability','architecture','design','geology','maker','pecan')
 # Get all tags from vault
 $allTags = @{}
-Get-ChildItem 'D:\Obsidian\Main' -Recurse -Filter '*.md' | ForEach-Object {
+Get-ChildItem 'C:\Users\awt\Sync\Obsidian' -Recurse -Filter '*.md' | ForEach-Object {
     $c = Get-Content $_.FullName -Raw -Encoding UTF8
     if ($c -match '(?s)^---\r?\n(.*?)\r?\n---') {
         $yaml = $Matches[1]

@@ -1,7 +1,7 @@
-# Script to find orphan files with no content beyond their title
+﻿# Script to find orphan files with no content beyond their title
 # These are candidates for deletion
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $outputFile = "C:\Users\awt\PowerShell\empty_orphans.json"
 
 Write-Host "Scanning vault..."

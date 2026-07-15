@@ -1,4 +1,4 @@
-# Script to add NLP_Psy tag to all files linked in MOC - NLP & Psychology
+﻿# Script to add NLP_Psy tag to all files linked in MOC - NLP & Psychology
 # Excludes: 09 - Kindle Clippings, MOC files, and contact/person files
 
 # Array of all unique files from the MOC
@@ -121,11 +121,11 @@ Write-Output ""
 
 foreach ($fileName in $uniqueFiles) {
     # Search for file in vault
-    $foundFiles = Get-ChildItem -Path 'D:\Obsidian\Main' -File -Filter "$fileName*" -Recurse | Where-Object { $_.Extension -eq '.md' }
+    $foundFiles = Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -File -Filter "$fileName*" -Recurse | Where-Object { $_.Extension -eq '.md' }
 
     if ($foundFiles.Count -eq 0) {
         # Try exact match
-        $foundFiles = Get-ChildItem -Path 'D:\Obsidian\Main' -File -Filter "$fileName.md" -Recurse
+        $foundFiles = Get-ChildItem -Path 'C:\Users\awt\Sync\Obsidian' -File -Filter "$fileName.md" -Recurse
     }
 
     if ($foundFiles.Count -eq 0) {

@@ -1,4 +1,4 @@
-# Script to check and add recipe tags to files linked in MOC - Recipes
+﻿# Script to check and add recipe tags to files linked in MOC - Recipes
 # UTF-8 encoding is preserved throughout
 # Version 2: Handles multiple matches intelligently
 
@@ -115,7 +115,7 @@ $files = @(
 )
 
 # Define the vault root
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Define exclusion patterns
 $exclusions = @('09 - Kindle Clippings', '05 - Templates', '04 - Indexes')

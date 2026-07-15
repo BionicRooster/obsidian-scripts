@@ -1,5 +1,5 @@
-# Test script to compare orphan detection methods
-$vaultPath = "D:\Obsidian\Main"
+﻿# Test script to compare orphan detection methods
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Get all .md files
 $allFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue

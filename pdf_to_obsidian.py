@@ -1,4 +1,4 @@
-"""
+﻿"""
 pdf_to_obsidian.py
 
 Convert PDF files into Obsidian-flavoured Markdown notes.
@@ -60,7 +60,7 @@ log = logging.getLogger("pdf_to_obsidian")
 # ---------------------------------------------------------------------------
 
 # VAULT_ROOT: absolute path to the Obsidian vault
-VAULT_ROOT = Path(r"D:\Obsidian\Main")
+VAULT_ROOT = Path(r"C:\Users\awt\Sync\Obsidian")
 
 # IMAGES_DIR: where extracted images are saved (Obsidian resolves by filename)
 IMAGES_DIR = VAULT_ROOT / "00 - Images"

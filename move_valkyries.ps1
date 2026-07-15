@@ -1,5 +1,5 @@
-# Fix filename (remove trailing comma) and move to 01\Social
-$vault = "D:\Obsidian\Main"
+﻿# Fix filename (remove trailing comma) and move to 01\Social
+$vault = "C:\Users\awt\Sync\Obsidian"
 $src = Join-Path $vault "Origin and myths of the Valkyries,.md"
 $dst = Join-Path $vault "01\Social\Origin and Myths of the Valkyries.md"
 

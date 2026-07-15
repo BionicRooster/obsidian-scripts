@@ -1,4 +1,4 @@
-# Verify files exist for cross-linking
+﻿# Verify files exist for cross-linking
 $linksToCheck = @(
     'Advantages and Disadvantages to Planting Moss',
     'Moss and CO2',
@@ -12,7 +12,7 @@ $linksToCheck = @(
 )
 
 foreach ($name in $linksToCheck) {
-    $found = Get-ChildItem 'D:\Obsidian\Main' -Recurse -Filter '*.md' -ErrorAction SilentlyContinue |
+    $found = Get-ChildItem 'C:\Users\awt\Sync\Obsidian' -Recurse -Filter '*.md' -ErrorAction SilentlyContinue |
         Where-Object { $_.BaseName -eq $name } | Select-Object -First 1
     if ($found) {
         Write-Host "EXISTS: $name"

@@ -1,4 +1,4 @@
-# update_recipes_moc.ps1
+﻿# update_recipes_moc.ps1
 # Adds missing wikilinks to MOC - Recipes.md and adds nav properties to recipe files
 # Uses UTF-8 encoding throughout
 
@@ -9,7 +9,7 @@ $utf8 = [System.Text.Encoding]::UTF8
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 # Path to the MOC file
-$mocPath = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md'
+$mocPath = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md'
 
 # Read MOC content
 $mocContent = [System.IO.File]::ReadAllText($mocPath, $utf8)
@@ -288,7 +288,7 @@ Write-Host "`n=== MOC updated: $linksAdded links added ==="
 # Step 3: Add nav property to recipe files
 # ============================================================
 
-$recipesFolder = 'D:\Obsidian\Main\01\Recipes'
+$recipesFolder = 'C:\Users\awt\Sync\Obsidian\01\Recipes'
 $navValue = 'nav: "[[MOC - Recipes]]"'
 $navAdded = 0
 $navSkipped = 0

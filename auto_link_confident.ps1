@@ -1,8 +1,8 @@
-# Auto-Link Confident Orphans - Links only high-confidence matches
+﻿# Auto-Link Confident Orphans - Links only high-confidence matches
 # Uses multiple criteria: title match, multiple keywords, etc.
 
 # Vault path
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # Load orphan list
 $orphansJson = Get-Content "C:\Users\awt\orphan_list.json" -Encoding UTF8 -Raw

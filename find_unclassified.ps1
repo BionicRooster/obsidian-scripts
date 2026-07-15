@@ -1,7 +1,7 @@
-# find_unclassified.ps1
+﻿# find_unclassified.ps1
 # Find recently created vault files that don't yet have a nav: property (unclassified)
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $days      = 7
 $cutoff    = (Get-Date).AddDays(-$days)
 

@@ -1,7 +1,7 @@
-# Move remaining unclassified files from 20 - Permanent Notes
+﻿# Move remaining unclassified files from 20 - Permanent Notes
 # Manual classification based on content analysis
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $sourcePath = "$vaultPath\20 - Permanent Notes"
 $destBase = "$vaultPath\01"
 

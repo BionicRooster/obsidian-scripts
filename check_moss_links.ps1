@@ -1,6 +1,6 @@
-# check_moss_links.ps1 - Verify existence and relevance of Moss and CO2 related notes
+﻿# check_moss_links.ps1 - Verify existence and relevance of Moss and CO2 related notes
 
-$vault = 'D:\Obsidian\Main'   # Vault root
+$vault = 'C:\Users\awt\Sync\Obsidian'   # Vault root
 
 # Each entry: display name and search term (filename stem)
 $candidates = @(

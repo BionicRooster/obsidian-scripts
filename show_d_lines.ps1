@@ -1,9 +1,9 @@
-# show_d_lines.ps1
+﻿# show_d_lines.ps1
 # Shows exact content of lines containing [[D in affected MOC files
 
 $files = @(
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Travel & Exploration.md',
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Reading & Literature.md'
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Travel & Exploration.md',
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Reading & Literature.md'
 )
 
 foreach ($f in $files) {

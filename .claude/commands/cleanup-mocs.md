@@ -1,14 +1,14 @@
-Remove misplaced links from MOC files, reassign them to correct subsections, and clean up structural artifacts.
+﻿Remove misplaced links from MOC files, reassign them to correct subsections, and clean up structural artifacts.
 
 ## Parameters
 
-No arguments. Always operates on all MOC files in `D:\Obsidian\Main\00 - Home Dashboard\`.
+No arguments. Always operates on all MOC files in `C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\`.
 
 ---
 
 ## Step 1 — Locate MOC Files
 
-Glob `D:\Obsidian\Main\00 - Home Dashboard\*MOC*.md` to get all MOC files.
+Glob `C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\*MOC*.md` to get all MOC files.
 
 The 9 key MOCs to inspect:
 - `MOC - Bahá'í Faith.md`

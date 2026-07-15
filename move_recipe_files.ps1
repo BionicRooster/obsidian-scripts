@@ -1,6 +1,6 @@
-# Move recipe files from Gmail to 03 - Recipes
+﻿# Move recipe files from Gmail to 03 - Recipes
 # Only move files that have actual recipe content (not just "recipe" in title from forwarding)
-$vault = "D:\Obsidian\Main"
+$vault = "C:\Users\awt\Sync\Obsidian"
 $gmail = "$vault\04 - GMail"
 $recipes = "$vault\03 - Recipes"
 

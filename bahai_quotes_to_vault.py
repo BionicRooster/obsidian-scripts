@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 bahai_quotes_to_vault.py
 
@@ -12,7 +12,7 @@ Usage:
 
 Body source: mail_fti.dat -> LocalMailsIndex3_content.c2content (c0id = mail item id)
 Date source: mail_index.dat -> MailItems.date (.NET DateTime ticks, epoch = 0001-01-01)
-Output:      D:\\Obsidian\\Main\\01\\Bahá'í\\Daily Quotes\\yyyy-mm.md
+Output:      C:\\Users\\awt\\Sync\\Obsidian\\01\\Bahá'í\\Daily Quotes\\yyyy-mm.md
 """
 
 import sqlite3
@@ -30,10 +30,10 @@ from collections import defaultdict
 EMCLIENT_DIR = Path(r"C:\Users\awt\AppData\Roaming\eM Client")
 
 # Vault output folder; created if absent
-VAULT_OUTPUT = Path(r"D:\Obsidian\Main\01\Bahá'í\Daily Quotes")
+VAULT_OUTPUT = Path(r"C:\Users\awt\Sync\Obsidian\01\Bahá'í\Daily Quotes")
 
 # Bahá'í Faith MOC to update with Daily Quotes section
-MOC_PATH = Path(r"D:\Obsidian\Main\00 - Home Dashboard\MOC - Bahá'í Faith.md")
+MOC_PATH = Path(r"C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Bahá'í Faith.md")
 
 # Anchor before which the ## Daily Quotes section is inserted
 MOC_ANCHOR = "## Bahá'í Books & Resources"

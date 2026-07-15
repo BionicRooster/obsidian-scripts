@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # Writes check_yaml.ps1 cleanly without escaping issues
 
 script = """\
@@ -13,7 +13,7 @@ script = """\
 # UTF-8 safe: reads/writes with System.Text.Encoding::UTF8, never re-encodes.
 
 param(
-    [string]$VaultRoot = "D:\\Obsidian\\Main",
+    [string]$VaultRoot = "C:\\Users\\awt\\Sync\\Obsidian",
     [switch]$DryRun = $false
 )
 

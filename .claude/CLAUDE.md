@@ -1,7 +1,7 @@
-# User Preferences
+﻿# User Preferences
 
 ## File Locations
-- Obsidian vault: D:\Obsidian\Main
+- Obsidian vault: C:\Users\awt\Sync\Obsidian
 - Master MOC Index: 00 - Home Dashboard/Master MOC Index
 - Obsidian maintenance script: C:\Users\awt\obsidian_maintenance.ps1
 
@@ -21,7 +21,7 @@
 
 ## Agent Permissions
 When spawning Task subagents for Obsidian operations, always pass these allowed_tools to inherit vault permissions:
-- `allowed_tools: ["Read(D:\\Obsidian\\Main/**)", "Edit(D:\\Obsidian\\Main/**)", "Write(D:\\Obsidian\\Main/**)"]`
+- `allowed_tools: ["Read(C:\\Users\\awt\\Sync\\Obsidian/**)", "Edit(C:\\Users\\awt\\Sync\\Obsidian/**)", "Write(C:\\Users\\awt\\Sync\\Obsidian/**)"]`
 This ensures subagents can operate on the vault without re-prompting for permission.
 
 ## File Naming Conventions
@@ -32,45 +32,28 @@ This ensures subagents can operate on the vault without re-prompting for permiss
 
 ## Source File Handling After Conversion
 When converting a source document (RTF, DOCX, DOC, TXT, PDF) to a vault .md note:
-- **Move** the original source file to `D:\Obsidian\Main\09 - Attachments\` after conversion — do NOT delete it.
+- **Move** the original source file to `C:\Users\awt\Sync\Obsidian\09 - Attachments\` after conversion — do NOT delete it.
 - The source file serves as the original record; the .md file is the working vault copy.
 - If the source file is already in `09 - Attachments\`, it is already correctly placed — leave it there.
 - Only delete source files if the user explicitly requests deletion.
 
 ## MOC Orphan Linker Workflow
-When the user asks to "link orphans" or find relevant orphans for a MOC:
-1. Helper script: C:\Users\awt\moc_orphan_linker.ps1
-2. Actions available: list-mocs, get-subsections, get-orphans, link-orphan
-3. Workflow:
-   - Present available MOCs for selection
-   - Present subsections within chosen MOC
-   - Search orphan files using Grep for relevant keywords based on subsection topic
-   - Analyze content relevance using AI and rank results
-   - Present top 20 candidates for user approval
-   - Create bidirectional links for approved files using the link-orphan action
-4. Example invocations: "link orphans to Recipes", "find orphans for Bahá'í Faith / Core Teachings"
+Trigger: "link orphans" or "find orphans for [MOC]" or "classify orphans"
+Read: `memory/workflow_moc_orphan_linker.md` — helper script, actions, full procedure.
 
 ## Fix Broken Image Links Workflow
-When the user says "Fix broken image links":
-1. Scripts:
-   - C:\Users\awt\find_broken_images.ps1 - Finds broken image embeds and fixes them
-   - C:\Users\awt\fix_backslash_paths.ps1 - Converts backslashes to forward slashes in image paths
-2. Workflow:
-   - Run find_broken_images.ps1 with -Fix parameter (e.g., -Limit 50 -Fix)
-   - IMPORTANT: Obsidian requires forward slashes (/) not backslashes (\) in paths
-   - After fixing, run fix_backslash_paths.ps1 to ensure all paths use forward slashes
-3. The script finds ![[image.jpg]] embeds pointing to wrong paths, locates the actual image file in the vault, and updates the link
-4. Example: powershell -ExecutionPolicy Bypass -File "C:\Users\awt\find_broken_images.ps1" -Limit 100 -Fix
+Trigger: "Fix broken image links"
+Read: `memory/workflow_fix_image_links.md` — scripts, forward-slash requirement, example commands.
 
 ## 2026 Japan Trip — Standing MOC Rule
-- Project folder: `D:\Obsidian\Main\02 - Working Projects\2026 Japan Trip\`
+- Project folder: `C:\Users\awt\Sync\Obsidian\02 - Working Projects\2026 Japan Trip\`
 - MOC section: `MOC - Travel & Exploration.md` → `## Specific Locations` → `### Japan 2026 Trip`
 - Any note tagged `#JapanTrip` belongs in the project folder, not in `01/Japan/`, and must be linked in the `### Japan 2026 Trip` subsection.
 - General Japan interest notes (no `JapanTrip` tag) go in `01/Japan/` and the `### Japan` subsection.
 - When classifying recent notes or cleaning MOCs, check for the `JapanTrip` tag and route accordingly.
 
 ## 2024 Columbia River Trip — Standing MOC Rule
-- Project folder: `D:\Obsidian\Main\03 - Completed Projects\2024 Columbia River Trip\`
+- Project folder: `C:\Users\awt\Sync\Obsidian\03 - Completed Projects\2024 Columbia River Trip\`
 - MOC section: `MOC - Travel & Exploration.md` → `## Specific Locations` → `### 2024 Columbia River Trip`
 - Any note tagged `#2024-WashingtonTrip` (or tagged with both `Travel` and `Megaflood`/`Washington`) belongs in this project folder and must be linked in the `### 2024 Columbia River Trip` subsection.
 - When classifying recent notes or cleaning MOCs, check for these tags and update the subsection accordingly.
@@ -81,8 +64,8 @@ Trigger: "cleanup MOCs" or "clean up MOCs"
 Read first: `memory/workflow_cleanup_mocs.md` — full procedure, 9 key MOCs, misplacement patterns, reassignment table.
 
 ## FOL (Friends of the Georgetown Public Library)
-- MOC location: D:\Obsidian\Main\00 - Home Dashboard\MOC - Friends of the Georgetown Public Library.md
-- FOL files folder: D:\Obsidian\Main\01\FOL
+- MOC location: C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Friends of the Georgetown Public Library.md
+- FOL files folder: C:\Users\awt\Sync\Obsidian\01\FOL
 - When an item is tagged with #FOL, ensure it is included in the FOL MOC
 - Move any new FOL-related files to the 01/FOL folder
 
@@ -123,11 +106,12 @@ Trigger: "ingest", "ingest this", "save this article/video/transcript/note", or 
 Use the `/ingest-resource` skill — extracts synthesized knowledge only (no verbatim content), routes to 01/ or 02-Working Projects, updates People Index, crosslinks; full procedure in `~/.claude/commands/ingest-resource.md`.
 
 ## Global Web Fetch Routing Rule
-**Whenever fetching any external URL or doing web research** (in any skill, workflow, or inline task), apply the tool-selection logic from `~/.claude/commands/web-scraping.md`:
-- Topic/concept searches → WebSearch (semantic ranking)
-- Known JS-heavy domains (ESPN, FBref stats tabs, Twitter/X, LinkedIn, GitHub Actions UI) → WebFetch with JS rendering note
-- Plain articles or static pages → WebFetch directly
-- If WebFetch returns < 200 words of body text → flag as JS-rendering candidate and note it
+**Whenever fetching any external URL or doing web research** (in any skill, workflow, or inline task), apply this priority order:
+1. Topic/concept searches → WebSearch (Exa, semantic ranking)
+2. Plain articles or static pages → WebFetch directly
+3. JS-heavy pages (ESPN, FBref stats tabs, Twitter/X, LinkedIn, GitHub Actions UI, SPAs) → **Playwright MCP first** (`mcp__playwright__*` tools)
+4. If Playwright fails or is unavailable → Firecrawl as **last resort** only
+- If WebFetch returns < 200 words of body text → escalate to Playwright (not Firecrawl)
 This applies globally: briefing, resolve-unknowns, box scores, biography research, synthesis updates — any time a web source is consulted.
 
 ## Book Highlights Extraction Workflow
@@ -147,7 +131,7 @@ Use the `/improve-system` skill — 5 modes: Audit (stale/conflicting/duplicate)
 
 ## Vault Activity Log Format
 
-All Claude vault actions are logged in `D:\Obsidian\Main\01\PKM\Claude Action Log.md` — NOT in the daily journal `## My Notes` section. Append a new `## YYYY-MM-DD` section (or add to today's section if it already exists) at the end of the file after each session. Personal notes written by Wayne remain in the daily journal.
+All Claude vault actions are logged in `C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md` — NOT in the daily journal `## My Notes` section. Append a new `## YYYY-MM-DD` section (or add to today's section if it already exists) at the end of the file after each session. Personal notes written by Wayne remain in the daily journal.
 
 Use these parseable prefixes in the log so entries can be searched with grep/PowerShell:
 
@@ -160,7 +144,7 @@ Use these parseable prefixes in the log so entries can be searched with grep/Pow
 | `[PEOPLE]` | New People Index entry | `[PEOPLE] Karpathy, Andrej added` |
 | `[RESOLVE]` | Unknowns resolution pass | `[RESOLVE] 2026-03-01 Austin FC box score — 2 jersey numbers confirmed` |
 
-Search example: `Select-String "\[INGEST\]" "D:\Obsidian\Main\01\PKM\Claude Action Log.md"` reconstructs the full ingest history.
+Search example: `Select-String "\[INGEST\]" "C:\Users\awt\Sync\Obsidian\01\PKM\Claude Action Log.md"` reconstructs the full ingest history.
 
 ## Daily Journal Briefing Workflow
 Trigger: "daily journal", "briefing", "update today's note", "morning briefing", or asks to populate today's daily note.

@@ -1,8 +1,8 @@
-# fix_pidp8_names.ps1
+﻿# fix_pidp8_names.ps1
 # Removes brackets from [pidp8] note filenames and updates all wikilinks
 # Rename: "[pidp8] foo.md" -> "pidp8 foo.md"  and  "Re_ [pidp8] foo.md" -> "Re_ pidp8 foo.md"
 
-$vaultPath = "D:\Obsidian\Main"                   # Vault root
+$vaultPath = "C:\Users\awt\Sync\Obsidian"                   # Vault root
 $enc       = [System.Text.Encoding]::UTF8          # UTF-8 for all I/O
 
 # --- Step 1: Find all files with [pidp8] in name ---

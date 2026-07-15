@@ -1,8 +1,8 @@
-# Fast script to find unlinked connections in Obsidian vault
+﻿# Fast script to find unlinked connections in Obsidian vault
 # Focuses on high-value note titles (People, MOCs, Permanent Notes, key topics)
 
 # Parameters
-$vaultPath = "D:\Obsidian\Main"  # Path to Obsidian vault
+$vaultPath = "C:\Users\awt\Sync\Obsidian"  # Path to Obsidian vault
 $outputFile = "C:\Users\awt\PowerShell\unlinked_connections.json"  # Output file for results
 
 # Get all markdown files

@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 reformat_nlp.py
-Batch reformats legacy NLP notes in D:/Obsidian/Main/01/NLP/
+Batch reformats legacy NLP notes in C:/Users/awt/Sync/Obsidian/01/NLP/
 
 Rules:
  1. Remove NLP_Psy tag, ensure NLP tag present
@@ -27,7 +27,7 @@ if hasattr(sys.stdout, 'reconfigure'):
 # ─────────────────────────────── constants ────────────────────────────────────
 
 # Vault root for the NLP folder
-NLP_DIR = r"D:\Obsidian\Main\01\NLP"
+NLP_DIR = r"C:\Users\awt\Sync\Obsidian\01\NLP"
 
 # Files to SKIP (already clean or explicitly excluded)
 SKIP_PREFIXES = ("NLP Forum —", "NLP Master Class")

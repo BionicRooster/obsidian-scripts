@@ -1,7 +1,7 @@
-# Link recent notes to their appropriate MOCs
+﻿# Link recent notes to their appropriate MOCs
 # This script adds bidirectional links between notes and MOCs
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $mocPath = "$vaultPath\00 - Home Dashboard"
 
 # Classification mapping: Note name (partial match) -> MOC file, Section

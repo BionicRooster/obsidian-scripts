@@ -1,4 +1,4 @@
-"""
+﻿"""
 Reformat: What's Wired In.md
 - Fix YAML
 - Convert ==== Message N ==== headers to ### headings
@@ -10,7 +10,7 @@ Reformat: What's Wired In.md
 
 import re, glob, os
 
-matches = glob.glob("D:/Obsidian/Main/01/NLP/What*Wired*")
+matches = glob.glob("C:/Users/awt/Sync/Obsidian/01/NLP/What*Wired*")
 if not matches:
     print("File not found")
     exit(1)

@@ -1,11 +1,11 @@
-# fix_broken_related_notes2.ps1
+﻿# fix_broken_related_notes2.ps1
 # Fixes two remaining broken patterns in Related Notes sections:
 #   1. Bare MOC references:  - MOC - Finance & Investment
 #      Action: REMOVE (MOC files should not appear in Related Notes per vault rules)
 #   2. Bare path references: - Clippings/The Destiny of America
 #      Action: extract filename, look up in vault, convert to [[wikilink]] or remove
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 $logPath   = 'C:\Users\awt\PowerShell\logs\fix_related_notes2_log.txt'
 
 # -------------------------------------------------------------------------

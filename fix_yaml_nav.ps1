@@ -1,10 +1,10 @@
-# fix_yaml_nav.ps1
+﻿# fix_yaml_nav.ps1
 # Fixes YAML frontmatter where nav: lines contain unquoted | characters
 # The | character has special meaning in YAML and must be quoted
 
 param(
     # Path to the Obsidian vault
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
 
     # Maximum number of files to process (0 = unlimited)
     [int]$Limit = 0,

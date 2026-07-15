@@ -1,5 +1,5 @@
-# Find and delete directories with .md extension (should be files)
-$Path = "D:\Obsidian\Main\20 - Permanent Notes"
+﻿# Find and delete directories with .md extension (should be files)
+$Path = "C:\Users\awt\Sync\Obsidian\20 - Permanent Notes"
 
 # Find directories that have .md in name
 $mdDirs = Get-ChildItem -Path $Path -Directory | Where-Object { $_.Name -like "*.md" }

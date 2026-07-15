@@ -1,4 +1,4 @@
-$vault = 'D:\Obsidian\Main'
+﻿$vault = 'C:\Users\awt\Sync\Obsidian'
 $cutoff = (Get-Date).AddDays(-2)
 Get-ChildItem -Path $vault -Recurse -Filter '*.md' | Where-Object {
     $_.CreationTime -ge $cutoff -and

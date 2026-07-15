@@ -1,6 +1,6 @@
-# Restore missing tags in files that should have them
+﻿# Restore missing tags in files that should have them
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # List of files that should have #tech tags
 $filesNeedingTags = @(

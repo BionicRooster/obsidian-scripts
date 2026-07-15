@@ -1,11 +1,11 @@
-# Find and Fix Broken Links in Obsidian Vault
+﻿# Find and Fix Broken Links in Obsidian Vault
 
 param(
     [switch]$DryRun = $false,
     [switch]$ReportOnly = $false
 )
 
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 Write-Host "=== Broken Link Finder ===" -ForegroundColor Cyan
 if ($DryRun) {

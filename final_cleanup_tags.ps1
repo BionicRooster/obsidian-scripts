@@ -1,6 +1,6 @@
-# Final cleanup - remove all duplicate tags: lines that appear after YAML front matter
+﻿# Final cleanup - remove all duplicate tags: lines that appear after YAML front matter
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Get all files modified in last 3 hours that aren't in exclusion folders
 $files = Get-ChildItem -Path $vaultRoot -Recurse -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object {

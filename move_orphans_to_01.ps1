@@ -1,4 +1,4 @@
-# Move recent orphan files from 20 - Permanent Notes to 01/[category] folders
+﻿# Move recent orphan files from 20 - Permanent Notes to 01/[category] folders
 # Uses UTF-8 encoding to preserve content integrity
 
 param(
@@ -6,7 +6,7 @@ param(
     [switch]$DryRun = $false   # If true, only show what would be moved
 )
 
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $orphanPath = "$vaultPath\20 - Permanent Notes"
 $destBase = "$vaultPath\01"
 $cutoffDate = (Get-Date).AddDays(-60)

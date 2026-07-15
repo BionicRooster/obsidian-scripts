@@ -1,4 +1,4 @@
-Classify recent Obsidian vault notes: add MOC links, nav properties, move to correct folders, check People Index, check Synthesis layer.
+﻿Classify recent Obsidian vault notes: add MOC links, nav properties, move to correct folders, check People Index, check Synthesis layer.
 
 ## Parameters
 
@@ -36,7 +36,7 @@ Curly apostrophes in filenames cause `Move-Item` to fail silently or delete the 
 
 ## Step 1 — Video Clipper Sweep
 
-Before processing new notes, grep `D:\Obsidian\Main\10 - Clippings\` for files containing `*Transcript pending*`. These are Web Clipper skeletons needing transcripts.
+Before processing new notes, grep `C:\Users\awt\Sync\Obsidian\10 - Clippings\` for files containing `*Transcript pending*`. These are Web Clipper skeletons needing transcripts.
 
 For each found file:
 1. Read the file's `source:` frontmatter field to get the YouTube URL
@@ -67,11 +67,11 @@ For each file (excluding the always-skip folders above):
 3. **Add wikilink** to the MOC subsection
 4. **Add nav property** to the file's frontmatter pointing back to the MOC (bidirectional linking)
 5. **Move** the file to the appropriate `01/` subdirectory — **BUT:**
-   - Do NOT move files in the vault root (`D:\Obsidian\Main\*.md`) — classify and link them but leave in place; the user will manually review and move them to `20 - Permanent Notes\`
+   - Do NOT move files in the vault root (`C:\Users\awt\Sync\Obsidian\*.md`) — classify and link them but leave in place; the user will manually review and move them to `20 - Permanent Notes\`
    - Do NOT move files already in `02 - Working Projects\` or `03 - Completed Projects\`
-   - **Elias White Talbot exception (overrides all other rules):** If a note contains "Elias White Talbot" or has tag `EliasWhiteTalbot`, move it to `D:\Obsidian\Main\02 - Working Projects\Elias White Talbot - Project\`. Ensure `EliasWhiteTalbot` tag is in frontmatter. This applies even to vault root files.
-   - **Japan Trip rule:** Notes tagged `#JapanTrip` belong in `D:\Obsidian\Main\02 - Working Projects\2026 Japan Trip\` and must be linked in `MOC - Travel & Exploration.md` → `## Specific Locations` → `### Japan 2026 Trip`
-   - **Columbia River Trip rule:** Notes tagged `#2024-WashingtonTrip` belong in `D:\Obsidian\Main\03 - Completed Projects\2024 Columbia River Trip\` and linked in `### 2024 Columbia River Trip`
+   - **Elias White Talbot exception (overrides all other rules):** If a note contains "Elias White Talbot" or has tag `EliasWhiteTalbot`, move it to `C:\Users\awt\Sync\Obsidian\02 - Working Projects\Elias White Talbot - Project\`. Ensure `EliasWhiteTalbot` tag is in frontmatter. This applies even to vault root files.
+   - **Japan Trip rule:** Notes tagged `#JapanTrip` belong in `C:\Users\awt\Sync\Obsidian\02 - Working Projects\2026 Japan Trip\` and must be linked in `MOC - Travel & Exploration.md` → `## Specific Locations` → `### Japan 2026 Trip`
+   - **Columbia River Trip rule:** Notes tagged `#2024-WashingtonTrip` belong in `C:\Users\awt\Sync\Obsidian\03 - Completed Projects\2024 Columbia River Trip\` and linked in `### 2024 Columbia River Trip`
 
 ---
 
@@ -101,8 +101,8 @@ For each file (excluding the always-skip folders above):
 Scan the file's content for named individuals: authors, subjects, players, coaches, officials, roster members in box scores or team files.
 
 For each name found:
-- Check if a file exists at `D:\Obsidian\Main\15 - People\<Name>.md`
-- Check if the name appears in `D:\Obsidian\Main\People Index.md`
+- Check if a file exists at `C:\Users\awt\Sync\Obsidian\15 - People\<Name>.md`
+- Check if the name appears in `C:\Users\awt\Sync\Obsidian\People Index.md`
 - If absent from both: add to a **New Names** list for the session
 
 At end of workflow, report the New Names list and offer to create stub People Index entries.
@@ -113,7 +113,7 @@ At end of workflow, report the New Names list and offer to create stub People In
 
 ## Step 4 — Synthesis Check (after each file)
 
-Read `D:\Obsidian\Main\30 - Synthesis\index.md`. If the file's topic matches an existing synthesis page:
+Read `C:\Users\awt\Sync\Obsidian\30 - Synthesis\index.md`. If the file's topic matches an existing synthesis page:
 - Read that synthesis page
 - Update it to reflect any new evidence, revised claims, or contradictions
 - Increment `source_count` in the synthesis page frontmatter

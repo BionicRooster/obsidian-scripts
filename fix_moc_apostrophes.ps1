@@ -1,9 +1,9 @@
-# fix_moc_apostrophes.ps1
+﻿# fix_moc_apostrophes.ps1
 # Repairs broken wikilinks in MOC - Recipes.md that were split by apostrophes
 
 $utf8 = [System.Text.Encoding]::UTF8
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-$mocPath = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md'
+$mocPath = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md'
 
 # Read content
 $content = [System.IO.File]::ReadAllText($mocPath, $utf8)

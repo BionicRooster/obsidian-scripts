@@ -1,8 +1,8 @@
-# Script to check and add "Home" tag to files linked in MOC - Home & Practical Life
+﻿# Script to check and add "Home" tag to files linked in MOC - Home & Practical Life
 # This version handles partial/truncated filenames better
 
 param(
-    [string]$VaultPath = "D:\Obsidian\Main"
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian"
 )
 
 # Counter variables

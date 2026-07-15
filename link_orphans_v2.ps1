@@ -1,4 +1,4 @@
-# Obsidian Orphan File Linker v2
+﻿# Obsidian Orphan File Linker v2
 # More targeted linking based on file names and specific content
 
 param(
@@ -7,8 +7,8 @@ param(
 )
 
 # Vault configuration
-$vaultPath = 'D:\Obsidian\Main'
-$reportPath = 'D:\Obsidian\Main\00 - Home Dashboard\Orphan File Connection Report.md'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
+$reportPath = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\Orphan File Connection Report.md'
 
 # More targeted category definitions - requires strong matches
 $categories = @{

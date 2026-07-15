@@ -1,10 +1,10 @@
-"""
+﻿"""
 MOC Cleanup — remove misplaced, duplicate, and truncated links.
 Each removal is accompanied by where the correct link already exists.
 """
 from pathlib import Path
 
-MOC_DIR = Path("D:/Obsidian/Main/00 - Home Dashboard")
+MOC_DIR = Path("C:/Users/awt/Sync/Obsidian/00 - Home Dashboard")
 
 # (moc_file, link_line_to_remove, reason)
 REMOVALS = [

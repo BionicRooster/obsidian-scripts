@@ -1,4 +1,4 @@
-"""
+﻿"""
 Reformat: Transcript of a CompUSERVE THREAD ON THE USE OF NLP IN TRAINING
 - Replace YAML frontmatter
 - Collapse excessive blank lines (every paragraph line has blank lines between each line)
@@ -10,7 +10,7 @@ Reformat: Transcript of a CompUSERVE THREAD ON THE USE OF NLP IN TRAINING
 
 import re
 
-SRC = 'D:/Obsidian/Main/01/NLP/Transcript of a CompUSERVE THREAD ON THE USE OF NLP IN TRAINING.md'
+SRC = 'C:/Users/awt/Sync/Obsidian/01/NLP/Transcript of a CompUSERVE THREAD ON THE USE OF NLP IN TRAINING.md'
 
 # Read file
 with open(SRC, 'r', encoding='utf-8') as f:

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Extract Wayne's reading notes and highlighted passages from
   Baha'i Sacred Writings - WT Notes R3.docx
@@ -8,7 +8,7 @@ Artifacts extracted:
   2. Yellow highlights (primary key passages)
   3. Green highlights (secondary key passages)
 
-Output: D:\\Obsidian\\Main\\09 - Kindle Clippings\\BahaiSacredWritings-WT-Notes.md
+Output: C:\\Users\\awt\\Sync\\Obsidian\\09 - Kindle Clippings\\BahaiSacredWritings-WT-Notes.md
 """
 import re
 import sys
@@ -60,7 +60,7 @@ DOCX_PATH = (
 
 # Destination vault note path
 OUT_PATH = (
-    "D:\\Obsidian\\Main\\09 - Kindle Clippings\\"
+    "C:\\Users\\awt\\Sync\\Obsidian\\09 - Kindle Clippings\\"
     "BahaiSacredWritings-WT-Notes.md"
 )
 

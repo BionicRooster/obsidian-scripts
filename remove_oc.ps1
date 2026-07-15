@@ -1,4 +1,4 @@
-$path = 'D:\Obsidian\Main\People Index.md'
+﻿$path = 'C:\Users\awt\Sync\Obsidian\People Index.md'
 $lines = [System.Collections.Generic.List[string]]([System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8) -split "`r?`n")
 $i = 0
 while ($i -lt $lines.Count) {

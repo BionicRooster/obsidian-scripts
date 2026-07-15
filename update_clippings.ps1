@@ -1,7 +1,7 @@
-# Script to update Clippings files that have special characters in names
+﻿# Script to update Clippings files that have special characters in names
 # Uses LiteralPath to avoid path interpretation issues
 
-$clippingsPath = "D:\Obsidian\Main\10 - Clippings"
+$clippingsPath = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
 
 # ============================================================
 # Can You Say..."Hero" - just needs nav added, author fixed

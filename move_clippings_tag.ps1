@@ -1,8 +1,8 @@
-# Script to move #clippings tag to last position in files with multiple tags
+﻿# Script to move #clippings tag to last position in files with multiple tags
 # Works with both inline hashtag format and YAML frontmatter format
 
 # Path to the Clippings folder
-$clippingsPath = "D:\Obsidian\Main\10 - Clippings"
+$clippingsPath = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
 
 # Counter for tracking changes
 $filesModified = 0

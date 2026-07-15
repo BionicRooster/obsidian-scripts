@@ -1,4 +1,4 @@
-# fix_misspelled_tags.ps1
+﻿# fix_misspelled_tags.ps1
 # Finds and fixes misspelled tags in YAML frontmatter across the Obsidian vault.
 # Usage:
 #   -WhatIf  : Preview changes without modifying files
@@ -17,7 +17,7 @@ if (-not $WhatIf -and -not $Apply) {
 }
 
 # Vault path
-$vaultPath = "D:\Obsidian\Main"
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Misspelled tag -> correct tag mapping
 # Each key is the misspelled tag, value is the correct replacement

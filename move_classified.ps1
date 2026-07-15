@@ -1,8 +1,8 @@
-# move_classified.ps1 — moves two newly classified clippings to their target folders
+﻿# move_classified.ps1 — moves two newly classified clippings to their target folders
 
 $moves = @(
-    @{ From = "D:\Obsidian\Main\10 - Clippings\Summarize the movie _My Father's Name.md";         To = "D:\Obsidian\Main\01\Social\Summarize the movie _My Father's Name.md" },
-    @{ From = "D:\Obsidian\Main\10 - Clippings\The ancient reason there are 60 minutes in an hour.md"; To = "D:\Obsidian\Main\01\Science\The ancient reason there are 60 minutes in an hour.md" }
+    @{ From = "C:\Users\awt\Sync\Obsidian\10 - Clippings\Summarize the movie _My Father's Name.md";         To = "C:\Users\awt\Sync\Obsidian\01\Social\Summarize the movie _My Father's Name.md" },
+    @{ From = "C:\Users\awt\Sync\Obsidian\10 - Clippings\The ancient reason there are 60 minutes in an hour.md"; To = "C:\Users\awt\Sync\Obsidian\01\Science\The ancient reason there are 60 minutes in an hour.md" }
 )
 
 foreach ($m in $moves) {

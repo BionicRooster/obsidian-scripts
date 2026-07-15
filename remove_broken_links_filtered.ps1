@@ -1,4 +1,4 @@
-# remove_broken_links_filtered.ps1
+﻿# remove_broken_links_filtered.ps1
 # Extended broken-link remover for Obsidian vault.
 # Improvements over find_broken_links.ps1:
 #   - UTF-8 safe read/write via [System.IO.File] (preserves diacriticals)
@@ -9,7 +9,7 @@
 
 param(
     # Root path of the Obsidian vault
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
 
     # When present, actually modify files; without it, only scans and reports
     [switch]$Delete,

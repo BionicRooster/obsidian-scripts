@@ -1,5 +1,5 @@
-# Summary Report for Orphan Classification and Linking
-$vaultPath = 'D:\Obsidian\Main'
+﻿# Summary Report for Orphan Classification and Linking
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 Write-Host "=== ORPHAN CLASSIFICATION AND LINKING SUMMARY ===" -ForegroundColor Cyan
 Write-Host ""

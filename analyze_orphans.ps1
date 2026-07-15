@@ -1,8 +1,8 @@
-# Analyze Orphan Files in Obsidian Vault
+﻿# Analyze Orphan Files in Obsidian Vault
 # Groups orphans by category and filters out system folders
 
 # Vault path for reference
-$vaultPath = 'D:\Obsidian\Main'
+$vaultPath = 'C:\Users\awt\Sync\Obsidian'
 
 # Read the orphan list
 $orphans = Get-Content 'C:\Users\awt\orphan_files.txt'

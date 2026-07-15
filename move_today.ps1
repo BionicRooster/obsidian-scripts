@@ -1,5 +1,5 @@
-# Move reformatted notes to appropriate 01 subdirectories
-$vault = "D:\Obsidian\Main"
+﻿# Move reformatted notes to appropriate 01 subdirectories
+$vault = "C:\Users\awt\Sync\Obsidian"
 
 # Define moves: source filename -> destination subfolder
 $moves = @(

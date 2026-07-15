@@ -1,4 +1,4 @@
-# fix_smart_apostrophe_filenames.ps1
+﻿# fix_smart_apostrophe_filenames.ps1
 # Purpose: Rename folders and files that contain smart/curly apostrophes (')
 #          to use standard apostrophes (') instead.
 #
@@ -15,7 +15,7 @@
 # ============================================================================
 
 # Path to the Obsidian vault - modify this if your vault is in a different location
-$VaultPath = "D:\Obsidian\Main"
+$VaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Smart apostrophe characters to find (various Unicode variants)
 $SmartApostrophes = @(

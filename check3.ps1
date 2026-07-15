@@ -1,4 +1,4 @@
-$base = 'D:\Obsidian\Main\10 - Clippings'
+﻿$base = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 $files = Get-ChildItem "$base\Ukraine*"
 foreach ($f in $files) {
     Write-Host "=== $($f.Name) ==="

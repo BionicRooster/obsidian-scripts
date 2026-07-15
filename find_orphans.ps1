@@ -1,7 +1,7 @@
-# find_orphans.ps1
+﻿# find_orphans.ps1
 # Locate orphan files listed in Orphan Files.md
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 $targets = @(
     '2010 Personal Calendar Summary.md',

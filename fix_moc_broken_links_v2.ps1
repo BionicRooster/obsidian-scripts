@@ -1,10 +1,10 @@
-# fix_moc_broken_links_v2.ps1
+﻿# fix_moc_broken_links_v2.ps1
 # Finds broken wikilinks in MOC files and fixes them by locating the actual file
 # Improved version: extracts filename from paths and avoids matching to folder indexes
 
 param(
     # Path to the Obsidian vault
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
 
     # Actually apply fixes (otherwise dry run)
     [switch]$Fix,

@@ -1,9 +1,9 @@
-# watch_prn_files.ps1
-# Purpose: Monitor D:\Obsidian\Main for .prn file arrivals and convert them to .md
+﻿# watch_prn_files.ps1
+# Purpose: Monitor C:\Users\awt\Sync\Obsidian for .prn file arrivals and convert them to .md
 # This script runs continuously and triggers conversion when .prn files appear
 
 # Target directory to monitor for .prn files
-$targetDir = "D:\Obsidian\Main"
+$targetDir = "C:\Users\awt\Sync\Obsidian"
 
 # Log file path for tracking conversions
 $logFile = "C:\Users\awt\prn_watcher.log"

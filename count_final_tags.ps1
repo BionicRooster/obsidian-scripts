@@ -1,6 +1,6 @@
-# Count files with tech tags from recent modifications
+﻿# Count files with tech tags from recent modifications
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 # Get all files modified in last 8 hours
 $allFiles = Get-ChildItem -Path $vaultRoot -Recurse -Filter "*.md" -ErrorAction SilentlyContinue | Where-Object {

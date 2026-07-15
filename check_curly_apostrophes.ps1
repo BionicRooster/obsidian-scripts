@@ -1,6 +1,6 @@
-# Script to check for curly apostrophes in recent file names and rename if needed
+﻿# Script to check for curly apostrophes in recent file names and rename if needed
 # Vault path
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 # Cutoff date for recent files
 $cutoff = (Get-Date).AddDays(-2)
 

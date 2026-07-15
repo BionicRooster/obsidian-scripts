@@ -1,4 +1,4 @@
-$vault = "D:\Obsidian\Main"
+﻿$vault = "C:\Users\awt\Sync\Obsidian"
 $links = @(
     "02 - Working Projects\Linux home office server",
     "20 - Permanent Notes\How the coronavirus",

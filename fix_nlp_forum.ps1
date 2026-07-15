@@ -1,7 +1,7 @@
-# Fix NLP Forum file that has literal \n instead of real newlines
+﻿# Fix NLP Forum file that has literal \n instead of real newlines
 # Use Get-ChildItem to avoid em-dash path encoding issues
 
-$dir = 'D:\Obsidian\Main\01\NLP'
+$dir = 'C:\Users\awt\Sync\Obsidian\01\NLP'
 
 # Find the file by partial name pattern
 $file = Get-ChildItem -Path $dir -Filter '*NLP Forum*Contest*' | Select-Object -First 1

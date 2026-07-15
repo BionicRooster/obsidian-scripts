@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # Obsidian Vault Character Corrections Script
 # =============================================================================
 # Purpose: Fixes replacement characters (�) that appear due to encoding issues
@@ -18,7 +18,7 @@
 # =============================================================================
 
 # Configuration
-$vaultPath = "D:\Obsidian\Main"                              # Path to Obsidian vault
+$vaultPath = "C:\Users\awt\Sync\Obsidian"                              # Path to Obsidian vault
 $logPath = "C:\Users\awt\PowerShell\logs\character_corrections_log.txt"  # Log file location
 $dryRun = $true                                              # Set to $true to preview changes without applying
 

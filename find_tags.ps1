@@ -1,5 +1,5 @@
-# Find all tags in Obsidian vault and list files where they appear
-$vaultPath = "D:\Obsidian\Main"
+﻿# Find all tags in Obsidian vault and list files where they appear
+$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $tagData = @{}
 
 # Get all markdown files

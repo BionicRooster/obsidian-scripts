@@ -1,8 +1,8 @@
-# fix_calendar_summaries.ps1
+﻿# fix_calendar_summaries.ps1
 # Adds YAML frontmatter to all Personal Calendar Summary files (2010-2025)
 # Files are in vault root; they are left in place (not moved) per classification rules
 
-$vaultRoot = 'D:\Obsidian\Main'   # Obsidian vault path
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'   # Obsidian vault path
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)   # UTF-8 without BOM
 $count = 0   # Counter for files fixed
 

@@ -1,19 +1,19 @@
-# move_clippings_batch.ps1
+﻿# move_clippings_batch.ps1
 # Moves specified files from 10 - Clippings to appropriate 01\ subdirectories.
 # Checks for existence at source and destination before moving.
 # Uses UTF-8 encoding for any file reads/writes if needed.
 
 # Source directory — all files come from here
-$sourceDir = "D:\Obsidian\Main\10 - Clippings"
+$sourceDir = "C:\Users\awt\Sync\Obsidian\10 - Clippings"
 
 # Destination directories
-$destTech   = "D:\Obsidian\Main\01\Technology"
+$destTech   = "C:\Users\awt\Sync\Obsidian\01\Technology"
 $destBahai  = $null   # will be resolved via real path below
-$destSocial = "D:\Obsidian\Main\01\Social"
-$destTravel = "D:\Obsidian\Main\01\Travel"
+$destSocial = "C:\Users\awt\Sync\Obsidian\01\Social"
+$destTravel = "C:\Users\awt\Sync\Obsidian\01\Travel"
 
 # Resolve the Baha'i folder by scanning 01\ for its actual name
-$vaultRoot = "D:\Obsidian\Main\01"
+$vaultRoot = "C:\Users\awt\Sync\Obsidian\01"
 $bahaiFolder = Get-ChildItem -LiteralPath $vaultRoot -Directory |
     Where-Object { $_.Name -like "Bah*" } |
     Select-Object -First 1 -ExpandProperty FullName

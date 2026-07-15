@@ -1,4 +1,4 @@
-# fix_broken_related_notes.ps1
+﻿# fix_broken_related_notes.ps1
 # Finds all files with broken "Related Notes" entries in the format:
 #   - FolderPath/FileName|Alias
 # and converts them to proper Obsidian wikilinks:
@@ -6,7 +6,7 @@
 # Removes entries where the target file does not exist in the vault.
 # Also removes links to system/MOC files that should not appear in Related Notes.
 
-$vaultPath   = 'D:\Obsidian\Main'   # Root of Obsidian vault
+$vaultPath   = 'C:\Users\awt\Sync\Obsidian'   # Root of Obsidian vault
 $logPath     = 'C:\Users\awt\PowerShell\logs\fix_related_notes_log.txt'   # Output log
 
 # System files that should never appear in Related Notes

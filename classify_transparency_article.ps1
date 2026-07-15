@@ -1,8 +1,8 @@
-# Classify "Identifying Necessary Transparency Moments In Agentic AI (Part 1)"
+﻿# Classify "Identifying Necessary Transparency Moments In Agentic AI (Part 1)"
 # Moves from 10 - Clippings to 01/Technology, updates tags/nav, links in MOC, adds to People Index
 
 # --- Path constants ---
-$vault       = 'D:\Obsidian\Main'
+$vault       = 'C:\Users\awt\Sync\Obsidian'
 $srcPath     = "$vault\10 - Clippings\Identifying Necessary Transparency Moments In Agentic AI (Part 1).md"
 $techDir     = "$vault\01\Technology"
 $destPath    = "$techDir\Identifying Necessary Transparency Moments In Agentic AI (Part 1).md"

@@ -1,7 +1,7 @@
-# check_calendar_fm.ps1
+﻿# check_calendar_fm.ps1
 # Check which Personal Calendar Summary files have frontmatter
 
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 
 2010..2025 | ForEach-Object {
     $year = $_

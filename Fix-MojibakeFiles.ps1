@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Identifies and fixes files with mojibake (multi-level encoding corruption).
 
@@ -43,15 +43,15 @@
     Clear the log file of previously fixed files, allowing them to be scanned again.
 
 .EXAMPLE
-    .\Fix-MojibakeFiles.ps1 -Path "D:\Obsidian\Main" -Recurse
+    .\Fix-MojibakeFiles.ps1 -Path "C:\Users\awt\Sync\Obsidian" -Recurse
     Scans the Obsidian vault for affected files.
 
 .EXAMPLE
-    .\Fix-MojibakeFiles.ps1 -Fix "D:\Obsidian\Main\SomeFile.md"
+    .\Fix-MojibakeFiles.ps1 -Fix "C:\Users\awt\Sync\Obsidian\SomeFile.md"
     Fixes a specific file.
 
 .EXAMPLE
-    .\Fix-MojibakeFiles.ps1 -Fix "D:\Obsidian\Main\SomeFile.md" -DryRun
+    .\Fix-MojibakeFiles.ps1 -Fix "C:\Users\awt\Sync\Obsidian\SomeFile.md" -DryRun
     Shows what would be fixed without changing the file.
 
 .EXAMPLE

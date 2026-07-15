@@ -1,4 +1,4 @@
-$vaultPath = "D:\Obsidian\Main"
+﻿$vaultPath = "C:\Users\awt\Sync\Obsidian"
 
 # Get all markdown files excluding certain directories
 $allFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse | Where-Object {

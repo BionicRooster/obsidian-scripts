@@ -1,10 +1,10 @@
-# fix_broken_wikilinks.ps1
+﻿# fix_broken_wikilinks.ps1
 # Fixes broken wiki-link syntax where closing brackets are missing
 # Example: [[Link|Alias] -> [[Link|Alias]]
 
 param(
     # Path to the Obsidian vault
-    [string]$VaultPath = "D:\Obsidian\Main",
+    [string]$VaultPath = "C:\Users\awt\Sync\Obsidian",
 
     # Maximum number of files to process (0 = unlimited)
     [int]$Limit = 0,

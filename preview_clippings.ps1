@@ -1,5 +1,5 @@
-# preview_clippings.ps1 - Show first 20 lines of each file in 10 - Clippings
-$folder = 'D:\Obsidian\Main\10 - Clippings'
+﻿# preview_clippings.ps1 - Show first 20 lines of each file in 10 - Clippings
+$folder = 'C:\Users\awt\Sync\Obsidian\10 - Clippings'
 $files = Get-ChildItem $folder -Filter '*.md' | Sort-Object Name
 foreach ($f in $files) {
     Write-Host "=== $($f.Name) ===" -ForegroundColor Cyan

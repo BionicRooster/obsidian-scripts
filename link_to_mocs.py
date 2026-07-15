@@ -1,4 +1,4 @@
-"""
+﻿"""
 Link moved notes to their MOCs:
 1. Add nav properties to moved files pointing back to their MOC
 2. Add missing wikilinks to MOC subsections
@@ -6,7 +6,7 @@ Link moved notes to their MOCs:
 import re
 from pathlib import Path
 
-VAULT = Path("D:/Obsidian/Main")
+VAULT = Path("C:/Users/awt/Sync/Obsidian")
 MOC_DIR = VAULT / "00 - Home Dashboard"
 BAHAI_DIR = VAULT / "01" / "Bah\xe1'\xed"  # Bahá'í
 

@@ -1,5 +1,5 @@
-$techContent = Get-Content 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Technology & Computers.md' -Encoding UTF8
-$travelContent = Get-Content 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Travel & Exploration.md' -Encoding UTF8
+﻿$techContent = Get-Content 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Technology & Computers.md' -Encoding UTF8
+$travelContent = Get-Content 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Travel & Exploration.md' -Encoding UTF8
 
 $wallenInTech = ($techContent | Select-String 'Jack Wallen').Count
 $colinInTravel = ($travelContent | Select-String 'Colin Marshall').Count

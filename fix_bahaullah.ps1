@@ -1,4 +1,4 @@
-# fix_bahaullah.ps1
+﻿# fix_bahaullah.ps1
 # Fixes misspellings of Bahá'u'lláh across the Obsidian vault
 #
 # Two garbled patterns corrected:
@@ -11,7 +11,7 @@
 #   - [[All Religions Are One Bahai - Bahaullah]] wikilinks: no apostrophes, won't match
 #   - title: All Religions Are One Bahai - Bahaullah  frontmatter: same
 
-$vaultPath   = "D:\Obsidian\Main"
+$vaultPath   = "C:\Users\awt\Sync\Obsidian"
 $correct     = "Bahá'u'lláh"          # target with full diacritics (á, á) and right-single curly apostrophes
 
 # Apostrophe variants to match

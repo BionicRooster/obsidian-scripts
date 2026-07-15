@@ -1,7 +1,7 @@
-$paths = @(
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Science & Nature.md',
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md',
-    'D:\Obsidian\Main\00 - Home Dashboard\MOC - Technology & Computers.md'
+﻿$paths = @(
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Science & Nature.md',
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md',
+    'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Technology & Computers.md'
 )
 foreach ($p in $paths) {
     $name = [System.IO.Path]::GetFileName($p)

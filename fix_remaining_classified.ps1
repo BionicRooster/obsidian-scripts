@@ -1,8 +1,8 @@
-# Fix remaining unclassified items
+﻿# Fix remaining unclassified items
 
 $ErrorActionPreference = 'Stop'
-$techMOC = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Technology & Computers.md'
-$recMOC  = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md'
+$techMOC = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Technology & Computers.md'
+$recMOC  = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md'
 $nbspChar = [char]0x00A0  # non-breaking space
 $nbspStr  = "$nbspChar"
 
@@ -10,7 +10,7 @@ $nbspStr  = "$nbspChar"
 # 1. Rename Brian K. White file: replace non-breaking space with regular space
 # -------------------------------------------------------------------
 Write-Output "=== Fix 1: Brian K. White filename ==="
-$bkwDir  = 'D:\Obsidian\Main\01\Technology'
+$bkwDir  = 'C:\Users\awt\Sync\Obsidian\01\Technology'
 $bkwFiles = Get-ChildItem $bkwDir | Where-Object { $_.Name -like 'Brian K*' -and $_.Name.Contains($nbspChar) }
 foreach ($f in $bkwFiles) {
     $oldPath = $f.FullName
@@ -77,7 +77,7 @@ if ($fixedRec -ne $recContent) {
 # 5. Delete generated report file
 # -------------------------------------------------------------------
 Write-Output "`n=== Fix 5: Delete Link Recommendations generated file ==="
-$lrPath = 'D:\Obsidian\Main\01\NLP\Link Recommendations for 10 Additional Obsidian Notes Batch 2.md'
+$lrPath = 'C:\Users\awt\Sync\Obsidian\01\NLP\Link Recommendations for 10 Additional Obsidian Notes Batch 2.md'
 if (Test-Path -LiteralPath $lrPath) {
     Remove-Item -LiteralPath $lrPath
     Write-Output "  Deleted: Link Recommendations for 10 Additional Obsidian Notes Batch 2.md"
@@ -89,7 +89,7 @@ if (Test-Path -LiteralPath $lrPath) {
 # 6. Add 16 - Organizations.md to Bahá'í MOC (Community & Service section)
 # -------------------------------------------------------------------
 Write-Output "`n=== Fix 6: 16 - Organizations.md link in Baha'i MOC ==="
-$bahai = "D:\Obsidian\Main\00 - Home Dashboard\MOC - Bah$(([char]0x00e1))'$(([char]0x00ed)) Faith.md"
+$bahai = "C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Bah$(([char]0x00e1))'$(([char]0x00ed)) Faith.md"
 if (Test-Path -LiteralPath $bahai) {
     $bahaiContent = Get-Content -LiteralPath $bahai -Encoding UTF8 -Raw
     if ($bahaiContent -match '16 - Organizations') {

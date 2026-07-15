@@ -1,4 +1,4 @@
-$vaultPath = "D:\Obsidian\Main"
+﻿$vaultPath = "C:\Users\awt\Sync\Obsidian"
 $allFiles = Get-ChildItem -Path $vaultPath -Filter "*.md" -Recurse -ErrorAction SilentlyContinue | Where-Object {
     $_.FullName -notmatch "05 - Templates" -and
     $_.FullName -notmatch "attachments" -and

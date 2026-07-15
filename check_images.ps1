@@ -1,4 +1,4 @@
-$dir = "D:\Obsidian\Main\02 - Working Projects\2024 Columbia River Trip"
+﻿$dir = "C:\Users\awt\Sync\Obsidian\02 - Working Projects\2024 Columbia River Trip"
 $files = Get-ChildItem $dir -Filter "*.md"
 $noImage = @()
 $hasImage = @()

@@ -1,7 +1,7 @@
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ---- Step 1: Extract names from **From:** lines in NLP forum files ----
-$nlpDir = 'D:\Obsidian\Main\01\NLP'
+$nlpDir = 'C:\Users\awt\Sync\Obsidian\01\NLP'
 $nlpFiles = Get-ChildItem -Path $nlpDir -Filter '*.md' -Recurse
 
 # nameFiles maps name -> list of distinct source files
@@ -39,7 +39,7 @@ $nameFiles.GetEnumerator() | Sort-Object { $_.Value.Count } -Descending | ForEac
 # ---- Step 2: Extract author: YAML fields across vault ----
 Write-Output ""
 Write-Output "=== AUTHOR YAML FIELDS ==="
-$vaultRoot = 'D:\Obsidian\Main'
+$vaultRoot = 'C:\Users\awt\Sync\Obsidian'
 $allFiles = Get-ChildItem -Path $vaultRoot -Filter '*.md' -Recurse -ErrorAction SilentlyContinue
 
 $authors = @{}

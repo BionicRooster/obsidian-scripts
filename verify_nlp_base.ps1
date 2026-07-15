@@ -1,5 +1,5 @@
-# Simulate the NLP & Psychology base query against the vault
-$vault = "D:\Obsidian\Main"
+﻿# Simulate the NLP & Psychology base query against the vault
+$vault = "C:\Users\awt\Sync\Obsidian"
 $enc   = [System.Text.Encoding]::UTF8
 $results = @()
 

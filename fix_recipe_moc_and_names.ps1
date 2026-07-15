@@ -1,7 +1,7 @@
-# Fix Recipes MOC run-together (space-separated items) and garbled recipe filenames
+﻿# Fix Recipes MOC run-together (space-separated items) and garbled recipe filenames
 
-$recMOC = 'D:\Obsidian\Main\00 - Home Dashboard\MOC - Recipes.md'
-$recDir  = 'D:\Obsidian\Main\01\Recipes'
+$recMOC = 'C:\Users\awt\Sync\Obsidian\00 - Home Dashboard\MOC - Recipes.md'
+$recDir  = 'C:\Users\awt\Sync\Obsidian\01\Recipes'
 
 # -------------------------------------------------------------------
 # 1. Fix Recipes MOC: items separated by "]] - [[" on same line

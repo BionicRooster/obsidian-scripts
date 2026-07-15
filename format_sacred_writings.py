@@ -1,10 +1,10 @@
-import re, sys
+﻿import re, sys
 
 # Ensure UTF-8 output to console (avoids Windows cp1252 crash on diacritical chars)
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Use Unicode escapes for diacriticals in the file path
-filepath = "D:\\Obsidian\\Main\\09 - eBooks\\Bahá'í Sacred Writings - Bahá'í Reference Library.md"
+filepath = "C:\\Users\\awt\\Sync\\Obsidian\\09 - eBooks\\Bahá'í Sacred Writings - Bahá'í Reference Library.md"
 
 # ── READ ──────────────────────────────────────────────────────────────────────
 with open(filepath, 'r', encoding='utf-8', newline='') as f:

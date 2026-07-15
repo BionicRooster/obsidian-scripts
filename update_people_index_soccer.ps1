@@ -1,8 +1,8 @@
-# update_people_index_soccer.ps1
+﻿# update_people_index_soccer.ps1
 # Inserts all Austin FC 2026 roster players into People Index
 # with links to box scores for matches they appeared in.
 
-$path = "D:\Obsidian\Main\People Index.md"
+$path = "C:\Users\awt\Sync\Obsidian\People Index.md"
 $content = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
 
 # Shorthand wikilinks for each box score
